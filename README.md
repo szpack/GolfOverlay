@@ -117,6 +117,12 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v6.5.5 — 2026-03-05
+- 导出文件名移除成绩模式字段（GROSS/TOPAR）
+- 新格式：`{Course}_{Player}_H{Hole}_S{Shot}_{ShotType}_{Res}.png`
+- 所有字段统一首字母大写其余小写（Xili, Tee, Appr, For_Birdie…）
+- 适用于 Shot PNG / Hole ZIP / Scorecard PNG / SC ZIP
+
 ### v6.5.4 — 2026-03-05
 - 计分卡球员名字改为独立 badge 样式：白底黑字，圆角，仅包裹文字宽度，badge 外无背景延伸
 

@@ -1101,14 +1101,15 @@ function expGetDims(){
   return{w,h};
 }
 function expSanitize(s){ return (s||'').replace(/[^\w\u4e00-\u9fa5\u3040-\u30ff\uAC00-\uD7A3]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')||'_'; }
-function expTitleCase(s){ return s.replace(/(^|_)([a-z])/g,(m,p1,p2)=>p1+p2.toUpperCase()); }
+// Capitalize first letter of each underscore-separated word, lowercase the rest
+function expTitleCase(s){ return s.split('_').map(w=>w?w[0].toUpperCase()+w.slice(1).toLowerCase():'').join('_'); }
 function expResLabel(){ const r=S.exportRes||2160; return r>=2160?'4K':r>=1440?'1440P':'1080P'; }
-function expModeLabel(){ return S.displayMode==='topar'?'TOPAR':'GROSS'; }
 function expCourse(){ return expTitleCase(expSanitize(S.courseName)||'Course'); }
 function expPlayer(){ if(S.currentPlayerId){const p=(S.players||[]).find(p=>p.id===S.currentPlayerId);if(p)return expTitleCase(expSanitize(p.name));} return 'Session'; }
-function expShotFile(hole,shotNum,st){ return `${expCourse()}_${expPlayer()}_H${String(hole).padStart(2,'0')}_S${String(shotNum).padStart(2,'0')}_${st}_${expModeLabel()}_${expResLabel()}.png`; }
-function expFinalFile(hole,res){ return `${expCourse()}_${expPlayer()}_H${String(hole).padStart(2,'0')}_ZFinal_${res}_${expModeLabel()}_${expResLabel()}.png`; }
-function expSCFile(k,range){ return `${expCourse()}_${expPlayer()}_SC_${String(k).padStart(2,'0')}_${range}_${expModeLabel()}_${expResLabel()}.png`; }
+function expShotType(st){ return expTitleCase(st||'Shot'); }
+function expShotFile(hole,shotNum,st){ return `${expCourse()}_${expPlayer()}_H${String(hole).padStart(2,'0')}_S${String(shotNum).padStart(2,'0')}_${expShotType(st)}_${expResLabel()}.png`; }
+function expFinalFile(hole,res){ return `${expCourse()}_${expPlayer()}_H${String(hole).padStart(2,'0')}_ZFinal_${res}_${expResLabel()}.png`; }
+function expSCFile(k,range){ return `${expCourse()}_${expPlayer()}_SC_${String(k).padStart(2,'0')}_${range}_${expResLabel()}.png`; }
 
 function expCanvasToBlob(canvas){ return new Promise(r=>canvas.toBlob(r,'image/png')); }
 function expSleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
