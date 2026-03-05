@@ -117,6 +117,32 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v6.7.3 — 2026-03-05
+- Overlay Style 主题切换按钮移至计分卡导航区左侧，改为竖排列，右侧 border 分隔；hole cards 导航区居中显示
+
+### v6.7.2 — 2026-03-05
+- 新增 THEMES.livgolf：黑底霓虹风，绿色（#39ff14）发光边框/分隔线/Par/距离值，紫色 Eagle，红色 Bogey
+- drawPanelFrame 新增 glow 分支：border 描边前设置 shadowColor/shadowBlur，描边后立即 restore 清除 shadow
+
+### v6.7.1 — 2026-03-05
+- 新增 THEMES.pgatour：深海军蓝主色（#0a2a66）、红色强调（#e2231a，Par值/分隔线/得分）、白色面板、16px圆角
+
+### v6.7.0 — 2026-03-05
+- 新增 THEMES.broadcast_gold 主题：金边双层边框、顶部高光、金色分隔线、金色 Par 值、较大圆角
+- 新增 drawPanelFrame() helper：统一处理 Shot/Scorecard Overlay 的外框/背景/阴影/clip；goldFrame=true 时渲染双层金边+顶部高光；classic 保持原样
+- 切换"Broadcast Gold"后两个 overlay 同步换皮，导出 PNG/ZIP 使用当前主题
+
+### v6.6.1 — 2026-03-05
+- 左侧 nav 区顶部新增「Overlay Style」皮肤切换面板（4个按钮：Classic / Broadcast Gold / PGA Tour / LIV Golf）
+- 选中项高亮（绿色边框 + 粗体），单选行为，切换立即渲染并持久化 S.theme
+- 非 classic 主题 fallback 到 classic 渲染，页面不崩溃
+
+### v6.6.0 — 2026-03-05
+- 引入 Theme 系统：新增全局 `THEMES` 常量 + `getTheme()` + `S.theme`（默认 `classic`）
+- Shot Overlay 与 Scorecard Overlay 所有颜色/字号/圆角/阴影/分隔线均从 theme token 读取，消除硬编码
+- `deltaColorHex()` 改为读取 `getTheme().sc.scoreColors`，delta 配色可随主题切换
+- 视觉效果与 v6.5.x 完全一致（classic 主题），导出逻辑不变
+
 ### v6.5.5 — 2026-03-05
 - 导出文件名移除成绩模式字段（GROSS/TOPAR）
 - 新格式：`{Course}_{Player}_H{Hole}_S{Shot}_{ShotType}_{Res}.png`

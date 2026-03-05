@@ -363,7 +363,7 @@ function defState(){
     scorecardSummary:null,
     showTotal:false, showDist:false,
     exportRes:2160, bgOpacity:1.0, overlayOpacity:1.0,
-    safeZone:false, szSize:'10', lang:'en',
+    safeZone:false, szSize:'10', lang:'en', theme:'classic',
     userBg:null,
     // multi-player
     players:[], currentPlayerId:null, playerHistory:[], byPlayer:{},
@@ -539,6 +539,7 @@ function loadSaved(){
     if(S.bgOpacity===undefined||S.bgOpacity<0.01) S.bgOpacity=1.0;
     if(S.exportRes===undefined) S.exportRes=2160;
     if(!S.courseName) S.courseName='';
+    if(!S.theme) S.theme='classic';
   } catch(e){ console.warn('loadSaved error',e); }
 }
 
@@ -709,6 +710,600 @@ function resetScorecardPos(){
   redrawOnly(); scheduleSave();
   miniToast('Scorecard position reset');
   closeSettings();
+}
+
+// ============================================================
+// THEME SYSTEM
+// ============================================================
+const THEMES = {
+  classic: {
+    shot: {
+      // Card frame
+      borderColor:        'rgba(184,150,46,0.55)',
+      borderWidth:        1.5,          // × scale, min 1.5
+      cornerRadius:       5,            // × scale
+      // Background regions
+      leftBg:             '#1B5E3B',
+      midBandBg:          '#1B5E3B',
+      rightBg:            '#F8F8F8',
+      // Left column — hole number
+      holeNumColor:       '#ffffff',
+      holeNumWeight:      900,
+      holeNumSize:        56,           // × scale
+      // Left column — PAR label
+      parLabelColor:      'rgba(255,255,255,0.6)',
+      parLabelWeight:     700,
+      parLabelSize:       20,
+      // Left column — par value
+      parValColor:        '#B8962E',
+      parValWeight:       900,
+      parValSize:         36,
+      // Row1 — player name
+      playerNameColor:    '#111111',
+      playerNameWeight:   700,
+      playerNameSize:     34,
+      // Row1 — total badge
+      totalBadgeWeight:   900,
+      totalBadgeSize:     38,
+      totalBadgeColorFn:  td => td<0?'#C0392B':td<=7?'#1a5bb5':td<=17?'#2e7d32':td<=27?'#888888':'#111111',
+      totalBadgeTextColor:'#ffffff',
+      // Row2 — progress squares
+      sqCurBg:            '#ffffff',
+      sqCurTextColor:     '#1B5E3B',
+      sqPastBg:           'rgba(255,255,255,.25)',
+      sqPastTextColor:    'rgba(255,255,255,.85)',
+      sqFutureBg:         'rgba(255,255,255,.10)',
+      sqFutureTextColor:  'rgba(255,255,255,.3)',
+      sqRadius:           3,
+      sqNumWeight:        700,
+      sqNumSize:          15,
+      // Dividers
+      dividerColor:       'rgba(184,150,46,0.7)',
+      dividerWidth:       1.2,
+      row12DivColor:      'rgba(200,200,200,0.5)',
+      row12DivWidth:      0.6,
+      // Row3 — To Pin distance
+      distValColor:       '#1e7a3e',
+      distValWeight:      700,
+      distValSize:        22,
+      distUnitColor:      'rgba(20,100,50,0.9)',
+      distUnitWeight:     600,
+      distUnitSize:       13,
+      // Row3 — shot type label
+      shotTypeColor:      '#1a6e35',
+      shotTypeWeight:     700,
+      shotTypeSize:       24,
+      // Row3 — result badge
+      resultBadgeRadius:  3,
+      resultBadgeWeight:  700,
+      resultBadgeSize:    24,
+      resultBadgeTextColor:'#ffffff',
+    },
+    sc: {
+      // Card
+      cardBg:             '#F2F2F2',
+      cardRadius:         8,
+      shadowColor:        'rgba(0,0,0,0.35)',
+      shadowBlur:         10,
+      shadowOffsetY:      3,
+      // Separators
+      vlineColor:         'rgba(180,190,180,0.4)',
+      vlineWidth:         0.6,
+      subVlineColor:      'rgba(27,94,59,0.25)',
+      subVlineWidth:      1.5,
+      // Header row
+      hdrBg:              '#1B5E3B',
+      holeLabelColor:     'rgba(255,255,255,0.6)',
+      holeLabelWeight:    600,
+      holeNumColor:       'rgba(255,255,255,.85)',
+      holeNumWeight:      600,
+      outInDimBg:         'rgba(0,0,0,0.18)',
+      outInTextColor:     'rgba(255,255,255,.95)',
+      outInWeight:        700,
+      totHdrTextColor:    'rgba(255,255,255,.95)',
+      totHdrWeight:       700,
+      // PAR row
+      parRowBg:           '#EAF0EA',
+      parLabelColor:      'rgba(0,0,0,0.45)',
+      parLabelWeight:     500,
+      parValColor:        '#2a5e2a',
+      parValWeight:       500,
+      parSubColor:        '#1B5E3B',
+      parSubWeight:       700,
+      parTotColor:        '#1B5E3B',
+      parTotWeight:       700,
+      // SCORE row
+      scoreRowBg:         '#FFFFFF',
+      scoreRowDivColor:   'rgba(180,190,180,0.5)',
+      scoreLabelColor:    'rgba(0,0,0,0.45)',
+      scoreLabelWeight:   700,
+      scoreSubBg:         'rgba(27,94,59,0.06)',
+      // Score cell — empty
+      emptyDashColor:     'rgba(0,0,0,0.18)',
+      emptyDashWeight:    400,
+      // Score cell — badge
+      scoreBadgeRadius:   4,
+      scoreBadgeTextColor:'#ffffff',
+      scoreBadgeWeight:   800,
+      // OUT/IN sub-total badge
+      subTotBg:           '#ffffff',
+      subTotTextColor:    '#111111',
+      subTotWeight:       800,
+      // TOT column
+      totTextColor:       '#111111',
+      totWeight:          700,
+      // Delta score badge colors
+      scoreColors: {
+        eagle:  '#7c3aed',
+        birdie: '#C0392B',
+        par:    '#1a5bb5',
+        bogey:  '#2e7d32',
+        double: '#9e9e9e',
+        triple: '#555555',
+        over:   '#111111',
+        empty:  '#888888',
+      },
+      // Player name badge
+      nameBadgeBg:        '#ffffff',
+      nameBadgeTextColor: '#111111',
+      nameBadgeWeight:    700,
+      nameBadgeSize:      34,
+      nameBadgeRadius:    5,
+    },
+  },
+};
+
+THEMES.broadcast_gold = {
+  name: 'Broadcast Gold',
+  shot: {
+    // Frame
+    borderColor:        '#c9a44a',
+    borderWidth:        3,
+    cornerRadius:       18,
+    goldFrame:          true,
+    borderInnerColor:   'rgba(255,255,255,0.55)',
+    borderInnerWidth:   1.5,
+    // Background regions
+    leftBg:             '#1a5a3a',
+    midBandBg:          '#1a5a3a',
+    rightBg:            '#f7f7f7',
+    // Left col — hole number
+    holeNumColor:       '#ffffff',
+    holeNumWeight:      900,
+    holeNumSize:        60,
+    // Left col — PAR label
+    parLabelColor:      'rgba(255,255,255,0.62)',
+    parLabelWeight:     700,
+    parLabelSize:       20,
+    // Left col — par value (gold)
+    parValColor:        '#d4af37',
+    parValWeight:       900,
+    parValSize:         42,
+    // Row1 — player name
+    playerNameColor:    '#111111',
+    playerNameWeight:   700,
+    playerNameSize:     34,
+    // Row1 — total badge
+    totalBadgeWeight:   900,
+    totalBadgeSize:     38,
+    totalBadgeColorFn:  td => td<0?'#C0392B':td<=7?'#1a5bb5':td<=17?'#2e7d32':td<=27?'#888888':'#111111',
+    totalBadgeTextColor:'#ffffff',
+    // Row2 — progress squares
+    sqCurBg:            '#ffffff',
+    sqCurTextColor:     '#1a5a3a',
+    sqPastBg:           'rgba(255,255,255,0.55)',
+    sqPastTextColor:    'rgba(255,255,255,0.90)',
+    sqFutureBg:         'rgba(255,255,255,0.25)',
+    sqFutureTextColor:  'rgba(255,255,255,0.40)',
+    sqRadius:           8,
+    sqNumWeight:        700,
+    sqNumSize:          15,
+    // Dividers
+    dividerColor:       '#d4af37',
+    dividerWidth:       1,
+    row12DivColor:      'rgba(0,0,0,0.10)',
+    row12DivWidth:      0.6,
+    // Row3 — distance
+    distValColor:       '#1a5a3a',
+    distValWeight:      700,
+    distValSize:        22,
+    distUnitColor:      'rgba(26,90,58,0.80)',
+    distUnitWeight:     600,
+    distUnitSize:       13,
+    // Row3 — shot type
+    shotTypeColor:      '#1a5a3a',
+    shotTypeWeight:     700,
+    shotTypeSize:       24,
+    // Row3 — result badge
+    resultBadgeRadius:  8,
+    resultBadgeWeight:  700,
+    resultBadgeSize:    24,
+    resultBadgeTextColor:'#ffffff',
+  },
+  sc: {
+    // Card frame
+    cardBg:             '#f7f7f7',
+    cardRadius:         18,
+    shadowColor:        'rgba(0,0,0,0.22)',
+    shadowBlur:         18,
+    shadowOffsetY:      8,
+    goldFrame:          true,
+    borderColor:        '#c9a44a',
+    borderWidth:        3,
+    borderInnerColor:   'rgba(255,255,255,0.55)',
+    borderInnerWidth:   1.5,
+    // Separators
+    vlineColor:         'rgba(0,0,0,0.10)',
+    vlineWidth:         0.6,
+    subVlineColor:      'rgba(26,90,58,0.25)',
+    subVlineWidth:      1.5,
+    // Header
+    hdrBg:              '#1f6a43',
+    holeLabelColor:     'rgba(255,255,255,0.62)',
+    holeLabelWeight:    600,
+    holeNumColor:       'rgba(255,255,255,.90)',
+    holeNumWeight:      600,
+    outInDimBg:         'rgba(0,0,0,0.15)',
+    outInTextColor:     'rgba(255,255,255,.95)',
+    outInWeight:        700,
+    totHdrTextColor:    'rgba(255,255,255,.95)',
+    totHdrWeight:       700,
+    // PAR row
+    parRowBg:           '#e8f0e8',
+    parLabelColor:      'rgba(0,0,0,0.45)',
+    parLabelWeight:     500,
+    parValColor:        '#2a5e2a',
+    parValWeight:       500,
+    parSubColor:        '#1a5a3a',
+    parSubWeight:       700,
+    parTotColor:        '#1a5a3a',
+    parTotWeight:       700,
+    // Score row
+    scoreRowBg:         '#ffffff',
+    scoreRowDivColor:   'rgba(0,0,0,0.10)',
+    scoreLabelColor:    'rgba(0,0,0,0.45)',
+    scoreLabelWeight:   700,
+    scoreSubBg:         'rgba(26,90,58,0.06)',
+    emptyDashColor:     'rgba(0,0,0,0.18)',
+    emptyDashWeight:    400,
+    scoreBadgeRadius:   6,
+    scoreBadgeTextColor:'#ffffff',
+    scoreBadgeWeight:   800,
+    subTotBg:           '#ffffff',
+    subTotTextColor:    '#111111',
+    subTotWeight:       800,
+    totTextColor:       '#111111',
+    totWeight:          700,
+    scoreColors: {
+      eagle:'#7c3aed', birdie:'#C0392B', par:'#1a5bb5',
+      bogey:'#2e7d32', double:'#9e9e9e', triple:'#555555', over:'#111111', empty:'#888888',
+    },
+    nameBadgeBg:        '#ffffff',
+    nameBadgeTextColor: '#111111',
+    nameBadgeWeight:    700,
+    nameBadgeSize:      34,
+    nameBadgeRadius:    8,
+  },
+};
+
+THEMES.pgatour = {
+  name: 'PGA Tour',
+  shot: {
+    // Frame — navy thin border, no goldFrame
+    borderColor:        'rgba(10,42,102,0.35)',
+    borderWidth:        1.5,
+    cornerRadius:       16,
+    // Background
+    leftBg:             '#0a2a66',
+    midBandBg:          '#0a2a66',
+    rightBg:            '#ffffff',
+    // Left col — hole number
+    holeNumColor:       '#ffffff',
+    holeNumWeight:      900,
+    holeNumSize:        58,
+    // Left col — PAR label
+    parLabelColor:      'rgba(255,255,255,0.70)',
+    parLabelWeight:     700,
+    parLabelSize:       20,
+    // Left col — par value (red accent)
+    parValColor:        '#e2231a',
+    parValWeight:       900,
+    parValSize:         40,
+    // Row1 — player name
+    playerNameColor:    '#0b0f18',
+    playerNameWeight:   700,
+    playerNameSize:     34,
+    // Row1 — total badge
+    totalBadgeWeight:   900,
+    totalBadgeSize:     38,
+    totalBadgeColorFn:  td => td<0?'#C0392B':td<=7?'#1a5bb5':td<=17?'#2e7d32':td<=27?'#888888':'#111111',
+    totalBadgeTextColor:'#ffffff',
+    // Row2 — progress squares
+    sqCurBg:            '#ffffff',
+    sqCurTextColor:     '#0a2a66',
+    sqPastBg:           'rgba(255,255,255,0.60)',
+    sqPastTextColor:    'rgba(255,255,255,0.90)',
+    sqFutureBg:         'rgba(255,255,255,0.25)',
+    sqFutureTextColor:  'rgba(255,255,255,0.40)',
+    sqRadius:           7,
+    sqNumWeight:        700,
+    sqNumSize:          15,
+    // Dividers — red accent divider
+    dividerColor:       '#e2231a',
+    dividerWidth:       1,
+    row12DivColor:      'rgba(10,42,102,0.14)',
+    row12DivWidth:      0.6,
+    // Row3 — distance
+    distValColor:       '#0a2a66',
+    distValWeight:      700,
+    distValSize:        22,
+    distUnitColor:      'rgba(11,15,24,0.55)',
+    distUnitWeight:     600,
+    distUnitSize:       13,
+    // Row3 — shot type
+    shotTypeColor:      '#0a2a66',
+    shotTypeWeight:     700,
+    shotTypeSize:       24,
+    // Row3 — result badge
+    resultBadgeRadius:  7,
+    resultBadgeWeight:  700,
+    resultBadgeSize:    24,
+    resultBadgeTextColor:'#ffffff',
+  },
+  sc: {
+    cardBg:             '#ffffff',
+    cardRadius:         16,
+    shadowColor:        'rgba(0,0,0,0.20)',
+    shadowBlur:         16,
+    shadowOffsetY:      7,
+    // Separators
+    vlineColor:         'rgba(10,42,102,0.14)',
+    vlineWidth:         0.6,
+    subVlineColor:      'rgba(10,42,102,0.22)',
+    subVlineWidth:      1.5,
+    // Header — dark navy
+    hdrBg:              '#0a2a66',
+    holeLabelColor:     'rgba(255,255,255,0.70)',
+    holeLabelWeight:    600,
+    holeNumColor:       'rgba(255,255,255,.90)',
+    holeNumWeight:      600,
+    outInDimBg:         'rgba(0,0,0,0.18)',
+    outInTextColor:     'rgba(255,255,255,.95)',
+    outInWeight:        700,
+    totHdrTextColor:    'rgba(255,255,255,.95)',
+    totHdrWeight:       700,
+    // PAR row — slight blue tint
+    parRowBg:           '#f0f2f5',
+    parLabelColor:      'rgba(0,0,0,0.45)',
+    parLabelWeight:     500,
+    parValColor:        '#0a2a66',
+    parValWeight:       500,
+    parSubColor:        '#0a2a66',
+    parSubWeight:       700,
+    parTotColor:        '#0a2a66',
+    parTotWeight:       700,
+    // Score row
+    scoreRowBg:         '#ffffff',
+    scoreRowDivColor:   'rgba(10,42,102,0.14)',
+    scoreLabelColor:    'rgba(0,0,0,0.45)',
+    scoreLabelWeight:   700,
+    scoreSubBg:         'rgba(10,42,102,0.04)',
+    emptyDashColor:     'rgba(0,0,0,0.18)',
+    emptyDashWeight:    400,
+    scoreBadgeRadius:   5,
+    scoreBadgeTextColor:'#ffffff',
+    scoreBadgeWeight:   800,
+    subTotBg:           '#ffffff',
+    subTotTextColor:    '#0b0f18',
+    subTotWeight:       800,
+    totTextColor:       '#0b0f18',
+    totWeight:          700,
+    scoreColors: {
+      eagle:'#2d4cff', birdie:'#e2231a', par:'#0a2a66',
+      bogey:'#2e7d32', double:'#9e9e9e', triple:'#555555', over:'#111111', empty:'#888888',
+    },
+    nameBadgeBg:        '#ffffff',
+    nameBadgeTextColor: '#0b0f18',
+    nameBadgeWeight:    700,
+    nameBadgeSize:      34,
+    nameBadgeRadius:    5,
+  },
+};
+
+THEMES.livgolf = {
+  name: 'LIV Golf',
+  shot: {
+    // Frame — neon green glow border
+    borderColor:        'rgba(57,255,20,0.55)',
+    borderWidth:        2,
+    cornerRadius:       18,
+    glow:               true,
+    glowColor:          '#39ff14',
+    glowBlur:           12,
+    // Background — near-black
+    leftBg:             '#101010',
+    midBandBg:          '#101010',
+    rightBg:            '#0b0b0b',
+    // Left col — hole number
+    holeNumColor:       '#f2f2f2',
+    holeNumWeight:      900,
+    holeNumSize:        58,
+    // Left col — PAR label
+    parLabelColor:      'rgba(242,242,242,0.65)',
+    parLabelWeight:     700,
+    parLabelSize:       20,
+    // Left col — par value (neon green)
+    parValColor:        '#39ff14',
+    parValWeight:       900,
+    parValSize:         40,
+    // Row1 — player name
+    playerNameColor:    '#f2f2f2',
+    playerNameWeight:   700,
+    playerNameSize:     34,
+    // Row1 — total badge
+    totalBadgeWeight:   900,
+    totalBadgeSize:     38,
+    totalBadgeColorFn:  td => td<0?'#C0392B':td<=7?'#1a5bb5':td<=17?'#2e7d32':td<=27?'#888888':'#111111',
+    totalBadgeTextColor:'#f2f2f2',
+    // Row2 — progress squares
+    sqCurBg:            '#39ff14',
+    sqCurTextColor:     '#0b0b0b',
+    sqPastBg:           'rgba(255,255,255,0.65)',
+    sqPastTextColor:    'rgba(255,255,255,0.90)',
+    sqFutureBg:         'rgba(255,255,255,0.18)',
+    sqFutureTextColor:  'rgba(255,255,255,0.35)',
+    sqRadius:           8,
+    sqNumWeight:        700,
+    sqNumSize:          15,
+    // Dividers — neon green
+    dividerColor:       '#39ff14',
+    dividerWidth:       1,
+    row12DivColor:      'rgba(255,255,255,0.10)',
+    row12DivWidth:      0.6,
+    // Row3 — distance (neon green)
+    distValColor:       '#39ff14',
+    distValWeight:      700,
+    distValSize:        22,
+    distUnitColor:      'rgba(242,242,242,0.60)',
+    distUnitWeight:     600,
+    distUnitSize:       13,
+    // Row3 — shot type
+    shotTypeColor:      'rgba(242,242,242,0.80)',
+    shotTypeWeight:     700,
+    shotTypeSize:       24,
+    // Row3 — result badge
+    resultBadgeRadius:  8,
+    resultBadgeWeight:  700,
+    resultBadgeSize:    24,
+    resultBadgeTextColor:'#0b0b0b',
+  },
+  sc: {
+    cardBg:             '#0b0b0b',
+    cardRadius:         18,
+    shadowColor:        'rgba(0,0,0,0.45)',
+    shadowBlur:         24,
+    shadowOffsetY:      10,
+    glow:               true,
+    glowColor:          '#39ff14',
+    glowBlur:           12,
+    borderColor:        'rgba(57,255,20,0.55)',
+    borderWidth:        2,
+    // Separators
+    vlineColor:         'rgba(255,255,255,0.10)',
+    vlineWidth:         0.6,
+    subVlineColor:      'rgba(57,255,20,0.20)',
+    subVlineWidth:      1.5,
+    // Header — black
+    hdrBg:              '#0b0b0b',
+    holeLabelColor:     'rgba(242,242,242,0.65)',
+    holeLabelWeight:    600,
+    holeNumColor:       'rgba(242,242,242,0.90)',
+    holeNumWeight:      600,
+    outInDimBg:         'rgba(255,255,255,0.05)',
+    outInTextColor:     'rgba(242,242,242,0.95)',
+    outInWeight:        700,
+    totHdrTextColor:    'rgba(242,242,242,0.95)',
+    totHdrWeight:       700,
+    // PAR row — dark
+    parRowBg:           '#111111',
+    parLabelColor:      'rgba(242,242,242,0.55)',
+    parLabelWeight:     500,
+    parValColor:        '#39ff14',
+    parValWeight:       500,
+    parSubColor:        '#39ff14',
+    parSubWeight:       700,
+    parTotColor:        '#39ff14',
+    parTotWeight:       700,
+    // Score row — dark
+    scoreRowBg:         '#0d0d0d',
+    scoreRowDivColor:   'rgba(255,255,255,0.08)',
+    scoreLabelColor:    'rgba(242,242,242,0.55)',
+    scoreLabelWeight:   700,
+    scoreSubBg:         'rgba(57,255,20,0.05)',
+    emptyDashColor:     'rgba(255,255,255,0.22)',
+    emptyDashWeight:    400,
+    scoreBadgeRadius:   6,
+    scoreBadgeTextColor:'#0b0b0b',
+    scoreBadgeWeight:   800,
+    subTotBg:           '#1a1a1a',
+    subTotTextColor:    '#f2f2f2',
+    subTotWeight:       800,
+    totTextColor:       '#39ff14',
+    totWeight:          700,
+    scoreColors: {
+      eagle:'#7b2cff', birdie:'#39ff14', par:'#e0e0e0',
+      bogey:'#ff4d4d', double:'#9e9e9e', triple:'#555555', over:'#333333', empty:'#444444',
+    },
+    nameBadgeBg:        '#1a1a1a',
+    nameBadgeTextColor: '#39ff14',
+    nameBadgeWeight:    700,
+    nameBadgeSize:      34,
+    nameBadgeRadius:    8,
+  },
+};
+
+function getTheme(){ return THEMES[S.theme] || THEMES.classic; }
+
+// ── Panel frame helper — draws border, shadow, bg fill, sets clip ──
+// withBg: true for scorecard (fill whole card first), false for shot (caller draws bg sections)
+// crVal:  corner radius in unscaled px (e.g. th.cornerRadius or th.cardRadius)
+function drawPanelFrame(ctx, X, Y, W, H, scale, th, withBg, crVal){
+  const r = Math.min((crVal||8)*scale, W/2, H/2);
+  const goldFrame = !!th.goldFrame;
+
+  if(withBg){
+    ctx.shadowColor   = th.shadowColor    || 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur    = (th.shadowBlur    || 10) * scale;
+    ctx.shadowOffsetY = (th.shadowOffsetY || 3)  * scale;
+    rrect(ctx, X, Y, W, H, r);
+    ctx.fillStyle = th.cardBg || '#fff';
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+  }
+
+  if(goldFrame){
+    // Outer gold border
+    rrect(ctx, X, Y, W, H, r);
+    ctx.strokeStyle = th.borderColor;
+    ctx.lineWidth   = Math.max(th.borderWidth, th.borderWidth * scale);
+    ctx.stroke();
+    // Inner highlight border (inset by half outer border width)
+    const d = (th.borderWidth * scale) / 2;
+    rrect(ctx, X+d, Y+d, W-2*d, H-2*d, Math.max(r-d, 0));
+    ctx.strokeStyle = th.borderInnerColor || 'rgba(255,255,255,0.55)';
+    ctx.lineWidth   = Math.max(1, (th.borderInnerWidth||1.5) * scale);
+    ctx.stroke();
+  } else if(th.borderColor){
+    // Border — with optional neon glow
+    if(th.glow){
+      ctx.save();
+      ctx.shadowColor   = th.glowColor || th.borderColor;
+      ctx.shadowBlur    = (th.glowBlur || 12) * scale;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    }
+    rrect(ctx, X, Y, W, H, r);
+    ctx.strokeStyle = th.borderColor;
+    ctx.lineWidth   = Math.max(th.borderWidth||1.5, (th.borderWidth||1.5) * scale);
+    ctx.stroke();
+    if(th.glow) ctx.restore(); // clear shadow immediately
+  }
+
+  // Clip to card shape
+  rrect(ctx, X, Y, W, H, r);
+  ctx.clip();
+
+  if(goldFrame){
+    // Top highlight streak
+    ctx.fillStyle = th.borderInnerColor || 'rgba(255,255,255,0.55)';
+    ctx.fillRect(X, Y, W, Math.max(1, 1.5*scale));
+  }
+}
+
+function setTheme(t){
+  S.theme = t;
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.toggle('active', b.dataset.theme===t));
+  render(); scheduleSave();
 }
 
 // ============================================================
@@ -891,37 +1486,32 @@ function drawSafeZone(ctx,w,h){
 
 // ── SHOT OVERLAY — v4.5 ──
 function drawShotOverlay(ctx,X,Y,scale){
+  const th=getTheme().shot;
   const h=curHole();
   const W=SHOT_W*scale, H=SHOT_H*scale;
   const r1=ROW1*scale, r2=ROW2*scale, r3=ROW3*scale;
   const colW=COL_W*scale, rpad=RPAD*scale;
 
   ctx.save();
-  // v4.5: gold border (drawn outside clip so visible)
-  rrect(ctx,X,Y,W,H,5*scale);
-  ctx.strokeStyle='rgba(184,150,46,0.55)';
-  ctx.lineWidth=Math.max(1.5,1.5*scale);
-  ctx.stroke();
-  // clip to shape
-  rrect(ctx,X,Y,W,H,5*scale); ctx.clip();
+  drawPanelFrame(ctx, X, Y, W, H, scale, th, false, th.cornerRadius);
 
   // BG
-  ctx.fillStyle='#1B5E3B'; ctx.fillRect(X,Y,colW,H);
-  ctx.fillStyle='#F8F8F8'; ctx.fillRect(X+colW,Y,W-colW,H);
-  ctx.fillStyle='#1B5E3B'; ctx.fillRect(X+colW,Y+r1,W-colW,r2);
+  ctx.fillStyle=th.leftBg;   ctx.fillRect(X,Y,colW,H);
+  ctx.fillStyle=th.rightBg;  ctx.fillRect(X+colW,Y,W-colW,H);
+  ctx.fillStyle=th.midBandBg; ctx.fillRect(X+colW,Y+r1,W-colW,r2);
 
   // ── LEFT: hole number ──
-  ctx.fillStyle='#fff';
-  ctx.font=`900 ${Math.round(56*scale)}px ${SF}`;
+  ctx.fillStyle=th.holeNumColor;
+  ctx.font=`${th.holeNumWeight} ${Math.round(th.holeNumSize*scale)}px ${SF}`;
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(String(S.currentHole+1),X+colW/2,Y+H*0.31);
 
-  ctx.fillStyle='rgba(255,255,255,0.6)';
-  ctx.font=`700 ${Math.round(20*scale)}px ${SF}`;
+  ctx.fillStyle=th.parLabelColor;
+  ctx.font=`${th.parLabelWeight} ${Math.round(th.parLabelSize*scale)}px ${SF}`;
   ctx.fillText('PAR',X+colW/2,Y+H*0.57);
 
-  ctx.fillStyle='#B8962E';
-  ctx.font=`900 ${Math.round(36*scale)}px ${SF}`;
+  ctx.fillStyle=th.parValColor;
+  ctx.font=`${th.parValWeight} ${Math.round(th.parValSize*scale)}px ${SF}`;
   ctx.fillText(String(h.par),X+colW/2,Y+H*0.80);
 
   // ── ROW1: player name + total badge ──
@@ -937,20 +1527,19 @@ function drawShotOverlay(ctx,X,Y,scale){
   const _ctxTd=_totalHoles.reduce((a,x)=>a+x.delta,0);
   const _ctxTg=_totalHoles.reduce((a,x)=>a+x.par+x.delta,0);
   const _showTotal=S.showTotal&&_totalHoles.length>0;
-  const _bColor=_ctxTd<0?'#C0392B':_ctxTd<=7?'#1a5bb5':_ctxTd<=17?'#2e7d32':_ctxTd<=27?'#888888':'#111111';
 
   let nameMaxW=rW;
   if(_showTotal){
     const bTxt=S.displayMode==='topar'?fmtDeltaDisplay(_ctxTd):String(_ctxTg);
-    ctx.font=`900 ${Math.round(38*scale)}px ${SF}`;
+    ctx.font=`${th.totalBadgeWeight} ${Math.round(th.totalBadgeSize*scale)}px ${SF}`;
     const btw=ctx.measureText(bTxt).width;
     const reservedBadgeW=Math.max(80*scale,btw+24*scale);
     nameMaxW=rW-reservedBadgeW+rpad;
   }
 
-  const nameFontSz=Math.round(34*scale);
-  ctx.fillStyle='#111';
-  ctx.font=`700 ${nameFontSz}px ${SF}`;
+  const nameFontSz=Math.round(th.playerNameSize*scale);
+  ctx.fillStyle=th.playerNameColor;
+  ctx.font=`${th.playerNameWeight} ${nameFontSz}px ${SF}`;
   ctx.textAlign='left'; ctx.textBaseline='middle';
   let name=currentPlayerDisplayName().toUpperCase();
   const origName=name;
@@ -960,19 +1549,15 @@ function drawShotOverlay(ctx,X,Y,scale){
 
   // Total badge — context-aware: in-play=prev holes, result=include current hole
   if(_showTotal){
-    const bColor=_bColor;
+    const bColor=th.totalBadgeColorFn(_ctxTd);
     const bTxt=S.displayMode==='topar'?fmtDeltaDisplay(_ctxTd):String(_ctxTg);
-    // Right edge flush to card border, height fills entire ROW1
     const badgeMinW=80*scale;
-    ctx.font=`900 ${Math.round(38*scale)}px ${SF}`;
+    ctx.font=`${th.totalBadgeWeight} ${Math.round(th.totalBadgeSize*scale)}px ${SF}`;
     const btw=ctx.measureText(bTxt).width;
     const bW=Math.max(badgeMinW,btw+24*scale);
-    const bx=X+W-bW; // flush right edge
-    const by=Y; // top of card
-    const bh=r1; // full ROW1 height
-    // no rounding on right side (card edge is already rounded by clip)
+    const bx=X+W-bW, by=Y, bh=r1;
     ctx.fillStyle=bColor; ctx.fillRect(bx,by,bW,bh);
-    ctx.fillStyle='#fff';
+    ctx.fillStyle=th.totalBadgeTextColor;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(bTxt,bx+bW/2,by+bh/2);
   }
@@ -988,92 +1573,87 @@ function drawShotOverlay(ctx,X,Y,scale){
     const bx=sqStartX+i*(sqSz+sqGap), by=sqCY-sqSz/2;
     const isCur=i===si, isPast=i<si;
     if(isCur){
-      rrect(ctx,bx,by,sqSz,sqSz,3*scale); ctx.fillStyle='#fff'; ctx.fill();
-      ctx.fillStyle='#1B5E3B';
+      rrect(ctx,bx,by,sqSz,sqSz,th.sqRadius*scale);
+      ctx.fillStyle=th.sqCurBg; ctx.fill();
+      ctx.fillStyle=th.sqCurTextColor;
     } else if(isPast){
-      rrect(ctx,bx,by,sqSz,sqSz,3*scale); ctx.fillStyle='rgba(255,255,255,.25)'; ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,.85)';
+      rrect(ctx,bx,by,sqSz,sqSz,th.sqRadius*scale);
+      ctx.fillStyle=th.sqPastBg; ctx.fill();
+      ctx.fillStyle=th.sqPastTextColor;
     } else {
-      rrect(ctx,bx,by,sqSz,sqSz,3*scale); ctx.fillStyle='rgba(255,255,255,.10)'; ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,.3)';
+      rrect(ctx,bx,by,sqSz,sqSz,th.sqRadius*scale);
+      ctx.fillStyle=th.sqFutureBg; ctx.fill();
+      ctx.fillStyle=th.sqFutureTextColor;
     }
-    ctx.font=`700 ${Math.round(15*scale)}px ${SF}`; // v5.3: +2 from 13
+    ctx.font=`${th.sqNumWeight} ${Math.round(th.sqNumSize*scale)}px ${SF}`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(String(i+1),bx+sqSz/2,sqCY);
   }
 
-  // GOLD DIVIDER
+  // DIVIDER (gold)
   const divY=Y+r1+r2;
   ctx.save();
   ctx.setLineDash([]);
-  ctx.strokeStyle='rgba(184,150,46,0.7)';
-  ctx.lineWidth=Math.max(1,1.2*scale);
+  ctx.strokeStyle=th.dividerColor;
+  ctx.lineWidth=Math.max(1,th.dividerWidth*scale);
   ctx.beginPath(); ctx.moveTo(X+colW,divY); ctx.lineTo(X+W,divY); ctx.stroke();
   ctx.restore();
 
   // ── ROW3: three-column ──
   const r3y=divY, r3h=r3;
   const midX=X+colW+rW/2;
-  const shotFontSz=Math.round(24*scale);
-  const toPinFontSz=Math.round(22*scale); // v5.1: one level smaller
-  const resultFontSz=Math.round(24*scale);
+  const shotFontSz=Math.round(th.shotTypeSize*scale);
+  const toPinFontSz=Math.round(th.distValSize*scale);
+  const resultFontSz=Math.round(th.resultBadgeSize*scale);
 
-  // Determine display mode for last shot
-  // v5.2: result mode is DEFAULT (auto); FOR mode only when user manually selects FOR type
   const isLast=si===gross-1;
   const curType=h.shots[si]?.type||'';
   const isManualLastShot=isLast && !!h.manualTypes[si];
   const isForMode=isLast && isManualLastShot && curType.startsWith('FOR_');
-  // Result mode = last shot AND not in FOR mode
   const isResultMode=isLast && !isForMode;
 
-  // LEFT: To Pin distance — only show when NOT in result mode AND shotToPin has a value
+  // LEFT: To Pin distance
   const shotToPin=getShotToPin(h,si);
   if(!isResultMode && shotToPin!==null){
     const distVal=String(shotToPin);
     const unit=T('ydsLabel');
-    ctx.fillStyle='#1e7a3e'; // v5.3.1: deeper green
-    ctx.font=`700 ${toPinFontSz}px ${SF}`;
+    ctx.fillStyle=th.distValColor;
+    ctx.font=`${th.distValWeight} ${toPinFontSz}px ${SF}`;
     ctx.textAlign='left'; ctx.textBaseline='middle';
     ctx.fillText(distVal,rx,r3y+r3h/2);
     const dw=ctx.measureText(distVal).width;
-    ctx.fillStyle='rgba(20,100,50,0.9)'; // v5.3.1: deeper green unit
-    ctx.font=`600 ${Math.round(13*scale)}px ${SF}`;
-    ctx.textBaseline='middle';
+    ctx.fillStyle=th.distUnitColor;
+    ctx.font=`${th.distUnitWeight} ${Math.round(th.distUnitSize*scale)}px ${SF}`;
     ctx.fillText(unit,rx+dw+3*scale,r3y+r3h/2);
   }
 
-  // CENTER: shot type label (for non-last shots) OR FOR text (for FOR mode)
+  // CENTER: shot type label
   let centerTxt='';
-  if(isForMode){
-    centerTxt=shotTypeLabel(curType);
-  } else if(!isLast){
-    centerTxt=shotTypeLabel(curType);
-  }
+  if(isForMode || !isLast) centerTxt=shotTypeLabel(curType);
   if(centerTxt){
-    // v5.3.1: no background, text only, deeper green
-    ctx.font=`700 ${shotFontSz}px ${SF}`;
-    ctx.fillStyle='#1a6e35'; // deeper green, no badge bg
+    ctx.font=`${th.shotTypeWeight} ${shotFontSz}px ${SF}`;
+    ctx.fillStyle=th.shotTypeColor;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(centerTxt,midX,r3y+r3h/2);
   }
 
-  // RIGHT: result badge — only in result mode (last shot, NOT FOR mode)
+  // RIGHT: result badge
   if(isResultMode){
     const resultTxt=deltaLabel(h.delta);
-    ctx.font=`700 ${resultFontSz}px ${SF}`;
+    ctx.font=`${th.resultBadgeWeight} ${resultFontSz}px ${SF}`;
     const rtw=ctx.measureText(resultTxt).width;
     const rbW=Math.max(rtw+20*scale,64*scale), rbH=32*scale;
     const rbx=X+W-rpad-rbW, rby=r3y+(r3h-rbH)/2;
-    rrect(ctx,rbx,rby,rbW,rbH,3*scale);
+    rrect(ctx,rbx,rby,rbW,rbH,th.resultBadgeRadius*scale);
     ctx.fillStyle=deltaColorHex(h.delta); ctx.fill();
-    ctx.fillStyle='#fff';
+    ctx.fillStyle=th.resultBadgeTextColor;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(resultTxt,rbx+rbW/2,rby+rbH/2);
   }
 
   // Row1/Row2 divider
-  ctx.strokeStyle='rgba(200,200,200,0.5)'; ctx.lineWidth=Math.max(.5,.6*scale);
+  ctx.strokeStyle=th.row12DivColor;
+  ctx.lineWidth=Math.max(.5,th.row12DivWidth*scale);
   ctx.beginPath(); ctx.moveTo(X+colW,Y+r1); ctx.lineTo(X+W,Y+r1); ctx.stroke();
 
   ctx.restore();
@@ -1297,6 +1877,7 @@ function init(){
 
   // Sync UI
   document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.toggle('active',b.dataset.ratio===S.ratio));
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.toggle('active',b.dataset.theme===(S.theme||'classic')));
   document.querySelectorAll('.res-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.res)===S.exportRes));
   const _ip=document.getElementById('inp-player'); if(_ip) _ip.value=S.playerName||'';
   document.getElementById('inp-course').value=S.courseName||'';

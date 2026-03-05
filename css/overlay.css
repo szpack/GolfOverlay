@@ -56,12 +56,18 @@ select:focus,input:focus{border-color:#2ea043}
 #score-range-sec .opt-sub{margin:0;gap:10px}
 
 /* ── NAV (scorecard) ── */
-#nav{background:var(--panel-bg);border-top:1px solid var(--panel-border);flex-shrink:0;padding:4px 6px 3px;display:flex;justify-content:center}
+#nav{background:var(--panel-bg);border-top:1px solid var(--panel-border);flex-shrink:0;padding:4px 6px 3px;display:flex;flex-direction:row;align-items:center;gap:6px}
+/* ── Theme / Overlay Style picker ── */
+#theme-picker{display:flex;flex-direction:column;align-items:stretch;gap:2px;flex-shrink:0;align-self:stretch;justify-content:center}
+.theme-sec-lbl{font:700 8px/1 inherit;letter-spacing:0.06em;color:var(--accent-gold);text-transform:uppercase;margin-bottom:2px;opacity:.8}
+.theme-btn{padding:3px 8px;border-radius:5px;border:1px solid var(--panel-border);background:transparent;color:var(--text-muted);font:600 10px/1.4 inherit;cursor:pointer;text-align:left;transition:background 80ms ease-out,color 80ms ease-out,border-color 80ms ease-out,font-weight 80ms ease-out;white-space:nowrap}
+.theme-btn:hover:not(.active){border-color:var(--text-muted);color:var(--text-primary)}
+.theme-btn.active{background:var(--panel-border);color:var(--text-primary);border-color:var(--accent-green);font-weight:700}
 #nav-rows{display:flex;flex-direction:column;gap:2px;align-items:center}
 /* v4.6: rows each aligned left, centering done by container */
 .nav-row{display:flex;gap:2px;align-items:center;justify-content:flex-start}
 /* v4.6: nav footer with To Par/Gross on same line as rows */
-#nav-outer{display:flex;align-items:center;gap:6px}
+#nav-outer{display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
 #nav-rows-col{display:flex;flex-direction:column;gap:2px}
 .hcard{flex:0 0 auto;width:50px;height:50px;border-radius:6px;border:2px solid transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;position:relative;transition:transform .1s}
 .hcard:active{transform:scale(.93)}

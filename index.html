@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Golf Overlay Tool v6.5.5</title>
+<title>Golf Overlay Tool v6.7.3</title>
 <link rel="stylesheet" href="./css/overlay.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 <!-- HEADER -->
 <div id="hdr">
   <div class="logo" id="logo-text">⛳ GOLF <span>OVERLAY</span></div>
-  <span class="logo-meta">v6.5.5<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
+  <span class="logo-meta">v6.7.3<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
   <span style="flex:1"></span>
   <div id="lang-toggle">
     <button class="lang-btn active" data-lang="en" onclick="setLang('en')">🇺🇸 EN</button>
@@ -68,6 +68,14 @@
 
     <!-- Scorecard Nav -->
     <div id="nav">
+      <!-- Overlay Style / Theme picker -->
+      <div id="theme-picker">
+        <div class="theme-sec-lbl">Overlay Style</div>
+        <button class="theme-btn active" data-theme="classic"        onclick="setTheme('classic')">Classic</button>
+        <button class="theme-btn"        data-theme="broadcast_gold" onclick="setTheme('broadcast_gold')">Broadcast Gold</button>
+        <button class="theme-btn"        data-theme="pgatour"        onclick="setTheme('pgatour')">PGA Tour</button>
+        <button class="theme-btn"        data-theme="livgolf"        onclick="setTheme('livgolf')">LIV Golf</button>
+      </div>
       <div id="nav-outer">
         <div id="nav-rows-col">
           <div class="nav-row" id="nav-row1"></div>

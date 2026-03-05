@@ -5,14 +5,19 @@
 
 // ── DELTA COLOR SYSTEM ──
 function deltaColorHex(d){
-  if(d===null||d===undefined) return '#888';
-  if(d<=-2) return '#7c3aed';
-  if(d===-1) return '#C0392B';
-  if(d===0)  return '#1a5bb5';
-  if(d===1)  return '#2e7d32';
-  if(d===2)  return '#9e9e9e';
-  if(d===3)  return '#555555';
-  return '#111111';
+  // Reads from active theme so colors can be customised per-theme
+  const sc=(typeof getTheme==='function'?getTheme().sc.scoreColors:null)||{
+    empty:'#888888',eagle:'#7c3aed',birdie:'#C0392B',par:'#1a5bb5',
+    bogey:'#2e7d32',double:'#9e9e9e',triple:'#555555',over:'#111111',
+  };
+  if(d===null||d===undefined) return sc.empty;
+  if(d<=-2) return sc.eagle;
+  if(d===-1) return sc.birdie;
+  if(d===0)  return sc.par;
+  if(d===1)  return sc.bogey;
+  if(d===2)  return sc.double;
+  if(d===3)  return sc.triple;
+  return sc.over;
 }
 function deltaCardClass(d){
   if(d===null) return 'hc-empty';
@@ -85,6 +90,7 @@ function getSCHeight(scale){
 
 // ── SCORECARD OVERLAY DRAW — v4.5 ──
 function drawScorecardOverlay(ctx,X,Y,scale){
+  const th=getTheme().sc;
   const[start,end]=getSCRange(), count=end-start;
   if(count<=0) return;
   // In hole view: only fill scores for holes before currentHole; hide on hole 1
@@ -105,105 +111,91 @@ function drawScorecardOverlay(ctx,X,Y,scale){
   const parValFontSz=Math.round(BASE*1.2);
   const scoreBadgeFontSz=Math.round(BASE*1.1);
   const totFontSz=Math.round(BASE*1.55);
-  const subFontSz=Math.round(BASE*1.3); // OUT/IN slightly smaller than TOT
+  const subFontSz=Math.round(BASE*1.3);
 
-  // Helper: x-center of a column given its left edge + width
-  const cx=(lx,w)=>lx+w/2;
-
-  // Build column x-positions for hole cells
-  // For 18H: cols 0-8 then OUT then cols 9-17 then IN then TOT
-  function holeX(i){ // i = 0..count-1
+  function holeX(i){
     if(!is18) return labelW+i*colW;
     if(i<9) return labelW+i*colW;
-    return labelW+9*colW+subW+(i-9)*colW; // after OUT col
+    return labelW+9*colW+subW+(i-9)*colW;
   }
-  const outX=is18?labelW+9*colW:null; // left edge of OUT col
-  const inX=is18?labelW+9*colW+subW+9*colW:null; // left edge of IN col
-  const totX=W-totalW; // left edge of TOT col
+  const outX=is18?labelW+9*colW:null;
+  const inX=is18?labelW+9*colW+subW+9*colW:null;
+  const totX=W-totalW;
 
   ctx.save();
-  ctx.shadowColor='rgba(0,0,0,0.35)'; ctx.shadowBlur=10*scale; ctx.shadowOffsetY=3*scale;
-  rrect(ctx,X,Y,W,H,8*scale);
-  ctx.fillStyle='#F2F2F2'; ctx.fill();
-  ctx.shadowColor='transparent';
-  rrect(ctx,X,Y,W,H,8*scale); ctx.clip();
+  drawPanelFrame(ctx, X, Y, W, H, scale, th, true, th.cardRadius);
 
-  // ── Helper to draw subtle separator line ──
   function vline(lx,y0,y1){
     ctx.save();
-    ctx.strokeStyle='rgba(180,190,180,0.4)'; ctx.lineWidth=0.6;
+    ctx.strokeStyle=th.vlineColor; ctx.lineWidth=th.vlineWidth;
     ctx.beginPath(); ctx.moveTo(X+lx,Y+y0); ctx.lineTo(X+lx,Y+y1); ctx.stroke();
     ctx.restore();
   }
   function subVline(lx,y0,y1){
     ctx.save();
-    ctx.strokeStyle='rgba(27,94,59,0.25)'; ctx.lineWidth=1.5;
+    ctx.strokeStyle=th.subVlineColor; ctx.lineWidth=th.subVlineWidth;
     ctx.beginPath(); ctx.moveTo(X+lx,Y+y0); ctx.lineTo(X+lx,Y+y1); ctx.stroke();
     ctx.restore();
   }
 
-  // ── Player name row (above HOLE header, only when showPlayerName) ──
+  // ── Player name badge row ──
   if(S.showPlayerName){
     const pn=(typeof currentPlayerDisplayName==='function'?currentPlayerDisplayName():(S.playerName||'PLAYER')).toUpperCase();
     ctx.textAlign='left'; ctx.textBaseline='middle';
-    ctx.font=`700 ${Math.round(34*scale)}px ${SF}`;
+    ctx.font=`${th.nameBadgeWeight} ${Math.round(th.nameBadgeSize*scale)}px ${SF}`;
     let dn=pn;
     while(ctx.measureText(dn).width>W*0.92&&dn.length>1) dn=dn.slice(0,-1);
     if(dn!==pn) dn=dn.slice(0,-1)+'…';
-    const padX=8*scale, padY=4*scale;
+    const padX=8*scale;
     const nameX=X+padX*1.5;
     const nameW=ctx.measureText(dn).width;
     const badgeH=nameRowH*0.78;
-    rrect(ctx,nameX-padX,Y+(nameRowH-badgeH)/2,nameW+padX*2,badgeH,5*scale);
-    ctx.fillStyle='#ffffff'; ctx.fill();
-    ctx.fillStyle='#111111';
+    rrect(ctx,nameX-padX,Y+(nameRowH-badgeH)/2,nameW+padX*2,badgeH,th.nameBadgeRadius*scale);
+    ctx.fillStyle=th.nameBadgeBg; ctx.fill();
+    ctx.fillStyle=th.nameBadgeTextColor;
     ctx.fillText(dn,nameX,Y+nameRowH/2);
   }
 
   // ── HOLE header row ──
   const hdrY=Y+nameRowH;
-  ctx.fillStyle='#1B5E3B'; ctx.fillRect(X,hdrY,W,hdrH);
+  ctx.fillStyle=th.hdrBg; ctx.fillRect(X,hdrY,W,hdrH);
   ctx.textAlign='center'; ctx.textBaseline='middle';
 
-  // HOLE label
-  ctx.fillStyle='rgba(255,255,255,0.6)';
-  ctx.font=`600 ${lblFontSz}px ${SF}`;
+  ctx.fillStyle=th.holeLabelColor;
+  ctx.font=`${th.holeLabelWeight} ${lblFontSz}px ${SF}`;
   ctx.fillText('HOLE',X+labelW/2,hdrY+hdrH/2);
 
-  // Hole numbers
   for(let i=0;i<count;i++){
     const hi=start+i, lx=holeX(i);
-    ctx.fillStyle='rgba(255,255,255,.85)';
-    ctx.font=`600 ${lblFontSz}px ${SF}`;
+    ctx.fillStyle=th.holeNumColor;
+    ctx.font=`${th.holeNumWeight} ${lblFontSz}px ${SF}`;
     ctx.fillText(String(hi+1),X+lx+colW/2,hdrY+hdrH/2);
   }
 
-  // OUT / IN headers (18H only) — slightly darker bg strip
   if(is18){
-    ctx.fillStyle='rgba(0,0,0,0.18)';
+    ctx.fillStyle=th.outInDimBg;
     ctx.fillRect(X+outX,hdrY,subW,hdrH);
     ctx.fillRect(X+inX,hdrY,subW,hdrH);
-    ctx.fillStyle='rgba(255,255,255,.95)';
-    ctx.font=`700 ${Math.round(subFontSz*0.75)}px ${SF}`;
+    ctx.fillStyle=th.outInTextColor;
+    ctx.font=`${th.outInWeight} ${Math.round(subFontSz*0.75)}px ${SF}`;
     ctx.fillText('OUT',X+outX+subW/2,hdrY+hdrH/2);
     ctx.fillText('IN', X+inX +subW/2,hdrY+hdrH/2);
   }
 
-  // TOT header
-  ctx.fillStyle='rgba(255,255,255,.95)';
-  ctx.font=`700 ${Math.round(totFontSz*0.7)}px ${SF}`;
+  ctx.fillStyle=th.totHdrTextColor;
+  ctx.font=`${th.totHdrWeight} ${Math.round(totFontSz*0.7)}px ${SF}`;
   ctx.fillText('TOT',X+totX+totalW/2,hdrY+hdrH/2);
 
   // ── PAR row ──
   const parY=hdrY+hdrH+rowGap;
-  ctx.fillStyle='#EAF0EA'; ctx.fillRect(X,parY,W,parRowH);
+  ctx.fillStyle=th.parRowBg; ctx.fillRect(X,parY,W,parRowH);
   const rowsTop=nameRowH+hdrH+rowGap;
   for(let i=0;i<=count;i++) vline(holeX(i<count?i:count-1)+(i<count?0:colW),rowsTop,rowsTop+parRowH);
   if(is18){ subVline(outX,rowsTop,H); subVline(inX,rowsTop,H); }
   vline(totX,rowsTop,H);
 
-  ctx.fillStyle='rgba(0,0,0,0.45)';
-  ctx.font=`500 ${lblFontSz}px ${SF}`;
+  ctx.fillStyle=th.parLabelColor;
+  ctx.font=`${th.parLabelWeight} ${lblFontSz}px ${SF}`;
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText('PAR',X+labelW/2,parY+parRowH/2);
 
@@ -211,74 +203,72 @@ function drawScorecardOverlay(ctx,X,Y,scale){
   for(let i=0;i<count;i++){
     const h=S.holes[start+i], lx=holeX(i);
     if(is18){ if(i<9) parOut+=h.par; else parIn+=h.par; }
-    ctx.fillStyle='#2a5e2a';
-    ctx.font=`500 ${parValFontSz}px ${SF}`;
+    ctx.fillStyle=th.parValColor;
+    ctx.font=`${th.parValWeight} ${parValFontSz}px ${SF}`;
     ctx.fillText(String(h.par),X+lx+colW/2,parY+parRowH/2);
   }
   if(is18){
-    ctx.fillStyle='#1B5E3B';
-    ctx.font=`700 ${subFontSz}px ${SF}`;
+    ctx.fillStyle=th.parSubColor;
+    ctx.font=`${th.parSubWeight} ${subFontSz}px ${SF}`;
     ctx.fillText(String(parOut),X+outX+subW/2,parY+parRowH/2);
     ctx.fillText(String(parIn), X+inX +subW/2,parY+parRowH/2);
   }
   const parTot=(is18?parOut+parIn:S.holes.slice(start,end).reduce((a,h)=>a+h.par,0));
-  ctx.fillStyle='#1B5E3B';
-  ctx.font=`700 ${totFontSz}px ${SF}`;
+  ctx.fillStyle=th.parTotColor;
+  ctx.font=`${th.parTotWeight} ${totFontSz}px ${SF}`;
   ctx.fillText(String(parTot),X+totX+totalW/2,parY+parRowH/2);
 
   // ── SCORE row ──
   const scY=parY+parRowH+rowGap;
-  ctx.fillStyle='#FFFFFF'; ctx.fillRect(X,scY,W,scoreRowH);
+  ctx.fillStyle=th.scoreRowBg; ctx.fillRect(X,scY,W,scoreRowH);
   for(let i=0;i<=count;i++) vline(holeX(i<count?i:count-1)+(i<count?0:colW),nameRowH+hdrH+rowGap+parRowH+rowGap,H);
-  ctx.strokeStyle='rgba(180,190,180,0.5)'; ctx.lineWidth=0.6;
+  ctx.strokeStyle=th.scoreRowDivColor; ctx.lineWidth=0.6;
   ctx.beginPath(); ctx.moveTo(X,scY); ctx.lineTo(X+W,scY); ctx.stroke();
 
-  ctx.fillStyle='rgba(0,0,0,0.45)';
-  ctx.font=`700 ${lblFontSz}px ${SF}`;
+  ctx.fillStyle=th.scoreLabelColor;
+  ctx.font=`${th.scoreLabelWeight} ${lblFontSz}px ${SF}`;
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText('SCORE',X+labelW/2,scY+scoreRowH/2);
 
-  // OUT/IN score backgrounds
   if(is18){
-    ctx.fillStyle='rgba(27,94,59,0.06)';
+    ctx.fillStyle=th.scoreSubBg;
     ctx.fillRect(X+outX,scY,subW,scoreRowH);
     ctx.fillRect(X+inX, scY,subW,scoreRowH);
   }
 
   const bH=Math.round(scoreRowH*0.56), bW=Math.round(colW*0.80);
-  let scoreOut=0,scoreIn=0,filledOut=0,filledIn=0;
+  let scoreOut=0,scoreIn=0;
 
   for(let i=0;i<count;i++){
     const h=S.holes[start+i], lx=holeX(i), cellCx=X+lx+colW/2;
-    const delta=(start+i)<scoreEnd ? h.delta : null; // only filled for holes before currentHole
+    const delta=(start+i)<scoreEnd ? h.delta : null;
     if(is18){
-      if(i<9){ scoreOut+=(delta??0); if(delta!==null)filledOut++; }
-      else   { scoreIn +=(delta??0); if(delta!==null)filledIn++; }
+      if(i<9) scoreOut+=(delta??0);
+      else    scoreIn +=(delta??0);
     }
     if(delta===null){
-      ctx.fillStyle='rgba(0,0,0,0.18)';
-      ctx.font=`400 ${Math.round(BASE*0.9)}px ${SF}`;
+      ctx.fillStyle=th.emptyDashColor;
+      ctx.font=`${th.emptyDashWeight} ${Math.round(BASE*0.9)}px ${SF}`;
       ctx.fillText('—',cellCx,scY+scoreRowH/2);
     } else {
-      rrect(ctx,cellCx-bW/2,scY+scoreRowH/2-bH/2,bW,bH,4*scale);
+      rrect(ctx,cellCx-bW/2,scY+scoreRowH/2-bH/2,bW,bH,th.scoreBadgeRadius*scale);
       ctx.fillStyle=deltaColorHex(delta); ctx.fill();
-      ctx.fillStyle='#fff';
-      ctx.font=`800 ${scoreBadgeFontSz}px ${SF}`;
+      ctx.fillStyle=th.scoreBadgeTextColor;
+      ctx.font=`${th.scoreBadgeWeight} ${scoreBadgeFontSz}px ${SF}`;
       const txt=S.displayMode==='topar'?fmtDeltaDisplay(delta):String(h.par+delta);
       ctx.fillText(txt,cellCx,scY+scoreRowH/2);
     }
   }
 
-  // OUT / IN sub-totals
   if(is18){
     const subBH=Math.round(scoreRowH*0.52), subBW=Math.round(subW*0.72);
     function drawSubTot(lx,delta,parSub){
       const scx=X+lx+subW/2;
       const txt=S.displayMode==='topar'?fmtDeltaDisplay(delta):String(parSub+delta);
-      rrect(ctx,scx-subBW/2,scY+scoreRowH/2-subBH/2,subBW,subBH,4*scale);
-      ctx.fillStyle='#fff'; ctx.fill();
-      ctx.fillStyle='#111';
-      ctx.font=`800 ${Math.round(subFontSz*0.95)}px ${SF}`;
+      rrect(ctx,scx-subBW/2,scY+scoreRowH/2-subBH/2,subBW,subBH,th.scoreBadgeRadius*scale);
+      ctx.fillStyle=th.subTotBg; ctx.fill();
+      ctx.fillStyle=th.subTotTextColor;
+      ctx.font=`${th.subTotWeight} ${Math.round(subFontSz*0.95)}px ${SF}`;
       ctx.fillText(txt,scx,scY+scoreRowH/2);
     }
     ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -286,10 +276,10 @@ function drawScorecardOverlay(ctx,X,Y,scale){
     drawSubTot(inX, scoreIn, parIn);
   }
 
-  // TOT: always Gross, always includes ALL holes in range (unplayed = par via delta??0)
+  // TOT: always Gross
   const tg=S.holes.slice(start,end).reduce((a,h)=>a+h.par+(h.delta??0),0);
-  ctx.fillStyle='#111';
-  ctx.font=`700 ${totFontSz}px ${SF}`;
+  ctx.fillStyle=th.totTextColor;
+  ctx.font=`${th.totWeight} ${totFontSz}px ${SF}`;
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(String(tg),X+totX+totalW/2,scY+scoreRowH/2);
 
