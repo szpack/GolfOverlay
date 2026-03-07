@@ -644,6 +644,10 @@ function applyLang(){
   const tpLbl=g('rp-topin-lbl'); if(tpLbl) tpLbl.textContent=T('distLabel');
   // Note placeholder
   const noteInp=g('inp-shot-note'); if(noteInp) noteInp.placeholder=T('noteLbl').toLowerCase()+'…';
+  // Course edit modal
+  const ceLbl=g('course-edit-label'); if(ceLbl) ceLbl.textContent=T('courseNamePrompt');
+  const ceCan=g('course-edit-cancel'); if(ceCan) ceCan.textContent=T('cancelBtn');
+  const ceOk=g('course-edit-ok'); if(ceOk) ceOk.textContent=T('okBtn');
   // Mobile UI
   const mobStroke=g('mob-btn-stroke'); if(mobStroke) mobStroke.textContent=T('addStrokeBtn');
   const mobFinish=g('mob-btn-finish'); if(mobFinish) mobFinish.textContent=T('finishHoleBtn');
@@ -694,13 +698,13 @@ function defState(){
     playerName:'PLAYER', courseName:'', currentHole:0, displayMode:'topar',
     ratio:'16:9', showShot:true, showScore:true, scoreRange:'18',
     scorecardSummary:null,
-    showTotal:false, showDist:false,
+    showTotal:true, showDist:false,
     exportRes:2160, bgOpacity:1.0, overlayOpacity:1.0,
     safeZone:false, szSize:'10', lang:'en', theme:'classic',
     userBg:null,
     // multi-player
     players:[], currentPlayerId:null, playerHistory:[], byPlayer:{}, recentPlayerIds:[], focusSlots:[],
-    showPlayerName:false,
+    showPlayerName:true,
     uiTheme:'dark',
     // right edge at 5% safe zone; x = 0.95 − (SHOT_W * ratioScale / baseW)
     // 16:9: scale=1, x=0.95−490/1920=0.695; 9:16: scale=1.6, x=0.95−490*1.6/1920=0.542; 1:1: scale=1, x=0.695
@@ -908,14 +912,37 @@ function updateCourseDisplay(){
   el.textContent=S.courseName||'';
 }
 function editCourseName(){
-  const v=prompt(T('courseNamePrompt'), S.courseName||'');
-  if(v!==null){
-    S.courseName=v;
-    const inp=document.getElementById('inp-course');
-    if(inp) inp.value=v;
-    updateCourseDisplay();
-    redrawOnly(); scheduleSave();
-  }
+  const bg=document.getElementById('course-edit-bg');
+  const modal=document.getElementById('course-edit-modal');
+  const inp=document.getElementById('course-edit-input');
+  const lbl=document.getElementById('course-edit-label');
+  const cancelBtn=document.getElementById('course-edit-cancel');
+  const okBtn=document.getElementById('course-edit-ok');
+  if(lbl) lbl.textContent=T('courseNamePrompt');
+  if(cancelBtn) cancelBtn.textContent=T('cancelBtn');
+  if(okBtn) okBtn.textContent=T('okBtn');
+  if(inp) inp.value=S.courseName||'';
+  if(bg) bg.classList.add('show');
+  if(modal) modal.classList.add('show');
+  if(inp){ inp.focus(); inp.select(); }
+  // Enter key to confirm
+  if(inp) inp.onkeydown=e=>{ if(e.key==='Enter') confirmCourseEdit(); };
+}
+function closeCourseEdit(){
+  const bg=document.getElementById('course-edit-bg');
+  const modal=document.getElementById('course-edit-modal');
+  if(bg) bg.classList.remove('show');
+  if(modal) modal.classList.remove('show');
+}
+function confirmCourseEdit(){
+  const inp=document.getElementById('course-edit-input');
+  const v=inp?inp.value.trim():'';
+  S.courseName=v;
+  const courseInp=document.getElementById('inp-course');
+  if(courseInp) courseInp.value=v;
+  updateCourseDisplay();
+  redrawOnly(); scheduleSave();
+  closeCourseEdit();
 }
 
 // ============================================================
@@ -2854,11 +2881,15 @@ function init(){
   applyUITheme(S.uiTheme);
   document.querySelectorAll('[data-ui-theme]').forEach(b=>b.classList.toggle('active',b.dataset.uiTheme===S.uiTheme));
   applyBg();
-  // Default to first player and first hole on startup
-  if(S.players.length>0 && S.currentPlayerId!==S.players[0].id){
-    switchToPlayer(S.players[0].id);
+  // Restore saved player — only switch if saved player is valid
+  if(S.players.length>0 && S.currentPlayerId){
+    const valid=S.players.some(p=>p.id===S.currentPlayerId);
+    if(!valid){ S.currentPlayerId=S.players[0].id; loadPlayerData(S.currentPlayerId); }
+  } else if(S.players.length>0 && !S.currentPlayerId){
+    S.currentPlayerId=S.players[0].id; loadPlayerData(S.currentPlayerId);
   }
-  S.currentHole=0;
+  // Preserve saved currentHole (clamp to valid range)
+  if(typeof S.currentHole!=='number'||S.currentHole<0||S.currentHole>17) S.currentHole=0;
 
   if(typeof buildPlayerArea==='function') buildPlayerArea();
   // Defer first render to ensure layout is settled — prevents position jumping
@@ -2879,3 +2910,6 @@ function init(){
 }
 
 window.addEventListener('DOMContentLoaded',init);
+// Flush pending saves on page unload / tab switch to prevent data loss
+window.addEventListener('beforeunload',()=>{ clearTimeout(saveTimer); doSave(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ clearTimeout(saveTimer); doSave(); } });

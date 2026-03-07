@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Golf Overlay Tool v10.9.5</title>
+<title>Golf Overlay Tool v10.10.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/overlay.css?v=10.9.5">
+<link rel="stylesheet" href="./css/overlay.css?v=10.10.0">
 <script>
 /* Narrow-screen detection: use screen.width (physical device pixels)
    — immune to Safari "Request Desktop Website" which inflates viewport to ~980px */
@@ -22,7 +22,7 @@
 <!-- HEADER -->
 <div id="hdr">
   <div class="logo" id="logo-text">⛳ GOLF <span>OVERLAY</span></div>
-  <span class="logo-meta">v10.9.5<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
+  <span class="logo-meta">v10.10.0<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
   <span style="flex:1"></span>
   <div id="lang-wrap">
     <button id="btn-lang" onclick="toggleLangMenu()">🇺🇸 EN</button>
@@ -280,6 +280,17 @@
   </div>
 </div>
 
+<!-- COURSE NAME EDIT MODAL -->
+<div id="course-edit-bg" onclick="closeCourseEdit()"></div>
+<div id="course-edit-modal">
+  <label id="course-edit-label">Course Name</label>
+  <input type="text" id="course-edit-input" maxlength="24" placeholder="COURSE">
+  <div id="course-edit-actions">
+    <button id="course-edit-cancel" onclick="closeCourseEdit()">Cancel</button>
+    <button id="course-edit-ok" class="ce-ok" onclick="confirmCourseEdit()">OK</button>
+  </div>
+</div>
+
 <!-- DELTA PICKER POPOVER -->
 <div id="picker-backdrop" onclick="closePicker()"></div>
 <div id="picker-popover">
@@ -458,8 +469,8 @@
 <div id="mini-toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="./js/scoreboard.js?v=10.9.5"></script>
-<script src="./js/ui.js?v=10.9.5"></script>
-<script src="./js/app.js?v=10.9.5"></script>
+<script src="./js/scoreboard.js?v=10.10.0"></script>
+<script src="./js/ui.js?v=10.10.0"></script>
+<script src="./js/app.js?v=10.10.0"></script>
 </body>
 </html>

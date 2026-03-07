@@ -117,6 +117,16 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v10.10.0 — 2026-03-07
+- NEXT按钮加长，提升点击体验
+- 移动端标题区恢复版本号与邮箱显示（小字）
+- 移动端移除SKIN、Preview、Options按钮，简化界面
+- 修复移动端页面滚动到底端弹回顶部的bug（overscroll-behavior）
+- 球场名称编辑改用自定义弹窗，解决系统prompt被浏览器拦截的问题
+- 移动端全局字号增大，提升可读性
+- 计分卡导航区左右滑动时锁定第一栏（球员名字sticky）
+- 修复数据持久化丢失问题：页面刷新不再强制重置当前洞和球员，添加beforeunload/visibilitychange即时保存
+
 ### v10.9.5 — 2026-03-07
 - 修复计分卡列hover闪烁(grid gap问题)：鼠标经过格子间隙时保持当前高亮不变
 

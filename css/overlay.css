@@ -120,7 +120,7 @@ select:focus,input:focus{border-color:#2ea043}
 .sg-hdr.sg-hdr-hover{background:rgba(255,215,0,.55);color:#1a2e1a}
 .sg-hdr.sg-active{background:#FFD700;color:#1a2e1a;font-weight:700}
 /* Label column (HOLE/PAR/player name) */
-.sg-label{justify-content:flex-start;padding-left:8px;font-weight:700;font-size:12px;cursor:default;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.04em}
+.sg-label{justify-content:flex-start;padding-left:8px;font-weight:700;font-size:12px;cursor:default;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.04em;position:sticky;left:0;z-index:2}
 /* sg-label no hover change */
 /* Subtotal columns (OUT/IN/TOT) */
 .sg-sub{font-weight:700;font-size:11px;color:var(--accent-gold);background:rgba(255,215,0,.06)}
@@ -195,7 +195,7 @@ html.light #rp-par-tap{color:#8a7200;border-color:rgba(138,114,0,.25)}
 html.light #rp-par-tap:hover{background:rgba(138,114,0,.08)}
 .rp-hn-btn{height:26px;padding:0 10px;border-radius:6px;border:1px solid var(--panel-border);background:transparent;color:var(--text-muted);font:700 10px/1 'Roboto',Arial,sans-serif;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:background 80ms;flex-shrink:0}
 .rp-hn-btn:active{background:rgba(255,255,255,.07)}
-.rp-hn-next{background:var(--accent-green);color:#fff;border-color:var(--accent-green)}
+.rp-hn-next{background:var(--accent-green);color:#fff;border-color:var(--accent-green);padding:0 20px;min-width:70px}
 .rp-hn-next:active{background:#16a34a}
 
 /* ── Players section ── */
@@ -541,6 +541,18 @@ input[type=range]{accent-color:var(--mg);flex:1}
 #exp-progress-bar{height:100%;width:0%;background:var(--accent-green);border-radius:2px;transition:width .25s}
 #exp-progress-txt{font:400 10px/1 inherit;color:var(--t3);text-align:center;letter-spacing:.02em}
 
+/* ── COURSE NAME EDIT MODAL ── */
+#course-edit-bg{display:none;position:fixed;inset:0;z-index:899;background:rgba(0,0,0,.45)}
+#course-edit-bg.show{display:block}
+#course-edit-modal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:900;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:16px;width:300px;max-width:90vw}
+#course-edit-modal.show{display:block}
+#course-edit-modal label{display:block;font:600 11px/1 'Roboto',Arial,sans-serif;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+#course-edit-input{width:100%;height:36px;border:1px solid var(--bd);border-radius:6px;background:var(--s2);color:var(--t1);font:400 14px/1 'Roboto',Arial,sans-serif;padding:0 10px;box-sizing:border-box}
+#course-edit-input:focus{outline:none;border-color:var(--accent-green)}
+#course-edit-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+#course-edit-actions button{height:32px;padding:0 16px;border-radius:6px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font:500 12px/1 'Roboto',Arial,sans-serif;cursor:pointer}
+#course-edit-actions button.ce-ok{background:var(--accent-green);color:#fff;border-color:var(--accent-green)}
+
 /* ── MOBILE BASE (hidden on desktop) ── */
 #mob{display:none}
 #mob-more-bg{display:none;position:fixed;inset:0;z-index:899;background:rgba(0,0,0,.5)}
@@ -562,11 +574,11 @@ input[type=range]{accent-color:var(--mg);flex:1}
    ══════════════════════════════════════════════════════════ */
 
 /* ── Header ── */
-html.narrow,html.narrow body{overflow:auto!important;height:auto!important;min-height:100svh}
+html.narrow,html.narrow body{overflow:auto!important;height:auto!important;min-height:100svh;overscroll-behavior:none;-webkit-overflow-scrolling:touch}
 html.narrow #hdr{padding:4px 8px;gap:4px}
 html.narrow .logo{font-size:13px;letter-spacing:0}
-html.narrow .logo-meta{display:none}
-html.narrow .narrow-only{display:inline-flex!important}
+html.narrow .logo-meta{display:inline;font-size:7px;line-height:1.2;opacity:.6}
+html.narrow .narrow-only{display:none!important}
 html.narrow #btn-lang{height:28px;padding:0 7px;font-size:10px}
 html.narrow #btn-skin-narrow{
   height:28px;padding:0 7px;border-radius:6px;
@@ -579,18 +591,14 @@ html.narrow #btn-settings #settings-lbl{display:none}
 html.narrow #btn-new{height:28px;padding:0 10px;font-size:11px}
 
 /* ── Main ── */
-html.narrow #main{display:flex!important;flex-direction:column;grid-template-columns:none;overflow-y:auto!important;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex:none}
+html.narrow #main{display:flex!important;flex-direction:column;grid-template-columns:none;overflow-y:auto!important;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex:none;overscroll-behavior-y:none}
 
 /* ── Left panel ── */
 html.narrow #left{border-right:none;overflow:visible}
 html.narrow #preview{flex:none;height:200px;min-height:140px}
 
 /* ── Options toggle bar ── */
-html.narrow #narrow-opts-bar{
-  display:flex;align-items:center;gap:6px;
-  padding:4px 8px;background:var(--panel-bg);border-top:1px solid var(--panel-border);
-  flex-shrink:0;
-}
+html.narrow #narrow-opts-bar{display:none!important}
 html.narrow #narrow-opts-bar button{
   height:26px;padding:0 10px;border-radius:6px;
   border:1px solid var(--panel-border);background:var(--s2);
@@ -613,21 +621,21 @@ html.narrow .sc-radio-lbl{font-size:9px!important}
 html.narrow #theme-picker{display:none!important}
 html.narrow #nav{padding:2px 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
 html.narrow #sc-grid{min-width:620px;gap:1px;grid-template-columns:56px repeat(9,1fr) 30px repeat(9,1fr) 30px 30px}
-html.narrow .sg-cell{min-height:22px;font-size:9px;padding:2px 0}
-html.narrow .sg-hdr{font-size:10px}
-html.narrow .sg-label{padding-left:4px;font-size:9px}
-html.narrow .sg-player{font-size:9px}
-html.narrow .sg-score{width:16px;height:16px;font-size:10px}
+html.narrow .sg-cell{min-height:24px;font-size:11px;padding:2px 0}
+html.narrow .sg-hdr{font-size:11px}
+html.narrow .sg-label{padding-left:4px;font-size:10px}
+html.narrow .sg-player{font-size:10px}
+html.narrow .sg-score{width:18px;height:18px;font-size:11px}
 
 /* ── Right panel ── */
 html.narrow #right{overflow-y:visible}
 html.narrow #rp-course-sec{padding:6px 10px}
-html.narrow #rp-hole-lbl,html.narrow #rp-hole-num{font-size:16px}
-html.narrow .rp-hn-btn{height:24px;padding:0 8px;font-size:9px}
-html.narrow .rp-plyr-btn{height:24px;font-size:10px;padding:0 6px}
-html.narrow .rp-sec-label{margin-bottom:3px;font-size:10px}
-html.narrow .rp-score-btn{height:24px;padding:0 6px;font-size:10px}
-html.narrow .rp-sec{padding:6px 10px}
+html.narrow #rp-hole-lbl,html.narrow #rp-hole-num{font-size:18px}
+html.narrow .rp-hn-btn{height:28px;padding:0 10px;font-size:11px}
+html.narrow .rp-plyr-btn{height:28px;font-size:12px;padding:0 8px}
+html.narrow .rp-sec-label{margin-bottom:3px;font-size:12px}
+html.narrow .rp-score-btn{height:28px;padding:0 8px;font-size:12px}
+html.narrow .rp-sec{padding:8px 12px}
 /* (rp-bar removed) */
 html.narrow .stitle{font-size:10px;margin-bottom:6px}
 
@@ -639,12 +647,12 @@ html.narrow .player-btn{height:28px;font-size:11px;width:calc(25% - 3px)}
 /* ── Shot section compact ── */
 html.narrow .shot-nav{margin-bottom:3px}
 html.narrow .shot-nav-btn{width:50px;height:22px;font-size:9px}
-html.narrow .snum-btn{width:24px;height:24px;font-size:11px}
+html.narrow .snum-btn{width:26px;height:26px;font-size:12px}
 html.narrow .dist-row{gap:4px;margin-top:4px}
 html.narrow .dist-row input[type=number]{width:58px;height:28px;font-size:13px}
 html.narrow .sp-btn-row{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
 html.narrow .sp-btn-row::-webkit-scrollbar{display:none}
-html.narrow .sp-btn{flex-shrink:0;font-size:9px;padding:4px 8px}
+html.narrow .sp-btn{flex-shrink:0;font-size:11px;padding:5px 10px}
 html.narrow .sp-group{margin-top:10px}
 
 /* ── Final Score compact ── */
@@ -657,7 +665,7 @@ html.narrow #btn-next-hole-inline .nhi-icon{font-size:16px}
 
 /* ── Export section compact ── */
 html.narrow #export-trigger-sec{padding:8px 10px 10px}
-html.narrow .exp-trigger-btn{height:32px;font-size:12px}
+html.narrow .exp-trigger-btn{height:36px;font-size:14px}
 html.narrow .res-group-inline{margin-bottom:5px}
 html.narrow .res-btn{height:26px;font-size:10px}
 html.narrow .opacity-row{margin-bottom:5px;font-size:11px}
