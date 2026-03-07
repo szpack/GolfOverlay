@@ -117,6 +117,12 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v10.21.1 — 2026-03-07
+- 添加计分卡渲染诊断：页面加载时toast显示showScore状态和位置，drawOverlays输出console日志
+
+### v10.21.0 — 2026-03-07
+- 新增Vivid主题皮肤：深海蓝底+珊瑚粉发光边框+电光青强调色，时尚活力风格
+
 ### v10.20.1 — 2026-03-07
 - 修复chk-score默认未checked，确保Scorecard叠加层默认开启
 

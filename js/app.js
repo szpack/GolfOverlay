@@ -100,7 +100,7 @@ const STRINGS = {
     darkLbl:'Dark', lightLbl:'Light', autoLbl:'Auto',
     playerLbl:'Player', displayLbl:'Display:',
     ratioLbl:'Aspect Ratio', styleLbl:'Overlay Style',
-    classicLbl:'Classic', broadcastGoldLbl:'Broadcast Gold', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf',
+    classicLbl:'Classic', broadcastGoldLbl:'Broadcast Gold', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf', vividLbl:'Vivid',
     bgUploadBtn:'📷 Upload Background',
     exportLbl:'Export',
     zoneSizeLbl:'Zone size',
@@ -197,7 +197,7 @@ const STRINGS = {
     darkLbl:'深色', lightLbl:'浅色', autoLbl:'自动',
     playerLbl:'球员', displayLbl:'显示：',
     ratioLbl:'画面比例', styleLbl:'角标样式',
-    classicLbl:'经典', broadcastGoldLbl:'转播金', pgaTourLbl:'PGA巡回赛', livGolfLbl:'LIV高尔夫',
+    classicLbl:'经典', broadcastGoldLbl:'转播金', pgaTourLbl:'PGA巡回赛', livGolfLbl:'LIV高尔夫', vividLbl:'活力',
     bgUploadBtn:'📷 上传背景图',
     exportLbl:'导出',
     zoneSizeLbl:'区域大小',
@@ -293,7 +293,7 @@ const STRINGS = {
     darkLbl:'ダーク', lightLbl:'ライト', autoLbl:'自動',
     playerLbl:'プレーヤー', displayLbl:'表示：',
     ratioLbl:'アスペクト比', styleLbl:'オーバーレイスタイル',
-    classicLbl:'クラシック', broadcastGoldLbl:'ブロードキャスト', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf',
+    classicLbl:'クラシック', broadcastGoldLbl:'ブロードキャスト', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf', vividLbl:'ビビッド',
     bgUploadBtn:'📷 背景アップロード',
     exportLbl:'エクスポート',
     zoneSizeLbl:'ゾーンサイズ',
@@ -387,7 +387,7 @@ const STRINGS = {
     darkLbl:'다크', lightLbl:'라이트', autoLbl:'자동',
     playerLbl:'플레이어', displayLbl:'표시:',
     ratioLbl:'화면 비율', styleLbl:'오버레이 스타일',
-    classicLbl:'클래식', broadcastGoldLbl:'브로드캐스트', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf',
+    classicLbl:'클래식', broadcastGoldLbl:'브로드캐스트', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf', vividLbl:'비비드',
     bgUploadBtn:'📷 배경 업로드',
     exportLbl:'내보내기',
     zoneSizeLbl:'영역 크기',
@@ -481,7 +481,7 @@ const STRINGS = {
     darkLbl:'Oscuro', lightLbl:'Claro', autoLbl:'Auto',
     playerLbl:'Jugador', displayLbl:'Mostrar:',
     ratioLbl:'Relación de aspecto', styleLbl:'Estilo de overlay',
-    classicLbl:'Clásico', broadcastGoldLbl:'Broadcast Gold', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf',
+    classicLbl:'Clásico', broadcastGoldLbl:'Broadcast Gold', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf', vividLbl:'Vibrante',
     bgUploadBtn:'📷 Subir fondo',
     exportLbl:'Exportar',
     zoneSizeLbl:'Tamaño de zona',
@@ -640,6 +640,7 @@ function applyLang(){
   document.querySelectorAll('[data-theme="broadcast_gold"]').forEach(b=>b.textContent=T('broadcastGoldLbl'));
   document.querySelectorAll('[data-theme="pgatour"]').forEach(b=>b.textContent=T('pgaTourLbl'));
   document.querySelectorAll('[data-theme="livgolf"]').forEach(b=>b.textContent=T('livGolfLbl'));
+  document.querySelectorAll('[data-theme="vivid"]').forEach(b=>b.textContent=T('vividLbl'));
   // BG upload, reset par
   const bgUpBtn=g('bg-upload-btn'); if(bgUpBtn) bgUpBtn.textContent=T('bgUploadBtn');
   const resetParBtn=g('btn-reset-par'); if(resetParBtn) resetParBtn.textContent=T('resetParBtn');
@@ -1730,6 +1731,138 @@ THEMES.livgolf = {
   },
 };
 
+THEMES.vivid = {
+  name: 'Vivid',
+  shot: {
+    // Frame — coral-pink glow border
+    borderColor:        'rgba(255,90,120,0.70)',
+    borderWidth:        2,
+    cornerRadius:       14,
+    glow:               true,
+    glowColor:          '#ff5a78',
+    glowBlur:           10,
+    // Background — deep dark blue
+    leftBg:             '#0d1b2a',
+    midBandBg:          '#0d1b2a',
+    rightBg:            '#0a1628',
+    // Left col — hole number
+    holeNumColor:       '#ffffff',
+    holeNumWeight:      900,
+    holeNumSize:        58,
+    // Left col — PAR label
+    parLabelColor:      'rgba(255,255,255,0.60)',
+    parLabelWeight:     700,
+    parLabelSize:       20,
+    // Left col — par value (electric cyan)
+    parValColor:        '#00e5ff',
+    parValWeight:       900,
+    parValSize:         40,
+    // Row1 — player name
+    playerNameColor:    '#ffffff',
+    playerNameWeight:   700,
+    playerNameSize:     34,
+    // Row1 — total badge
+    totalBadgeWeight:   900,
+    totalBadgeSize:     38,
+    totalBadgeColorFn:  td => td<0?'#ff5a78':td<=7?'#00e5ff':td<=17?'#a78bfa':td<=27?'#64748b':'#1e293b',
+    totalBadgeTextColor:'#ffffff',
+    // Row2 — progress squares
+    sqCurBg:            '#ff5a78',
+    sqCurTextColor:     '#ffffff',
+    sqPastBg:           'rgba(255,255,255,0.55)',
+    sqPastTextColor:    'rgba(255,255,255,0.90)',
+    sqFutureBg:         'rgba(255,255,255,0.15)',
+    sqFutureTextColor:  'rgba(255,255,255,0.30)',
+    sqRadius:           0,
+    sqNumWeight:        700,
+    sqNumSize:          15,
+    // Dividers — coral pink
+    dividerColor:       '#ff5a78',
+    dividerWidth:       1,
+    row12DivColor:      'rgba(255,255,255,0.10)',
+    row12DivWidth:      0.6,
+    // Row3 — distance (electric cyan)
+    distValColor:       '#00e5ff',
+    distValWeight:      700,
+    distValSize:        22,
+    distUnitColor:      'rgba(255,255,255,0.55)',
+    distUnitWeight:     600,
+    distUnitSize:       13,
+    // Row3 — shot type
+    shotTypeColor:      'rgba(255,255,255,0.85)',
+    shotTypeWeight:     700,
+    shotTypeSize:       24,
+    // Row3 — result badge
+    resultBadgeRadius:  6,
+    resultBadgeWeight:  700,
+    resultBadgeSize:    24,
+    resultBadgeTextColor:'#ffffff',
+  },
+  sc: {
+    cardBg:             '#0d1b2a',
+    cardRadius:         14,
+    shadowColor:        'rgba(0,0,0,0.50)',
+    shadowBlur:         20,
+    shadowOffsetY:      8,
+    glow:               true,
+    glowColor:          '#ff5a78',
+    glowBlur:           10,
+    borderColor:        'rgba(255,90,120,0.50)',
+    borderWidth:        2,
+    // Separators
+    vlineColor:         'rgba(255,255,255,0.08)',
+    vlineWidth:         0.6,
+    subVlineColor:      'rgba(0,229,255,0.20)',
+    subVlineWidth:      1.5,
+    // Header — deep navy
+    hdrBg:              '#0a1628',
+    holeLabelColor:     'rgba(255,255,255,0.55)',
+    holeLabelWeight:    600,
+    holeNumColor:       'rgba(255,255,255,0.90)',
+    holeNumWeight:      600,
+    outInDimBg:         'rgba(255,90,120,0.15)',
+    outInTextColor:     'rgba(255,255,255,0.95)',
+    outInWeight:        700,
+    totHdrTextColor:    'rgba(255,255,255,0.95)',
+    totHdrWeight:       700,
+    // PAR row
+    parRowBg:           '#111d2e',
+    parLabelColor:      'rgba(255,255,255,0.50)',
+    parLabelWeight:     500,
+    parValColor:        '#00e5ff',
+    parValWeight:       500,
+    parSubColor:        '#00e5ff',
+    parSubWeight:       700,
+    parTotColor:        '#00e5ff',
+    parTotWeight:       700,
+    // Score row
+    scoreRowBg:         '#0d1b2a',
+    scoreRowDivColor:   'rgba(255,255,255,0.06)',
+    scoreLabelColor:    'rgba(255,255,255,0.50)',
+    scoreLabelWeight:   700,
+    scoreSubBg:         'rgba(0,229,255,0.05)',
+    emptyDashColor:     'rgba(255,255,255,0.20)',
+    emptyDashWeight:    400,
+    scoreBadgeRadius:   6,
+    scoreBadgeTextColor:'#ffffff',
+    scoreBadgeWeight:   800,
+    subTotBg:           '#152238',
+    subTotTextColor:    '#ffffff',
+    subTotWeight:       800,
+    totTextColor:       '#ff5a78',
+    totWeight:          700,
+    scoreColors: {
+      eagle:'#a78bfa', birdie:'#ff5a78', par:'#00e5ff',
+      bogey:'#fbbf24', double:'#9e9e9e', triple:'#555555', over:'#333333', empty:'#3a3a3a',
+    },
+    nameBadgeBg:        '#152238',
+    nameBadgeTextColor: '#ff5a78',
+    nameBadgeWeight:    700,
+    nameBadgeSize:      34,
+    nameBadgeRadius:    8,
+  },
+};
+
 function getTheme(){ return THEMES[S.theme] || THEMES.classic; }
 
 // ── Panel frame helper — draws border, shadow, bg fill, sets clip ──
@@ -1998,6 +2131,13 @@ function drawOverlays(ctx,w,h,forExport){
     const shotScale=baseScale*(is916?1.6:1);
     const pos=S.overlayPos[S.ratio];
     drawShotOverlay(ctx,pos.x*w,pos.y*h,shotScale);
+  }
+  // DEBUG: trace scorecard rendering
+  if(!drawOverlays._logged){
+    const scPos=S.scorecardPos[S.ratio];
+    console.log('[SC DEBUG] showScore:',S.showScore,'pos:',JSON.stringify(scPos),'canvas:',w+'x'+h,'scale:',baseScale.toFixed(4));
+    drawOverlays._logged=true;
+    setTimeout(()=>{ drawOverlays._logged=false; },3000);
   }
   if(S.showScore){
     const scScale=baseScale*(is916?1.35:1);
@@ -3063,6 +3203,12 @@ function init(){
   if(typeof S.currentHole!=='number'||S.currentHole<0||S.currentHole>17) S.currentHole=0;
 
   if(typeof buildPlayerArea==='function') buildPlayerArea();
+
+  // ── DIAGNOSTIC: trace scorecard state on load ──
+  const _scDiag=`SC:${S.showScore} Shot:${S.showShot} y:${S.scorecardPos[S.ratio]?.y}`;
+  console.warn('[SC DIAG]',_scDiag,'full:',JSON.stringify(S.scorecardPos[S.ratio]));
+  setTimeout(()=>miniToast(_scDiag),1500);
+
   // Defer first render to ensure layout is settled — prevents position jumping
   requestAnimationFrame(()=>{ render(); requestAnimationFrame(render); });
 
