@@ -44,7 +44,7 @@ const STRINGS = {
     // canvas strings — ALL UPPERCASE
     toeOff:'TEE OFF', approach:'APPROACH', layup:'LAYUP', chip:'CHIP', putt:'PUTT',
     forBirdie:'FOR BIRDIE', forPar:'FOR PAR', forBogey:'FOR BOGEY',
-    forDouble:'FOR DOUBLE', forTriple:'FOR TRIPLE+',
+    forDouble:'FOR DOUBLE', forTriple:'FOR TRIPLE',
     // shot type button labels — abbreviated
     typeTee:'TEE', typeAppr:'APPR', typeLayup:'LAYUP', typeChip:'CHIP', typePutt:'PUTT', typeProv:'PROVISIONAL',
     typeFB:'FOR BIRDIE', typeFP:'FOR PAR', typeFBo:'FOR BOGEY', typePenalty:'PENALTY',
@@ -64,7 +64,7 @@ const STRINGS = {
     grossDisp:(g,p,d)=>`Gross: ${g}  (Par ${p}  ${d>=0?'+':''}${d})`,
     toPinLabel:'TO PIN', ydsLabel:'YDS',
     albatross:'ALBATROSS', eagle:'EAGLE', birdie:'BIRDIE', par:'PAR',
-    bogey:'BOGEY', double:'DOUBLE', triple:'TRIPLE+',
+    bogey:'BOGEY', double:'DOUBLE', triple:'TRIPLE',
     // UI labels
     courseLbl:'Course', playersLbl:'Players', scoreLbl:'Score', shotLbl:'SHOT',
     shotTypeLbl:'SHOT TYPE', resultLbl:'RESULT', flagsLbl:'FLAGS', noteLbl:'NOTE',
@@ -254,7 +254,7 @@ const STRINGS = {
     grossDisp:(g,p,d)=>`グロス: ${g}（パー ${p}  ${d>=0?'+':''}${d}）`,
     toPinLabel:'ピンまで', ydsLabel:'ヤード',
     albatross:'アルバトロス', eagle:'イーグル', birdie:'バーディー', par:'パー',
-    bogey:'ボギー', double:'ダブルボギー', triple:'トリプル+',
+    bogey:'ボギー', double:'ダブルボギー', triple:'トリプル',
     // UI labels
     courseLbl:'コース', playersLbl:'プレーヤー', scoreLbl:'スコア', shotLbl:'ショット',
     shotTypeLbl:'ショットタイプ', resultLbl:'結果', flagsLbl:'フラグ', noteLbl:'メモ',
@@ -346,7 +346,7 @@ const STRINGS = {
     grossDisp:(g,p,d)=>`그로스: ${g}（파 ${p}  ${d>=0?'+':''}${d}）`,
     toPinLabel:'핀까지', ydsLabel:'야드',
     albatross:'알바트로스', eagle:'이글', birdie:'버디', par:'파',
-    bogey:'보기', double:'더블보기', triple:'트리플+',
+    bogey:'보기', double:'더블보기', triple:'트리플',
     // UI labels
     courseLbl:'코스', playersLbl:'플레이어', scoreLbl:'스코어', shotLbl:'샷',
     shotTypeLbl:'샷 타입', resultLbl:'결과', flagsLbl:'플래그', noteLbl:'메모',
@@ -419,7 +419,7 @@ const STRINGS = {
     parLbl:'Par',
     toeOff:'SALIDA', approach:'APROXIMACIÓN', layup:'LAYUP', chip:'CHIP', putt:'PUTT',
     forBirdie:'P/ BIRDIE', forPar:'P/ PAR', forBogey:'P/ BOGEY',
-    forDouble:'P/ DOBLE', forTriple:'P/ TRIPLE+',
+    forDouble:'P/ DOBLE', forTriple:'P/ TRIPLE',
     typeTee:'SALIDA', typeAppr:'APROX', typeLayup:'LAYUP', typeChip:'CHIP', typePutt:'PUTT', typeProv:'PROVISIONAL',
     typeFB:'P/BIRDIE', typeFP:'P/PAR', typeFBo:'P/BOGEY', typePenalty:'PENALTI',
     provisional:'PROVISIONAL',
@@ -438,7 +438,7 @@ const STRINGS = {
     grossDisp:(g,p,d)=>`Brutos: ${g}  (Par ${p}  ${d>=0?'+':''}${d})`,
     toPinLabel:'AL HOYO', ydsLabel:'YDS',
     albatross:'ALBATROS', eagle:'ÁGUILA', birdie:'BIRDIE', par:'PAR',
-    bogey:'BOGEY', double:'DOBLE', triple:'TRIPLE+',
+    bogey:'BOGEY', double:'DOBLE', triple:'TRIPLE',
     // UI labels
     courseLbl:'Campo', playersLbl:'Jugadores', scoreLbl:'Puntuación', shotLbl:'GOLPE',
     shotTypeLbl:'TIPO DE GOLPE', resultLbl:'RESULTADO', flagsLbl:'BANDERAS', noteLbl:'NOTA',
@@ -705,7 +705,7 @@ function defState(){
     // multi-player
     players:[], currentPlayerId:null, playerHistory:[], byPlayer:{}, recentPlayerIds:[], focusSlots:[],
     showPlayerName:true,
-    uiTheme:'dark',
+    uiTheme:'auto',
     // right edge at 5% safe zone; x = 0.95 − (SHOT_W * ratioScale / baseW)
     // 16:9: scale=1, x=0.95−490/1920=0.695; 9:16: scale=1.6, x=0.95−490*1.6/1920=0.542; 1:1: scale=1, x=0.695
     overlayPos:{
@@ -975,8 +975,7 @@ function setDelta(d){
   const h=curHole();
   h.delta=d; h.manualTypes={};
   reconcileShots(h);
-  const gross=getGross(h);
-  if(gross&&gross>0) h.shotIndex=gross-1; else h.shotIndex=0;
+  h.shotIndex=0;
   render(); scheduleSave();
 }
 
@@ -1183,7 +1182,7 @@ const THEMES = {
       // Row1 — player name
       playerNameColor:    '#111111',
       playerNameWeight:   700,
-      playerNameSize:     34,
+      playerNameSize:     38,
       // Row1 — total badge
       totalBadgeWeight:   900,
       totalBadgeSize:     38,

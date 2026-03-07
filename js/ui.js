@@ -134,6 +134,11 @@ function closePlayerManager(){
   const bg=document.getElementById('player-modal-bg');
   if(m) m.style.display='none';
   if(bg) bg.style.display='none';
+  // Refresh all related areas after player changes
+  if(typeof buildPlayerArea==='function') buildPlayerArea();
+  if(typeof buildFocusPlayerBtns==='function') buildFocusPlayerBtns();
+  if(typeof buildHoleNav==='function') buildHoleNav();
+  render(); scheduleSave();
 }
 
 function buildPlayerManager(){
@@ -271,6 +276,7 @@ function buildHoleNav(){
       S.scorecardSummary=null;
       resetAllShotIndex(i);
       render(); scheduleSave();
+      openScoreDrawer(i);
     };
   }
 

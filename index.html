@@ -3,17 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Golf Overlay Tool v10.11.0</title>
+<title>Golf Overlay Tool v10.12.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/overlay.css?v=10.11.0">
+<link rel="stylesheet" href="./css/overlay.css?v=10.12.0">
 <script>
 /* Narrow-screen detection: use screen.width (physical device pixels)
    — immune to Safari "Request Desktop Website" which inflates viewport to ~980px */
 (function(){
-  var w = screen.width;
+  var w = Math.min(screen.width, window.innerWidth);
   if(w > 0 && w <= 480) document.documentElement.classList.add('narrow');
+  // Also listen for viewport resize (desktop window narrowing)
+  window.addEventListener('resize', function(){
+    var vw = window.innerWidth;
+    document.documentElement.classList.toggle('narrow', vw > 0 && vw <= 480);
+  });
 })();
 </script>
 </head>
@@ -22,7 +27,7 @@
 <!-- HEADER -->
 <div id="hdr">
   <div class="logo" id="logo-text">⛳ GOLF <span>OVERLAY</span></div>
-  <span class="logo-meta">v10.11.0<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
+  <span class="logo-meta">v10.12.0<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
   <span style="flex:1"></span>
   <div id="lang-wrap">
     <button id="btn-lang" onclick="toggleLangMenu()">🇺🇸 EN</button>
@@ -70,7 +75,7 @@
 
   <!-- RIGHT PANEL -->
   <div id="right">
-    <!-- 1. Course & Hole info -->
+    <!-- 1. Course -->
     <div class="rp-sec" id="rp-course-sec">
       <div class="rp-row">
         <span class="rp-sec-label" id="rp-course-lbl">Course</span>
@@ -79,6 +84,20 @@
       <div class="rp-row">
         <span id="rp-course-name" onclick="editCourseName()"></span>
       </div>
+    </div>
+
+    <!-- 2. Players -->
+    <div class="rp-sec rp-sec-no-border" id="rp-players-sec">
+      <div class="rp-row">
+        <span class="rp-sec-label" id="rp-players-lbl">Players</span>
+        <button class="rp-edit-btn" id="btn-player-mgr" onclick="openPlayerManager()">EDIT</button>
+      </div>
+      <div id="rp-player-btns"></div>
+      <div class="rp-divider"></div>
+    </div>
+
+    <!-- 3. Hole -->
+    <div class="rp-sec rp-sec-no-border" id="rp-hole-sec">
       <div id="rp-hole-row">
         <span id="rp-hole-lbl">HOLE</span>
         <span id="rp-hole-num">1</span>
@@ -87,15 +106,6 @@
         <button class="rp-hn-btn" id="btn-prev-hole" onclick="gotoPrevHole()">PREV</button>
         <button class="rp-hn-btn rp-hn-next" id="btn-next-hole" onclick="gotoNextHole()">NEXT</button>
       </div>
-    </div>
-
-    <!-- 2. Players -->
-    <div class="rp-sec" id="rp-players-sec">
-      <div class="rp-row">
-        <span class="rp-sec-label" id="rp-players-lbl">Players</span>
-        <button class="rp-edit-btn" id="btn-player-mgr" onclick="openPlayerManager()">EDIT</button>
-      </div>
-      <div id="rp-player-btns"></div>
     </div>
 
     <!-- 3. Score & Shot -->
@@ -158,17 +168,38 @@
     <div class="exp-modal-body">
       <div class="exp-modal-group">
         <span class="exp-modal-lbl" id="exp-modal-lbl-single">Single</span>
-        <button class="exp-modal-btn" onclick="doExportShotOnly()"><span id="lbl-exp-shot">Shot PNG</span></button>
-        <button class="exp-modal-btn" onclick="doExportScorecardOnly()"><span id="lbl-exp-sc">Scorecard PNG</span></button>
+        <div class="exp-modal-btn-row">
+          <div class="exp-modal-btn-wrap">
+            <span class="exp-modal-desc" id="exp-desc-shot">Export current shot overlay</span>
+            <button class="exp-modal-btn" onclick="doExportShotOnly()"><span id="lbl-exp-shot">Shot PNG</span></button>
+          </div>
+          <div class="exp-modal-btn-wrap">
+            <span class="exp-modal-desc" id="exp-desc-sc">Export current scorecard</span>
+            <button class="exp-modal-btn" onclick="doExportScorecardOnly()"><span id="lbl-exp-sc">Scorecard PNG</span></button>
+          </div>
+        </div>
       </div>
       <div class="exp-modal-group">
         <span class="exp-modal-lbl" id="exp-modal-lbl-batch">Batch</span>
-        <button class="exp-modal-btn" onclick="doExportHoleSequence()"><span id="lbl-exp-hole-seq">Hole Shots ZIP</span></button>
-        <button class="exp-modal-btn" onclick="doExportScorecardSequence()"><span id="lbl-exp-sc-seq">Scorecard ZIP</span></button>
+        <div class="exp-modal-btn-row">
+          <div class="exp-modal-btn-wrap">
+            <span class="exp-modal-desc" id="exp-desc-hole-seq">All shots for current hole</span>
+            <button class="exp-modal-btn" onclick="doExportHoleSequence()"><span id="lbl-exp-hole-seq">Hole Shots ZIP</span></button>
+          </div>
+          <div class="exp-modal-btn-wrap">
+            <span class="exp-modal-desc" id="exp-desc-sc-seq">18 scorecard sequence</span>
+            <button class="exp-modal-btn" onclick="doExportScorecardSequence()"><span id="lbl-exp-sc-seq">Scorecard ZIP</span></button>
+          </div>
+        </div>
       </div>
       <div class="exp-modal-group">
         <span class="exp-modal-lbl" id="exp-modal-lbl-all">All</span>
-        <button class="exp-modal-btn" onclick="doExportAll()"><span id="lbl-exp-all">Export All ZIP</span></button>
+        <div class="exp-modal-btn-row">
+          <div class="exp-modal-btn-wrap">
+            <span class="exp-modal-desc" id="exp-desc-all">Everything in one ZIP</span>
+            <button class="exp-modal-btn" onclick="doExportAll()"><span id="lbl-exp-all">Export All ZIP</span></button>
+          </div>
+        </div>
       </div>
       <div id="exp-progress-wrap" style="display:none">
         <div id="exp-progress-bar-bg"><div id="exp-progress-bar"></div></div>
@@ -468,8 +499,8 @@
 <div id="mini-toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="./js/scoreboard.js?v=10.11.0"></script>
-<script src="./js/ui.js?v=10.11.0"></script>
-<script src="./js/app.js?v=10.11.0"></script>
+<script src="./js/scoreboard.js?v=10.12.0"></script>
+<script src="./js/ui.js?v=10.12.0"></script>
+<script src="./js/app.js?v=10.12.0"></script>
 </body>
 </html>

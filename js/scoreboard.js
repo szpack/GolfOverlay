@@ -150,7 +150,7 @@ function getSCRange(){
 function getSCWidth(scale){
   // v5.3: add OUT+IN sub-total columns for 18H mode
   const[s,e]=getSCRange(); const count=e-s;
-  const colW=54, labelW=Math.round(colW*1.3), totalW=Math.round(colW*1.5);
+  const colW=54, labelW=Math.round(colW*1.3)+10, totalW=Math.round(colW*1.5);
   const is18=(e-s)===18;
   const subW=is18?totalW*2:0; // OUT + IN each same width as TOT
   return(labelW+count*colW+subW+totalW)*scale;
@@ -171,7 +171,7 @@ function drawScorecardOverlay(ctx,X,Y,scale){
   const scoreEnd = S.scorecardSummary===null ? S.currentHole+1 : end;
   const is18=count===18;
   // v5.3: columns — for 18H: label | 1-9 | OUT | 10-18 | IN | TOT
-  const COL=54, LAB=Math.round(COL*1.3), TOT=Math.round(COL*1.5);
+  const COL=54, LAB=Math.round(COL*1.3)+10, TOT=Math.round(COL*1.5);
   const colW=COL*scale, labelW=LAB*scale, totalW=TOT*scale;
   const subW=totalW; // OUT and IN same width as TOT
   const nameRowH=40*scale;

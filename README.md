@@ -117,6 +117,25 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v10.12.0 — 2026-03-07
+- 计分卡导航区：点击PAR/HOLE列打开成绩编辑抽屉；成绩数字字号加大
+- 导出弹窗：按钮改为并排布局，每个按钮上方添加功能说明
+- 击球信息版(Canvas)：球员名字字号加大（34→38px）
+- 球员选择器：字体字号与主界面统一(Roboto)，关闭后刷新所有相关区域
+- 计分卡信息版(Canvas)：第一列名字加宽10px
+- 右侧所有按钮添加明显hover态（背景+颜色+边框变化）
+- 左侧布局：预览区+计分卡自上而下铺设（预览区不再flex:1撑满）
+- Desktop/iPad窄屏时(≤480px)自动切换移动端适配模式
+- HOLE区：去掉整行hover，Players/Hole分隔线改为短divider
+- Shot导航箭头高度与进度条按钮对齐(26px)
+- TRIPLE+去掉+号，统一为TRIPLE
+- 修复PUTT按钮换行BUG(sp-btn-row改为nowrap)
+- 点击成绩按钮后Shot进度条回到第1杆（不选中最后一杆）
+- Settings外观默认改为Auto
+
+### v10.11.1 — 2026-03-07
+- 右侧面板布局调整：球场 → 球员 → 洞号（Hole行独立为单独区块）
+
 ### v10.11.0 — 2026-03-07
 - 新增自动击球推断系统 (Shot Inference Engine)
   - 自动推断 SHOT TYPE: TEE → APPR/LAYUP → PUTT（基于洞Par、成绩、杆号）
