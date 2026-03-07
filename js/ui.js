@@ -286,19 +286,19 @@ function buildHoleNav(){
     };
   }
 
-  // ── Row 1: PAR — click opens score drawer ──
-  grid.appendChild(cell('PAR','sg-hdr sg-label sg-par-label',()=>openScoreDrawer(ci)));
-  for(let i=0;i<9;i++) grid.appendChild(cell(String(S.holes[i].par),'sg-hdr sg-par-val',()=>openScoreDrawer(i),i));
+  // ── Row 1: PAR ──
+  grid.appendChild(cell('PAR','sg-hdr sg-label sg-par-label'));
+  for(let i=0;i<9;i++) grid.appendChild(cell(String(S.holes[i].par),'sg-hdr sg-par-val'+(i===ci?' sg-active':''),holeClick(i),i));
   grid.appendChild(cell(String(f9P),'sg-hdr sg-sub'));
-  for(let i=9;i<18;i++) grid.appendChild(cell(String(S.holes[i].par),'sg-hdr sg-par-val',()=>openScoreDrawer(i),i));
+  for(let i=9;i<18;i++) grid.appendChild(cell(String(S.holes[i].par),'sg-hdr sg-par-val'+(i===ci?' sg-active':''),holeClick(i),i));
   grid.appendChild(cell(String(b9P),'sg-hdr sg-sub'));
   grid.appendChild(cell(String(f9P+b9P),'sg-hdr sg-sub'));
 
-  // ── Row 2: HOLE header — click opens score drawer ──
-  grid.appendChild(cell('HOLE','sg-hdr sg-label',()=>openScoreDrawer(ci)));
-  for(let i=0;i<9;i++) grid.appendChild(cell(String(i+1),'sg-hdr'+(i===ci?' sg-active':''),()=>openScoreDrawer(i),i));
+  // ── Row 2: HOLE header ──
+  grid.appendChild(cell('HOLE','sg-hdr sg-label'));
+  for(let i=0;i<9;i++) grid.appendChild(cell(String(i+1),'sg-hdr'+(i===ci?' sg-active':''),holeClick(i),i));
   grid.appendChild(cell('OUT','sg-hdr sg-sub',()=>{ S.scorecardSummary='out'; render(); scheduleSave(); }));
-  for(let i=9;i<18;i++) grid.appendChild(cell(String(i+1),'sg-hdr'+(i===ci?' sg-active':''),()=>openScoreDrawer(i),i));
+  for(let i=9;i<18;i++) grid.appendChild(cell(String(i+1),'sg-hdr'+(i===ci?' sg-active':''),holeClick(i),i));
   grid.appendChild(cell('IN','sg-hdr sg-sub',()=>{ S.scorecardSummary='in'; render(); scheduleSave(); }));
   grid.appendChild(cell('TOT','sg-hdr sg-sub',()=>{ S.scorecardSummary='tot'; render(); scheduleSave(); }));
 
@@ -398,7 +398,20 @@ function buildHoleNav(){
     addPlayerRow(epid,'—',true);
   }
 
-  // (column-wide hover removed — individual cell :hover via CSS)
+  // Column-unified hover for PAR+HOLE header cells (no flicker)
+  let _hdrCol=null;
+  grid.addEventListener('mouseover',e=>{
+    const c=e.target.closest('.sg-hdr[data-col]');
+    const col=c?c.dataset.col:null;
+    if(col===_hdrCol) return;
+    if(col===null) return; // on grid gap — keep current highlight
+    if(_hdrCol!==null) grid.querySelectorAll('.sg-hdr[data-col="'+_hdrCol+'"]').forEach(el=>el.classList.remove('sg-hdr-hover'));
+    _hdrCol=col;
+    grid.querySelectorAll('.sg-hdr[data-col="'+col+'"]').forEach(el=>el.classList.add('sg-hdr-hover'));
+  });
+  grid.addEventListener('mouseleave',()=>{
+    if(_hdrCol!==null){ grid.querySelectorAll('.sg-hdr[data-col="'+_hdrCol+'"]').forEach(el=>el.classList.remove('sg-hdr-hover')); _hdrCol=null; }
+  });
 
   if(typeof narrowAutoScrollNav==='function') narrowAutoScrollNav();
 }
@@ -409,11 +422,11 @@ function buildDeltaBtn(){ buildPlayerArea(); }
 // ── TYPE BUTTONS ──
 const SHOT_KEYS={TEE:'T',APPR:'A',LAYUP:'L',CHIP:'C',PUTT:'U',PROV:'V',FOR_BIRDIE:'B',FOR_PAR:'P',FOR_BOGEY:'O'};
 const SP_TYPES=[
-  {type:'TEE',   label:'TEE'},
-  {type:'APPR',  label:'APPR'},
-  {type:'LAYUP', label:'LAYUP'},
-  {type:'CHIP',  label:'CHIP'},
-  {type:'PUTT',  label:'PUTT'},
+  {type:'TEE',   labelKey:'typeTee'},
+  {type:'APPR',  labelKey:'typeAppr'},
+  {type:'LAYUP', labelKey:'typeLayup'},
+  {type:'CHIP',  labelKey:'typeChip'},
+  {type:'PUTT',  labelKey:'typePutt'},
 ];
 const SP_RESULTS=[
   {type:'FOR_BIRDIE', labelKey:'typeFB'},
@@ -437,7 +450,7 @@ function buildTypeButtons(){
       const btn=document.createElement('button');
       btn.className='sp-btn'+(curType===item.type?' active':'');
       btn.dataset.type=item.type;
-      btn.textContent=item.label||(item.labelKey?T(item.labelKey).toUpperCase():'');
+      btn.textContent=item.labelKey?T(item.labelKey).toUpperCase():'';
       btn.onclick=()=>setShotType(item.type);
       cont.appendChild(btn);
     });
@@ -520,25 +533,25 @@ function buildFocusPlayerBtns(){
 
 // ── SCORE QUICK BUTTONS (delta) ──
 const SCORE_OPTIONS=[
-  {delta:-1,label:'Birdie'},
-  {delta:0, label:'Par'},
-  {delta:1, label:'Bogey'},
-  {delta:2, label:'Double'},
-  {delta:3, label:'Triple'},
+  {delta:-1,key:'birdie'},
+  {delta:0, key:'par'},
+  {delta:1, key:'bogey'},
+  {delta:2, key:'double'},
+  {delta:3, key:'triple'},
 ];
 function buildScoreBtns(){
   const cont=document.getElementById('rp-score-btns');
   if(!cont) return;
   cont.innerHTML='';
   const h=curHole();
-  SCORE_OPTIONS.forEach(({delta,label})=>{
+  SCORE_OPTIONS.forEach(({delta,key})=>{
     const btn=document.createElement('button');
     btn.className='rp-score-btn';
     if(h.delta===delta){
       btn.classList.add('active');
       btn.style.background=deltaColorHex(delta);
     }
-    btn.textContent=label;
+    btn.textContent=T(key);
     btn.onclick=()=>setDelta(delta);
     cont.appendChild(btn);
   });
@@ -651,7 +664,7 @@ var _scoreDrawerHole=-1;
 function openScoreDrawer(holeIdx){
   _scoreDrawerHole=holeIdx;
   const title=document.getElementById('score-drawer-title');
-  title.textContent='HOLE '+(holeIdx+1)+' · Par '+S.holes[holeIdx].par;
+  title.textContent=T('scoreDrawerTitle',holeIdx+1,S.holes[holeIdx].par);
   buildScoreDrawerBody(holeIdx);
   document.getElementById('score-drawer').classList.add('open');
   document.getElementById('score-drawer-bg').classList.add('show');
@@ -710,7 +723,7 @@ function openDrawerPicker(pid,holeIdx,e){
 function buildScoreDrawerBody(holeIdx){
   const body=document.getElementById('score-drawer-body');
   body.innerHTML='';
-  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:'Player'}];
+  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:T('playerLbl')}];
   players.forEach(p=>{
     const row=document.createElement('div');
     row.className='sd-player-row';
@@ -772,7 +785,7 @@ function buildScoreDrawerBody(holeIdx){
 function scoreDrawerClear(){
   if(_scoreDrawerHole<0) return;
   const hi=_scoreDrawerHole;
-  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:'Player'}];
+  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:T('playerLbl')}];
   players.forEach(p=>{
     setPlayerHoleDelta(p.id,hi,null);
   });
@@ -783,7 +796,7 @@ function scoreDrawerConfirm(){
   if(_scoreDrawerHole<0){ closeScoreDrawer(); return; }
   const hi=_scoreDrawerHole;
   // For any player still at null (default), commit as par(0)
-  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:'Player'}];
+  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:T('playerLbl')}];
   players.forEach(p=>{
     if(getPlayerHoleDelta(p.id,hi)===null){
       setPlayerHoleDelta(p.id,hi,0);

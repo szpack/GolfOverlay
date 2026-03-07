@@ -46,7 +46,7 @@ const STRINGS = {
     forBirdie:'FOR BIRDIE', forPar:'FOR PAR', forBogey:'FOR BOGEY',
     forDouble:'FOR DOUBLE', forTriple:'FOR TRIPLE+',
     // shot type button labels — abbreviated
-    typeTee:'TEE OFF', typeAppr:'APPROACH', typeLayup:'LAYUP', typeChip:'CHIP', typePutt:'PUTT', typeProv:'PROVISIONAL',
+    typeTee:'TEE', typeAppr:'APPR', typeLayup:'LAYUP', typeChip:'CHIP', typePutt:'PUTT', typeProv:'PROVISIONAL',
     typeFB:'FOR BIRDIE', typeFP:'FOR PAR', typeFBo:'FOR BOGEY', typePenalty:'PENALTY',
     provisional:'PROVISIONAL',
     pickerRows:d=>{
@@ -84,10 +84,31 @@ const STRINGS = {
     setScoreFirst:'Set score first', jsZipNotLoaded:'JSZip not loaded',
     addPlayersFirst:'Add players first', exportError:'Export error',
     holeCleared:'Hole cleared',
-    // New round
+    // New round / dialogs
     clearBtn:'Clear', cancelBtn:'Cancel', okBtn:'OK',
     showPlayerName:'Show Player Name',
     logoText:'⛳ GOLF <span>OVERLAY</span>',
+    // Settings drawer
+    appearanceLbl:'Appearance', overlayLbl:'Overlay',
+    darkLbl:'Dark', lightLbl:'Light', autoLbl:'Auto',
+    playerLbl:'Player', displayLbl:'Display:',
+    ratioLbl:'Aspect Ratio', styleLbl:'Overlay Style',
+    classicLbl:'Classic', broadcastGoldLbl:'Broadcast Gold', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf',
+    bgUploadBtn:'📷 Upload Background',
+    exportLbl:'Export',
+    zoneSizeLbl:'Zone size',
+    actionSafe:'5% Action Safe', titleSafe:'10% Title Safe', bothLbl:'Both',
+    resetParBtn:'Reset All to Par 4',
+    newRoundBtn:'New…', skinBtn:'Skin',
+    // Score drawer
+    scoreDrawerTitle:(h,p)=>'HOLE '+h+' · Par '+p,
+    // Mobile
+    strokesTxt:g=>'Strokes: '+g, strokesEmpty:'Strokes: —',
+    addStrokeBtn:'+Stroke', finishHoleBtn:'Finish Hole', undoBtn:'Undo',
+    previewBtn:'Preview', exportPngBtn:'Export PNG',
+    resetHoleBtn:'Reset Hole', backBtn:'← Back',
+    optionsBtn:'Options…', optionsClose:'Options ▴',
+    yardsPh:'yards',
   },
   zh:{
     holeHero:h=>`第 ${h} 洞`, holeLbl:'第·洞', parLabel:p=>`标准杆 ${p}`,
@@ -137,8 +158,8 @@ const STRINGS = {
     },
     grossDisp:(g,p,d)=>`总杆: ${g}（标准杆 ${p}  ${d>=0?'+':''}${d}）`,
     toPinLabel:'距旗杆', ydsLabel:'码',
-    albatross:'信天翁', eagle:'老鹰', birdie:'小鸟', par:'标准杆',
-    bogey:'柏忌', double:'双柏忌', triple:'三柏忌+',
+    albatross:'信天翁', eagle:'老鹰', birdie:'小鸟', par:'帕',
+    bogey:'柏忌', double:'双柏忌', triple:'三柏忌',
     // UI labels
     courseLbl:'球场', playersLbl:'球员', scoreLbl:'成绩', shotLbl:'击球',
     shotTypeLbl:'击球类型', resultLbl:'结果', flagsLbl:'标记', noteLbl:'备注',
@@ -158,10 +179,31 @@ const STRINGS = {
     setScoreFirst:'请先录入成绩', jsZipNotLoaded:'JSZip 未加载',
     addPlayersFirst:'请先添加球员', exportError:'导出错误',
     holeCleared:'本洞已清空',
-    // New round
+    // New round / dialogs
     clearBtn:'清空', cancelBtn:'取消', okBtn:'确定',
     showPlayerName:'显示球员名字',
     logoText:'⛳ 高尔夫<span>角标助手</span>',
+    // Settings drawer
+    appearanceLbl:'外观', overlayLbl:'角标显示',
+    darkLbl:'深色', lightLbl:'浅色', autoLbl:'自动',
+    playerLbl:'球员', displayLbl:'显示：',
+    ratioLbl:'画面比例', styleLbl:'角标样式',
+    classicLbl:'经典', broadcastGoldLbl:'转播金', pgaTourLbl:'PGA巡回赛', livGolfLbl:'LIV高尔夫',
+    bgUploadBtn:'📷 上传背景图',
+    exportLbl:'导出',
+    zoneSizeLbl:'区域大小',
+    actionSafe:'5% 动作安全区', titleSafe:'10% 标题安全区', bothLbl:'两者',
+    resetParBtn:'全部重置为 Par 4',
+    newRoundBtn:'新一轮…', skinBtn:'主题',
+    // Score drawer
+    scoreDrawerTitle:(h,p)=>'第 '+h+' 洞 · 标准杆 '+p,
+    // Mobile
+    strokesTxt:g=>'总杆: '+g, strokesEmpty:'总杆: —',
+    addStrokeBtn:'+击球', finishHoleBtn:'完成本洞', undoBtn:'撤销',
+    previewBtn:'预览', exportPngBtn:'导出 PNG',
+    resetHoleBtn:'重置本洞', backBtn:'← 返回',
+    optionsBtn:'选项…', optionsClose:'选项 ▴',
+    yardsPh:'码',
   },
   ja:{
     holeHero:h=>`ホール ${h}`, holeLbl:'HOLE', parLabel:p=>`パー ${p}`,
@@ -232,10 +274,28 @@ const STRINGS = {
     setScoreFirst:'先にスコアを設定', jsZipNotLoaded:'JSZip未読込',
     addPlayersFirst:'先にプレーヤーを追加', exportError:'エクスポートエラー',
     holeCleared:'ホールクリア',
-    // New round
+    // New round / dialogs
     clearBtn:'クリア', cancelBtn:'キャンセル', okBtn:'OK',
     showPlayerName:'プレーヤー名表示',
     logoText:'⛳ GOLF <span>OVERLAY</span>',
+    appearanceLbl:'外観', overlayLbl:'オーバーレイ',
+    darkLbl:'ダーク', lightLbl:'ライト', autoLbl:'自動',
+    playerLbl:'プレーヤー', displayLbl:'表示：',
+    ratioLbl:'アスペクト比', styleLbl:'オーバーレイスタイル',
+    classicLbl:'クラシック', broadcastGoldLbl:'ブロードキャスト', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf',
+    bgUploadBtn:'📷 背景アップロード',
+    exportLbl:'エクスポート',
+    zoneSizeLbl:'ゾーンサイズ',
+    actionSafe:'5% アクションセーフ', titleSafe:'10% タイトルセーフ', bothLbl:'両方',
+    resetParBtn:'全ホール Par 4 にリセット',
+    newRoundBtn:'新規…', skinBtn:'スキン',
+    scoreDrawerTitle:(h,p)=>'ホール '+h+' · パー '+p,
+    strokesTxt:g=>'ストローク: '+g, strokesEmpty:'ストローク: —',
+    addStrokeBtn:'+ストローク', finishHoleBtn:'ホール完了', undoBtn:'元に戻す',
+    previewBtn:'プレビュー', exportPngBtn:'PNG出力',
+    resetHoleBtn:'ホールリセット', backBtn:'← 戻る',
+    optionsBtn:'オプション…', optionsClose:'オプション ▴',
+    yardsPh:'ヤード',
   },
   ko:{
     holeHero:h=>`${h}번 홀`, holeLbl:'HOLE', parLabel:p=>`파 ${p}`,
@@ -306,10 +366,28 @@ const STRINGS = {
     setScoreFirst:'먼저 스코어를 설정하세요', jsZipNotLoaded:'JSZip 미로드',
     addPlayersFirst:'먼저 플레이어를 추가하세요', exportError:'내보내기 오류',
     holeCleared:'홀 초기화',
-    // New round
+    // New round / dialogs
     clearBtn:'지우기', cancelBtn:'취소', okBtn:'확인',
     showPlayerName:'플레이어 이름 표시',
     logoText:'⛳ GOLF <span>OVERLAY</span>',
+    appearanceLbl:'외관', overlayLbl:'오버레이',
+    darkLbl:'다크', lightLbl:'라이트', autoLbl:'자동',
+    playerLbl:'플레이어', displayLbl:'표시:',
+    ratioLbl:'화면 비율', styleLbl:'오버레이 스타일',
+    classicLbl:'클래식', broadcastGoldLbl:'브로드캐스트', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf',
+    bgUploadBtn:'📷 배경 업로드',
+    exportLbl:'내보내기',
+    zoneSizeLbl:'영역 크기',
+    actionSafe:'5% 액션 세이프', titleSafe:'10% 타이틀 세이프', bothLbl:'둘 다',
+    resetParBtn:'전체 Par 4로 리셋',
+    newRoundBtn:'새 라운드…', skinBtn:'스킨',
+    scoreDrawerTitle:(h,p)=>h+'번 홀 · 파 '+p,
+    strokesTxt:g=>'스트로크: '+g, strokesEmpty:'스트로크: —',
+    addStrokeBtn:'+스트로크', finishHoleBtn:'홀 완료', undoBtn:'실행 취소',
+    previewBtn:'미리보기', exportPngBtn:'PNG 내보내기',
+    resetHoleBtn:'홀 리셋', backBtn:'← 뒤로',
+    optionsBtn:'옵션…', optionsClose:'옵션 ▴',
+    yardsPh:'야드',
   },
   es:{
     holeHero:h=>`HOYO ${h}`, holeLbl:'HOYO', parLabel:p=>`PAR ${p}`,
@@ -380,10 +458,28 @@ const STRINGS = {
     setScoreFirst:'Primero establezca el puntaje', jsZipNotLoaded:'JSZip no cargado',
     addPlayersFirst:'Primero añada jugadores', exportError:'Error de exportación',
     holeCleared:'Hoyo limpiado',
-    // New round
+    // New round / dialogs
     clearBtn:'Borrar', cancelBtn:'Cancelar', okBtn:'OK',
     showPlayerName:'Mostrar nombre del jugador',
     logoText:'⛳ GOLF <span>OVERLAY</span>',
+    appearanceLbl:'Apariencia', overlayLbl:'Superposición',
+    darkLbl:'Oscuro', lightLbl:'Claro', autoLbl:'Auto',
+    playerLbl:'Jugador', displayLbl:'Mostrar:',
+    ratioLbl:'Relación de aspecto', styleLbl:'Estilo de overlay',
+    classicLbl:'Clásico', broadcastGoldLbl:'Broadcast Gold', pgaTourLbl:'PGA Tour', livGolfLbl:'LIV Golf',
+    bgUploadBtn:'📷 Subir fondo',
+    exportLbl:'Exportar',
+    zoneSizeLbl:'Tamaño de zona',
+    actionSafe:'5% Acción segura', titleSafe:'10% Título seguro', bothLbl:'Ambos',
+    resetParBtn:'Restablecer todo a Par 4',
+    newRoundBtn:'Nuevo…', skinBtn:'Tema',
+    scoreDrawerTitle:(h,p)=>'HOYO '+h+' · Par '+p,
+    strokesTxt:g=>'Golpes: '+g, strokesEmpty:'Golpes: —',
+    addStrokeBtn:'+Golpe', finishHoleBtn:'Terminar hoyo', undoBtn:'Deshacer',
+    previewBtn:'Vista previa', exportPngBtn:'Exportar PNG',
+    resetHoleBtn:'Reiniciar hoyo', backBtn:'← Volver',
+    optionsBtn:'Opciones…', optionsClose:'Opciones ▴',
+    yardsPh:'yds',
   }
 };
 
@@ -506,6 +602,75 @@ function applyLang(){
   const spNoteLbl=g('sp-note-lbl'); if(spNoteLbl) spNoteLbl.textContent=T('noteLbl');
   const rpPrevBtn=g('btn-prev-hole'); if(rpPrevBtn) rpPrevBtn.textContent=T('prevBtn');
   const rpNextBtn=g('btn-next-hole'); if(rpNextBtn) rpNextBtn.textContent=T('nextBtn');
+  // Settings drawer — appearance, themes, safe zone, etc.
+  const sdAppLbl=g('sd-appearance-title'); if(sdAppLbl) sdAppLbl.textContent=T('appearanceLbl');
+  const sdOvlLbl=g('sd-overlay-title'); if(sdOvlLbl) sdOvlLbl.textContent=T('overlayLbl');
+  const sdRatLbl=g('sd-ratio-title'); if(sdRatLbl) sdRatLbl.textContent=T('ratioLbl');
+  const sdExpLbl=g('sd-export-title'); if(sdExpLbl) sdExpLbl.textContent=T('exportLbl');
+  const sdDispLbl=g('sd-disp-lbl'); if(sdDispLbl) sdDispLbl.textContent=T('displayLbl');
+  const sdSzSizeLbl=g('sd-sz-size-lbl'); if(sdSzSizeLbl) sdSzSizeLbl.textContent=T('zoneSizeLbl');
+  const pnameLbl=g('lbl-pname-nav'); if(pnameLbl) pnameLbl.textContent=T('playerLbl');
+  // Theme buttons
+  document.querySelectorAll('[data-ui-theme="dark"]').forEach(b=>b.textContent=T('darkLbl'));
+  document.querySelectorAll('[data-ui-theme="light"]').forEach(b=>b.textContent=T('lightLbl'));
+  document.querySelectorAll('[data-ui-theme="auto"]').forEach(b=>b.textContent=T('autoLbl'));
+  // Overlay style buttons
+  const sdStyleTitle=g('sd-theme-sec'); if(sdStyleTitle){ const t=sdStyleTitle.querySelector('.sd-sec-title'); if(t) t.textContent=T('styleLbl'); }
+  document.querySelectorAll('[data-theme="classic"]').forEach(b=>b.textContent=T('classicLbl'));
+  document.querySelectorAll('[data-theme="broadcast_gold"]').forEach(b=>b.textContent=T('broadcastGoldLbl'));
+  document.querySelectorAll('[data-theme="pgatour"]').forEach(b=>b.textContent=T('pgaTourLbl'));
+  document.querySelectorAll('[data-theme="livgolf"]').forEach(b=>b.textContent=T('livGolfLbl'));
+  // BG upload, reset par
+  const bgUpBtn=g('bg-upload-btn'); if(bgUpBtn) bgUpBtn.textContent=T('bgUploadBtn');
+  const resetParBtn=g('btn-reset-par'); if(resetParBtn) resetParBtn.textContent=T('resetParBtn');
+  // Safe zone options
+  const szSelect=g('sz-size');
+  if(szSelect){
+    const opts=szSelect.options;
+    if(opts[0]) opts[0].text=T('actionSafe');
+    if(opts[1]) opts[1].text=T('titleSafe');
+    if(opts[2]) opts[2].text=T('bothLbl');
+  }
+  // New round button, skin
+  const btnNew=g('btn-new'); if(btnNew) btnNew.textContent=T('newRoundBtn');
+  const btnSkin=g('btn-skin-narrow'); if(btnSkin) btnSkin.textContent=T('skinBtn');
+  // Course input placeholder
+  const inpCourse=g('inp-course'); if(inpCourse) inpCourse.placeholder=T('courseLbl').toUpperCase();
+  // Score drawer footer
+  const sdClr=g('sd-foot-clear'); if(sdClr) sdClr.textContent=T('clearBtn');
+  const sdCan=g('sd-foot-cancel'); if(sdCan) sdCan.textContent=T('cancelBtn');
+  const sdOk=g('sd-foot-ok'); if(sdOk) sdOk.textContent=T('okBtn');
+  // To Pin label
+  const tpLbl=g('rp-topin-lbl'); if(tpLbl) tpLbl.textContent=T('distLabel');
+  // Note placeholder
+  const noteInp=g('inp-shot-note'); if(noteInp) noteInp.placeholder=T('noteLbl').toLowerCase()+'…';
+  // Mobile UI
+  const mobStroke=g('mob-btn-stroke'); if(mobStroke) mobStroke.textContent=T('addStrokeBtn');
+  const mobFinish=g('mob-btn-finish'); if(mobFinish) mobFinish.textContent=T('finishHoleBtn');
+  const mobUndo=g('mob-btn-undo'); if(mobUndo) mobUndo.textContent=T('undoBtn');
+  const mobDistInp=g('mob-dist-inp'); if(mobDistInp) mobDistInp.placeholder=T('yardsPh');
+  // Mobile more menu
+  const mobMenu=g('mob-more-menu');
+  if(mobMenu){
+    const btns=mobMenu.querySelectorAll('button');
+    if(btns[0]) btns[0].textContent=T('previewBtn');
+    if(btns[1]) btns[1].textContent=T('exportPngBtn');
+    if(btns[2]) btns[2].textContent=T('settingsLbl').trim();
+    if(btns[3]) btns[3].textContent=T('playersLbl');
+    if(btns[4]) btns[4].textContent=T('resetHoleBtn');
+    if(btns[5]) btns[5].textContent=T('cancelBtn');
+  }
+  // Mobile preview header
+  const mobPvHdr=g('mob-pv-hdr');
+  if(mobPvHdr){
+    const btns=mobPvHdr.querySelectorAll('button');
+    if(btns[0]) btns[0].textContent=T('backBtn');
+    const sp=mobPvHdr.querySelector('span'); if(sp) sp.textContent=T('previewBtn');
+    if(btns[1]) btns[1].textContent=T('exportLbl');
+  }
+  // Narrow opts
+  const optsToggle=g('btn-opts-toggle'); if(optsToggle&&optsToggle.textContent.includes('…')) optsToggle.textContent=T('optionsBtn');
+  const pvNarrow=g('btn-preview-narrow'); if(pvNarrow) pvNarrow.textContent=T('previewBtn');
   if(typeof buildPlayerArea==='function') buildPlayerArea();
   if(typeof buildFocusPlayerBtns==='function') buildFocusPlayerBtns();
   buildTypeButtons();
@@ -537,10 +702,11 @@ function defState(){
     players:[], currentPlayerId:null, playerHistory:[], byPlayer:{}, recentPlayerIds:[], focusSlots:[],
     showPlayerName:false,
     uiTheme:'dark',
-    // x = 0.95 − SHOT_W/1920 = 0.695 (right edge at 5% safe zone), y = 0.05 (top safe zone)
+    // right edge at 5% safe zone; x = 0.95 − (SHOT_W * ratioScale / baseW)
+    // 16:9: scale=1, x=0.95−490/1920=0.695; 9:16: scale=1.6, x=0.95−490*1.6/1920=0.542; 1:1: scale=1, x=0.695
     overlayPos:{
       '16:9':{x:0.695,y:0.05},
-      '9:16':{x:0.695,y:0.05},
+      '9:16':{x:0.542,y:0.05},
       '1:1': {x:0.695,y:0.05}
     },
     // centered horizontally; y = 0.95 − SC_height_fraction per ratio (bottom at 5% safe zone)
@@ -901,6 +1067,9 @@ function setRatio(r){
     const bgEl=document.getElementById('bg-img');
     if(bgEl){ bgEl.src=RATIO_BG[r]||DEFAULT_BG; bgEl.style.display='block'; }
   }
+  // Reset overlay & scorecard positions to defaults for this ratio
+  S.overlayPos[r]=defState().overlayPos[r];
+  S.scorecardPos[r]=defState().scorecardPos[r];
   render(); scheduleSave();
 }
 
@@ -2167,7 +2336,7 @@ async function doExportAll(){
   const zip=new JSZip();
   const{w,h}=expGetDims();
   const savedHole=S.currentHole, savedPid=S.currentPlayerId, savedSummary=S.scorecardSummary;
-  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:S.playerName||'Player'}];
+  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:S.playerName||T('playerLbl')}];
   const totalSteps=players.length*18+players.length*19;
   let step=0;
   try{
@@ -2430,7 +2599,7 @@ function updateMobUI(){
 
   // Header
   document.getElementById('mob-hole-lbl').textContent = T('holeHero', idx+1);
-  document.getElementById('mob-par-lbl').textContent = 'Par ' + h.par;
+  document.getElementById('mob-par-lbl').textContent = T('parLabel', h.par);
   const tp = getShotToPin(h, h.shotIndex);
   document.getElementById('mob-tp-val').textContent = tp !== null ? tp : '\u2014';
   document.getElementById('mob-tp-unit').textContent = T('distUnit').charAt(0);
@@ -2448,11 +2617,11 @@ function updateMobUI(){
   const strokesTxt = document.getElementById('mob-strokes-txt');
   const resultTxt = document.getElementById('mob-result-txt');
   if(h.delta !== null){
-    strokesTxt.textContent = 'Strokes: ' + gross;
+    strokesTxt.textContent = T('strokesTxt',gross);
     resultTxt.textContent = deltaLabel(h.delta);
     resultTxt.style.background = deltaColorHex(h.delta);
   } else {
-    strokesTxt.textContent = 'Strokes: \u2014';
+    strokesTxt.textContent = T('strokesEmpty');
     resultTxt.textContent = '\u2014';
     resultTxt.style.background = 'var(--s2)';
   }
@@ -2637,7 +2806,7 @@ function toggleNarrowOpts(){
   if(!ptool) return;
   ptool.classList.toggle('narrow-hidden');
   const btn = document.getElementById('btn-opts-toggle');
-  if(btn) btn.textContent = ptool.classList.contains('narrow-hidden') ? 'Options…' : 'Options ▴';
+  if(btn) btn.textContent = ptool.classList.contains('narrow-hidden') ? T('optionsBtn') : T('optionsClose');
 }
 
 function narrowAutoScrollNav(){

@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Golf Overlay Tool v10.7.0</title>
+<title>Golf Overlay Tool v10.9.5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/overlay.css?v=10.7.0">
+<link rel="stylesheet" href="./css/overlay.css?v=10.9.5">
 <script>
 /* Narrow-screen detection: use screen.width (physical device pixels)
    — immune to Safari "Request Desktop Website" which inflates viewport to ~980px */
@@ -22,7 +22,7 @@
 <!-- HEADER -->
 <div id="hdr">
   <div class="logo" id="logo-text">⛳ GOLF <span>OVERLAY</span></div>
-  <span class="logo-meta">v10.7.0<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
+  <span class="logo-meta">v10.9.5<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
   <span style="flex:1"></span>
   <div id="lang-wrap">
     <button id="btn-lang" onclick="toggleLangMenu()">🇺🇸 EN</button>
@@ -111,7 +111,7 @@
         <div class="sp-header">
           <span class="sp-title" id="rp-shot-lbl">SHOT</span>
           <span style="flex:1"></span>
-          <span class="rp-topin-lbl">To Pin</span>
+          <span class="rp-topin-lbl" id="rp-topin-lbl">To Pin</span>
           <input type="number" id="inp-dist" placeholder="" min="0" max="999" onfocus="this.select()" class="rp-topin-input">
           <span id="dist-unit" class="rp-dist-unit">yds</span>
         </div>
@@ -274,9 +274,9 @@
   </div>
   <div id="score-drawer-body"></div>
   <div id="score-drawer-footer">
-    <button class="sd-foot-btn sd-foot-clear" onclick="scoreDrawerClear()">清空</button>
-    <button class="sd-foot-btn sd-foot-cancel" onclick="closeScoreDrawer()">取消</button>
-    <button class="sd-foot-btn sd-foot-ok" onclick="scoreDrawerConfirm()">确定</button>
+    <button class="sd-foot-btn sd-foot-clear" id="sd-foot-clear" onclick="scoreDrawerClear()">Clear</button>
+    <button class="sd-foot-btn sd-foot-cancel" id="sd-foot-cancel" onclick="closeScoreDrawer()">Cancel</button>
+    <button class="sd-foot-btn sd-foot-ok" id="sd-foot-ok" onclick="scoreDrawerConfirm()">OK</button>
   </div>
 </div>
 
@@ -437,7 +437,7 @@
         <input type="text" id="inp-course" placeholder="COURSE" maxlength="24" onfocus="this.select()" style="flex:1;height:30px;font-size:13px;padding:0 8px;border-radius:5px;border:1px solid var(--bd);background:var(--s2);color:var(--t1)">
       </div>
       <div class="sd-sec-title" id="sd-par-title" style="margin-top:8px">Course Par</div>
-      <button class="sd-btn" onclick="resetAllPars()">Reset All to Par 4</button>
+      <button class="sd-btn" id="btn-reset-par" onclick="resetAllPars()">Reset All to Par 4</button>
     </div>
   </div>
 </div>
@@ -458,8 +458,8 @@
 <div id="mini-toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="./js/scoreboard.js?v=10.7.0"></script>
-<script src="./js/ui.js?v=10.7.0"></script>
-<script src="./js/app.js?v=10.7.0"></script>
+<script src="./js/scoreboard.js?v=10.9.5"></script>
+<script src="./js/ui.js?v=10.9.5"></script>
+<script src="./js/app.js?v=10.9.5"></script>
 </body>
 </html>
