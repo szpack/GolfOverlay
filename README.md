@@ -117,6 +117,12 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v10.20.1 — 2026-03-07
+- 修复chk-score默认未checked，确保Scorecard叠加层默认开启
+
+### v10.20.0 — 2026-03-07
+- 新增成绩CSV导出：导出模态框增加Data分组，一键导出计分卡CSV（含球场、日期、PAR、各球员Gross+ToPar、OUT/IN/TOT汇总）
+
 ### v10.19.0 — 2026-03-07
 - 移动端页面自由滚动：移除overscroll-behavior限制，#main改为overflow-y:visible，touchmove仅在拖拽时绑定
 

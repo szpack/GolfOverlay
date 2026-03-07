@@ -78,6 +78,7 @@ const STRINGS = {
     singleLbl:'Single', batchLbl:'Batch', allLbl:'All',
     expShotPng:'Shot PNG', expScPng:'Scorecard PNG',
     expHoleZip:'Hole Shots ZIP', expScZip:'Scorecard ZIP', expAllZip:'Export All ZIP',
+    dataLbl:'Data', expScCsv:'Scorecard CSV', expDescCsv:'Scorecard as CSV text file',
     // Player manager
     pmTitle:'Players', pmActive:'Active Players', pmAdd:'Add Player', pmHist:'History',
     pmNamePh:'Name…', pmSearchPh:'Search…',
@@ -174,6 +175,7 @@ const STRINGS = {
     singleLbl:'单张', batchLbl:'批量', allLbl:'全部',
     expShotPng:'击球 PNG', expScPng:'计分卡 PNG',
     expHoleZip:'当前洞击球包', expScZip:'18洞计分卡包', expAllZip:'全部导出 ZIP',
+    dataLbl:'数据', expScCsv:'成绩 CSV', expDescCsv:'计分卡导出为CSV文本',
     // Player manager
     pmTitle:'球员管理', pmActive:'已添加球员', pmAdd:'添加球员', pmHist:'历史球员',
     pmNamePh:'球员姓名…', pmSearchPh:'搜索球员…',
@@ -270,6 +272,7 @@ const STRINGS = {
     singleLbl:'単体', batchLbl:'バッチ', allLbl:'全て',
     expShotPng:'ショット PNG', expScPng:'スコアカード PNG',
     expHoleZip:'ホールショット ZIP', expScZip:'スコアカード ZIP', expAllZip:'全てエクスポート ZIP',
+    dataLbl:'データ', expScCsv:'スコアカード CSV', expDescCsv:'スコアカードをCSVで出力',
     // Player manager
     pmTitle:'プレーヤー管理', pmActive:'追加済み', pmAdd:'プレーヤー追加', pmHist:'履歴',
     pmNamePh:'名前…', pmSearchPh:'検索…',
@@ -363,6 +366,7 @@ const STRINGS = {
     singleLbl:'단일', batchLbl:'배치', allLbl:'전체',
     expShotPng:'샷 PNG', expScPng:'스코어카드 PNG',
     expHoleZip:'홀 샷 ZIP', expScZip:'스코어카드 ZIP', expAllZip:'전체 내보내기 ZIP',
+    dataLbl:'데이터', expScCsv:'스코어카드 CSV', expDescCsv:'스코어카드를 CSV로 내보내기',
     // Player manager
     pmTitle:'플레이어 관리', pmActive:'추가된 선수', pmAdd:'플레이어 추가', pmHist:'히스토리',
     pmNamePh:'이름…', pmSearchPh:'검색…',
@@ -456,6 +460,7 @@ const STRINGS = {
     singleLbl:'Individual', batchLbl:'Lote', allLbl:'Todo',
     expShotPng:'Golpe PNG', expScPng:'Tarjeta PNG',
     expHoleZip:'Golpes del hoyo ZIP', expScZip:'Tarjeta ZIP', expAllZip:'Exportar todo ZIP',
+    dataLbl:'Datos', expScCsv:'Tarjeta CSV', expDescCsv:'Exportar tarjeta como CSV',
     // Player manager
     pmTitle:'Jugadores', pmActive:'Jugadores activos', pmAdd:'Añadir jugador', pmHist:'Historial',
     pmNamePh:'Nombre…', pmSearchPh:'Buscar…',
@@ -588,6 +593,9 @@ function applyLang(){
   const expBatchLbl=g('exp-modal-lbl-batch'); if(expBatchLbl) expBatchLbl.textContent=T('batchLbl');
   const expAllLbl=g('exp-modal-lbl-all'); if(expAllLbl) expAllLbl.textContent=T('allLbl');
   const expAllBtn=g('lbl-exp-all'); if(expAllBtn) expAllBtn.textContent=T('expAllZip');
+  const expDataLbl=g('exp-modal-lbl-data'); if(expDataLbl) expDataLbl.textContent=T('dataLbl');
+  const expCsvBtn=g('lbl-exp-csv'); if(expCsvBtn) expCsvBtn.textContent=T('expScCsv');
+  const expCsvDesc=g('exp-desc-csv'); if(expCsvDesc) expCsvDesc.textContent=T('expDescCsv');
   const expTrigger=g('btn-export-trigger'); if(expTrigger) expTrigger.textContent=T('exportBtn2');
   const expModalTitle=g('exp-modal-title-txt'); if(expModalTitle) expModalTitle.textContent=T('exportTitle');
   // Player manager labels
@@ -2516,6 +2524,66 @@ async function doExportAll(){
     S.currentHole=savedHole; S.scorecardSummary=savedSummary;
   }
   redrawOnly();
+}
+
+// ── Export: Scorecard CSV ──
+function doExportScoreCSV(){
+  const players=(S.players&&S.players.length>0)?S.players:[{id:effectivePlayerId(),name:S.playerName||'PLAYER'}];
+  const course=S.courseName||'Golf Course';
+  const date=new Date().toISOString().slice(0,10);
+  const rows=[];
+  rows.push('# '+course+' — '+date);
+  rows.push('');
+  // Header
+  const hdr=[''].concat(Array.from({length:9},(_,i)=>String(i+1)),['OUT'],Array.from({length:9},(_,i)=>String(i+10)),['IN','TOT']);
+  rows.push(hdr.join(','));
+  // Par row
+  const pars=['PAR'];
+  let outPar=0,inPar=0;
+  for(let i=0;i<9;i++){outPar+=S.holes[i].par;pars.push(S.holes[i].par);}
+  pars.push(outPar);
+  for(let i=9;i<18;i++){inPar+=S.holes[i].par;pars.push(S.holes[i].par);}
+  pars.push(inPar); pars.push(outPar+inPar);
+  rows.push(pars.join(','));
+  // Player rows
+  players.forEach(p=>{
+    const gross=[p.name];
+    let outG=0,inG=0,outPlayed=0,inPlayed=0;
+    for(let i=0;i<9;i++){
+      const d=getPlayerHoleDelta(p.id,i);
+      if(d!==null){gross.push(S.holes[i].par+d);outG+=S.holes[i].par+d;outPlayed++;}
+      else gross.push('');
+    }
+    gross.push(outPlayed?outG:'');
+    for(let i=9;i<18;i++){
+      const d=getPlayerHoleDelta(p.id,i);
+      if(d!==null){gross.push(S.holes[i].par+d);inG+=S.holes[i].par+d;inPlayed++;}
+      else gross.push('');
+    }
+    gross.push(inPlayed?inG:'');
+    gross.push((outPlayed||inPlayed)?(outG+inG):'');
+    rows.push(gross.join(','));
+    // To-par row
+    const tp=[' (to par)'];
+    let outD=0,inD=0;
+    for(let i=0;i<9;i++){
+      const d=getPlayerHoleDelta(p.id,i);
+      if(d!==null){tp.push(fmtDeltaDisplay(d));outD+=d;}else tp.push('');
+    }
+    tp.push(outPlayed?fmtDeltaDisplay(outD):'');
+    for(let i=9;i<18;i++){
+      const d=getPlayerHoleDelta(p.id,i);
+      if(d!==null){tp.push(fmtDeltaDisplay(d));inD+=d;}else tp.push('');
+    }
+    tp.push(inPlayed?fmtDeltaDisplay(inD):'');
+    tp.push((outPlayed||inPlayed)?fmtDeltaDisplay(outD+inD):'');
+    rows.push(tp.join(','));
+  });
+  const csv=rows.join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const fn=expCourse()+'_scorecard_'+date+'.csv';
+  expDownloadBlob(blob,fn);
+  miniToast('CSV exported ✓');
 }
 
 // ============================================================

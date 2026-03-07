@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Golf Overlay Tool v10.19.0</title>
+<title>Golf Overlay Tool v10.20.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/overlay.css?v=10.19.0">
+<link rel="stylesheet" href="./css/overlay.css?v=10.20.1">
 <script>
 /* Narrow-screen detection: use screen.width (physical device pixels)
    — immune to Safari "Request Desktop Website" which inflates viewport to ~980px */
@@ -27,7 +27,7 @@
 <!-- HEADER -->
 <div id="hdr">
   <div class="logo" id="logo-text">⛳ GOLF <span>OVERLAY</span></div>
-  <span class="logo-meta">v10.19.0<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
+  <span class="logo-meta">v10.20.1<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
   <span style="flex:1"></span>
   <div id="lang-wrap">
     <button id="btn-lang" onclick="toggleLangMenu()">🇺🇸 EN</button>
@@ -203,6 +203,15 @@
           <div class="exp-modal-btn-wrap">
             <span class="exp-modal-desc" id="exp-desc-all">Everything in one ZIP</span>
             <button class="exp-modal-btn" onclick="doExportAll()"><span id="lbl-exp-all">Export All ZIP</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="exp-modal-group">
+        <span class="exp-modal-lbl" id="exp-modal-lbl-data">Data</span>
+        <div class="exp-modal-btn-row">
+          <div class="exp-modal-btn-wrap">
+            <span class="exp-modal-desc" id="exp-desc-csv">Scorecard as CSV text file</span>
+            <button class="exp-modal-btn" onclick="doExportScoreCSV()"><span id="lbl-exp-csv">Scorecard CSV</span></button>
           </div>
         </div>
       </div>
@@ -392,7 +401,7 @@
         <label class="ptool-toggle-lbl"><input type="checkbox" id="chk-shot" checked> <span id="lbl-shot">Shot Overlay</span></label>
       </div>
       <div class="sd-row">
-        <label class="ptool-toggle-lbl"><input type="checkbox" id="chk-score"> <span id="lbl-score">Scorecard</span></label>
+        <label class="ptool-toggle-lbl"><input type="checkbox" id="chk-score" checked> <span id="lbl-score">Scorecard</span></label>
       </div>
       <div id="score-range-sec" style="display:none;margin-left:8px">
         <div class="sd-row" style="gap:8px;flex-wrap:wrap">
@@ -504,8 +513,8 @@
 <div id="mini-toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="./js/scoreboard.js?v=10.19.0"></script>
-<script src="./js/ui.js?v=10.19.0"></script>
-<script src="./js/app.js?v=10.19.0"></script>
+<script src="./js/scoreboard.js?v=10.20.1"></script>
+<script src="./js/ui.js?v=10.20.1"></script>
+<script src="./js/app.js?v=10.20.1"></script>
 </body>
 </html>
