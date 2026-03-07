@@ -249,7 +249,7 @@ html.light .rp-plyr-btn.active{background:#FFD700;color:#1a2e1a;border-color:#d4
 .player-row{display:flex;align-items:center;gap:0;margin-bottom:3px;min-height:34px;border-radius:8px;padding:3px 4px;transition:background 80ms}
 .player-row.pr-active{background:rgba(34,197,94,.10)}
 html.light .player-row.pr-active{background:rgba(34,197,94,.08)}
-.player-row .pr-name{flex:0 0 50%;min-width:0;font:500 13px/1 inherit;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:4px 6px;border-radius:6px;transition:background 80ms;letter-spacing:.01em}
+.player-row .pr-name{flex:0 0 50%;min-width:0;font:500 12px/1 inherit;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:4px 6px;border-radius:6px;transition:background 80ms;letter-spacing:.01em}
 .player-row .pr-name:hover{background:rgba(255,255,255,.05)}
 .player-row .pr-name.active{color:var(--text-primary);font-weight:600}
 .player-row .pr-delta-wrap{flex:0 0 50%;display:flex;align-items:center;justify-content:center;gap:6px}

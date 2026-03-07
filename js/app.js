@@ -67,7 +67,8 @@ const STRINGS = {
     bogey:'BOGEY', double:'DOUBLE', triple:'TRIPLE',
     // UI labels
     courseLbl:'Course', playersLbl:'Players', scoreLbl:'Score', shotLbl:'SHOT',
-    shotTypeLbl:'SHOT TYPE', resultLbl:'RESULT', flagsLbl:'FLAGS', noteLbl:'NOTE',
+    shotTypeLbl:'SHOT TYPE', purposeLbl:'PURPOSE', resultLbl:'RESULT', flagsLbl:'FLAGS', noteLbl:'NOTE',
+    landGreen:'ON GREEN', landFairway:'FAIRWAY', landBunker:'BUNKER', landLight:'LIGHT ROUGH', landHeavy:'HEAVY ROUGH', landWater:'WATER', landTrees:'TREES',
     editBtn:'EDIT', prevBtn:'PREV', nextBtn:'NEXT', exportBtn2:'Export…',
     singleLbl:'Single', batchLbl:'Batch', allLbl:'All',
     expShotPng:'Shot PNG', expScPng:'Scorecard PNG',
@@ -162,7 +163,8 @@ const STRINGS = {
     bogey:'柏忌', double:'双柏忌', triple:'三柏忌',
     // UI labels
     courseLbl:'球场', playersLbl:'球员', scoreLbl:'成绩', shotLbl:'击球',
-    shotTypeLbl:'击球类型', resultLbl:'结果', flagsLbl:'标记', noteLbl:'备注',
+    shotTypeLbl:'击球类型', purposeLbl:'目标', resultLbl:'结果', flagsLbl:'标记', noteLbl:'备注',
+    landGreen:'上果岭', landFairway:'上球道', landBunker:'下沙', landLight:'二级草', landHeavy:'三级草', landWater:'下水', landTrees:'进树林',
     editBtn:'编辑', prevBtn:'上一洞', nextBtn:'下一洞', exportBtn2:'导出…',
     singleLbl:'单张', batchLbl:'批量', allLbl:'全部',
     expShotPng:'击球 PNG', expScPng:'计分卡 PNG',
@@ -257,7 +259,8 @@ const STRINGS = {
     bogey:'ボギー', double:'ダブルボギー', triple:'トリプル',
     // UI labels
     courseLbl:'コース', playersLbl:'プレーヤー', scoreLbl:'スコア', shotLbl:'ショット',
-    shotTypeLbl:'ショットタイプ', resultLbl:'結果', flagsLbl:'フラグ', noteLbl:'メモ',
+    shotTypeLbl:'ショットタイプ', purposeLbl:'目的', resultLbl:'結果', flagsLbl:'フラグ', noteLbl:'メモ',
+    landGreen:'グリーンオン', landFairway:'フェアウェイ', landBunker:'バンカー', landLight:'ライトラフ', landHeavy:'ヘビーラフ', landWater:'ウォーター', landTrees:'林',
     editBtn:'編集', prevBtn:'前へ', nextBtn:'次へ', exportBtn2:'エクスポート…',
     singleLbl:'単体', batchLbl:'バッチ', allLbl:'全て',
     expShotPng:'ショット PNG', expScPng:'スコアカード PNG',
@@ -349,7 +352,8 @@ const STRINGS = {
     bogey:'보기', double:'더블보기', triple:'트리플',
     // UI labels
     courseLbl:'코스', playersLbl:'플레이어', scoreLbl:'스코어', shotLbl:'샷',
-    shotTypeLbl:'샷 타입', resultLbl:'결과', flagsLbl:'플래그', noteLbl:'메모',
+    shotTypeLbl:'샷 타입', purposeLbl:'목적', resultLbl:'결과', flagsLbl:'플래그', noteLbl:'메모',
+    landGreen:'온 그린', landFairway:'페어웨이', landBunker:'벙커', landLight:'라이트 러프', landHeavy:'헤비 러프', landWater:'워터', landTrees:'숲',
     editBtn:'편집', prevBtn:'이전', nextBtn:'다음', exportBtn2:'내보내기…',
     singleLbl:'단일', batchLbl:'배치', allLbl:'전체',
     expShotPng:'샷 PNG', expScPng:'스코어카드 PNG',
@@ -441,7 +445,8 @@ const STRINGS = {
     bogey:'BOGEY', double:'DOBLE', triple:'TRIPLE',
     // UI labels
     courseLbl:'Campo', playersLbl:'Jugadores', scoreLbl:'Puntuación', shotLbl:'GOLPE',
-    shotTypeLbl:'TIPO DE GOLPE', resultLbl:'RESULTADO', flagsLbl:'BANDERAS', noteLbl:'NOTA',
+    shotTypeLbl:'TIPO DE GOLPE', purposeLbl:'PROPÓSITO', resultLbl:'RESULTADO', flagsLbl:'BANDERAS', noteLbl:'NOTA',
+    landGreen:'EN GREEN', landFairway:'FAIRWAY', landBunker:'BÚNKER', landLight:'ROUGH LEVE', landHeavy:'ROUGH DENSO', landWater:'AGUA', landTrees:'ÁRBOLES',
     editBtn:'EDITAR', prevBtn:'ANT', nextBtn:'SIG', exportBtn2:'Exportar…',
     singleLbl:'Individual', batchLbl:'Lote', allLbl:'Todo',
     expShotPng:'Golpe PNG', expScPng:'Tarjeta PNG',
@@ -598,6 +603,7 @@ function applyLang(){
   const rpScoreLbl=g('rp-score-lbl'); if(rpScoreLbl) rpScoreLbl.textContent=T('scoreLbl');
   const btnScoreMore=g('btn-score-more'); if(btnScoreMore) btnScoreMore.textContent=T('editBtn');
   const spTypeLbl=g('sp-type-lbl'); if(spTypeLbl) spTypeLbl.textContent=T('shotTypeLbl');
+  const spPurposeLbl=g('sp-purpose-lbl'); if(spPurposeLbl) spPurposeLbl.textContent=T('purposeLbl');
   const spResultLbl=g('sp-result-lbl'); if(spResultLbl) spResultLbl.textContent=T('resultLbl');
   const spFlagLbl=g('sp-flag-lbl'); if(spFlagLbl) spFlagLbl.textContent=T('flagsLbl');
   const spNoteLbl=g('sp-note-lbl'); if(spNoteLbl) spNoteLbl.textContent=T('noteLbl');
@@ -1077,6 +1083,18 @@ function setShotType(type){
     h.shotIndex++;
   }
 
+  render(); scheduleSave();
+}
+
+function setLanding(type){
+  const h=curHole();
+  if(h.delta===null||h.shotIndex<0) return;
+  if(!h.shots[h.shotIndex]) h.shots[h.shotIndex]={};
+  const s=h.shots[h.shotIndex];
+  s.landing=(s.landing===type)?null:type;
+  // Auto-advance
+  const gross=getGross(h);
+  if(gross && h.shotIndex < gross-1) h.shotIndex++;
   render(); scheduleSave();
 }
 

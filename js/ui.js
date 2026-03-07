@@ -426,6 +426,15 @@ const SP_RESULTS=[
   {type:'FOR_PAR',    labelKey:'typeFP'},
   {type:'FOR_BOGEY',  labelKey:'typeFBo'},
 ];
+const SP_LANDINGS=[
+  {type:'GREEN',   labelKey:'landGreen'},
+  {type:'FAIRWAY', labelKey:'landFairway'},
+  {type:'BUNKER',  labelKey:'landBunker'},
+  {type:'LIGHT_ROUGH', labelKey:'landLight'},
+  {type:'HEAVY_ROUGH', labelKey:'landHeavy'},
+  {type:'WATER',   labelKey:'landWater'},
+  {type:'TREES',   labelKey:'landTrees'},
+];
 const SP_FLAGS=[
   {type:'PENALTY', labelKey:'typePenalty'},
   {type:'PROV',  labelKey:'typeProv'},
@@ -471,6 +480,21 @@ function buildTypeButtons(){
       btn.textContent=item.labelKey?T(item.labelKey).toUpperCase():'';
       btn.onclick=()=>setShotType(item.type);
       resCont.appendChild(btn);
+    });
+  }
+
+  // LANDING (result) buttons
+  const landCont=document.getElementById('sp-landing-btns');
+  if(landCont){
+    landCont.innerHTML='';
+    SP_LANDINGS.forEach(item=>{
+      const btn=document.createElement('button');
+      const isActive=(s.landing===item.type);
+      btn.className='sp-btn'+(isActive?' active':'');
+      btn.dataset.type=item.type;
+      btn.textContent=item.labelKey?T(item.labelKey):'';
+      btn.onclick=()=>setLanding(item.type);
+      landCont.appendChild(btn);
     });
   }
 

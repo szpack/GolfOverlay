@@ -117,6 +117,11 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v10.14.0 — 2026-03-07
+- RESULT区改名为PURPOSE（目标），保留FOR BIRDIE/FOR PAR/FOR BOGEY
+- 新增RESULT（结果/落点）区：上果岭、上球道、下沙、二级草、三级草、下水、进树林
+- 落点数据存储在每杆的`landing`字段，支持点击切换和自动跳下一杆
+
 ### v10.13.5 — 2026-03-07
 - 计分卡导航区点击PAR/HOLE只切换洞号，不再弹出成绩编辑器
 - Score区"…"改为"编辑"按钮（多语言），点击打开成绩编辑器
