@@ -1811,8 +1811,7 @@ function initCanvas(){
   window.addEventListener('mousemove',onDragMove);
   window.addEventListener('mouseup',onDragEnd);
   cvEl.addEventListener('touchstart',onTouchStart,{passive:false});
-  window.addEventListener('touchmove',onTouchMove,{passive:false});
-  window.addEventListener('touchend',onDragEnd);
+  window.addEventListener('touchend',onTouchEnd);
 }
 
 function evPt(e){
@@ -1924,8 +1923,15 @@ function onDragEnd(e){
   }
   dragging=null;
 }
-function onTouchStart(e){ if(e.touches.length===1) onDragStart(e); }
+function onTouchStart(e){
+  if(e.touches.length===1) onDragStart(e);
+  if(dragging) window.addEventListener('touchmove',onTouchMove,{passive:false});
+}
 function onTouchMove(e){ if(e.touches.length===1) onDragMove(e); }
+function onTouchEnd(e){
+  onDragEnd(e);
+  window.removeEventListener('touchmove',onTouchMove);
+}
 
 function onCursorUpdate(e){
   if(dragging) return;

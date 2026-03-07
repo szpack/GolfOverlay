@@ -612,7 +612,7 @@ input[type=range]{accent-color:var(--mg);flex:1}
    ══════════════════════════════════════════════════════════ */
 
 /* ── Header ── */
-html.narrow,html.narrow body{overflow:auto!important;height:auto!important;min-height:100svh;overscroll-behavior:none;-webkit-overflow-scrolling:touch}
+html.narrow,html.narrow body{overflow:auto!important;height:auto!important;min-height:100svh;-webkit-overflow-scrolling:touch}
 html.narrow #hdr{padding:4px 8px;gap:4px}
 html.narrow .logo{font-size:13px;letter-spacing:0}
 html.narrow .logo-meta{display:inline;font-size:7px;line-height:1.2;opacity:.6}
@@ -629,11 +629,11 @@ html.narrow #btn-settings #settings-lbl{display:none}
 html.narrow #btn-new{height:28px;padding:0 10px;font-size:11px}
 
 /* ── Main ── */
-html.narrow #main{display:flex!important;flex-direction:column;grid-template-columns:none;overflow-y:auto!important;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex:none;overscroll-behavior-y:none}
+html.narrow #main{display:flex!important;flex-direction:column;grid-template-columns:none;overflow-y:visible!important;overflow-x:hidden;flex:none}
 
 /* ── Left panel ── */
 html.narrow #left{border-right:none;overflow:visible}
-html.narrow #preview{flex:none;height:200px;min-height:140px}
+html.narrow #preview{flex:none;aspect-ratio:16/9;width:100%}
 
 /* ── Options toggle bar ── */
 html.narrow #narrow-opts-bar{display:none!important}

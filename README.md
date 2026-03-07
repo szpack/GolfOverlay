@@ -117,6 +117,12 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v10.19.0 — 2026-03-07
+- 移动端页面自由滚动：移除overscroll-behavior限制，#main改为overflow-y:visible，touchmove仅在拖拽时绑定
+
+### v10.18.9 — 2026-03-07
+- 移动端内嵌预览区改为自适应16:9比例（去掉固定200px高度），计分卡/击球信息版可见
+
 ### v10.18.8 — 2026-03-07
 - 击球进度条成绩着色改为直角矩形色块（CSS色条+Canvas所有主题sqRadius均置0）
 
