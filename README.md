@@ -117,6 +117,13 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v12.2.0 — 2026-03-08
+- 修复刷新丢数据根本原因：adjPlayerDelta/setPlayerHoleDelta缺少scheduleSave()调用，数据仅存内存未持久化
+- 修复S对象与D.ws()双写不同步：所有直接写入S的属性（bgOpacity、showShot、theme等20+处）同步写入D.ws()，防止D.syncS(S)覆盖未持久化的变更
+- 修复player area +/- 按钮点击后UI不更新的问题
+- D.load()增强：_postLoad()异常不再导致数据回退到空白状态
+- 新增pagehide事件监听，提升移动端页面关闭时的数据保存可靠性
+
 ### v12.1.4 — 2026-03-08
 - 修复刷新丢数据：syncFromS增加前置守卫（S未初始化时直接跳过），所有字段写入增加undefined防御，防止空S覆盖localStorage中的有效数据
 

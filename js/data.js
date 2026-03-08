@@ -513,14 +513,17 @@ const D = (function(){
     var rawSc = localStorage.getItem(LS_SC);
     if(rawSc){
       try {
-        _sc = JSON.parse(rawSc);
+        var parsedSc = JSON.parse(rawSc);
         var rawWs = localStorage.getItem(LS_WS);
-        _ws = rawWs ? Object.assign(defWorkspace(), JSON.parse(rawWs)) : defWorkspace();
-        _ws.userBg = localStorage.getItem(LS_BG) || null;
-        _postLoad();
+        var parsedWs = rawWs ? Object.assign(defWorkspace(), JSON.parse(rawWs)) : defWorkspace();
+        parsedWs.userBg = localStorage.getItem(LS_BG) || null;
+        // Assign only after parsing succeeds
+        _sc = parsedSc;
+        _ws = parsedWs;
+        try { _postLoad(); } catch(pe){ console.warn('[D] postLoad warning (data kept):', pe); }
         console.log('[D] loaded v4 data');
         return 'v4';
-      } catch(e){ console.warn('[D] v4 load error, trying v531', e); }
+      } catch(e){ console.warn('[D] v4 parse error, trying v531', e); }
     }
     // Priority 2: migrate from v531
     var rawOld = localStorage.getItem(LS_OLD);

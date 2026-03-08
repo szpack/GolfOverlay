@@ -515,7 +515,7 @@ function applyUITheme(mode){
   document.documentElement.classList.toggle('light',prefer==='light');
 }
 function setUITheme(mode){
-  S.uiTheme=mode;
+  S.uiTheme=mode; D.ws().uiTheme=mode;
   applyUITheme(mode);
   document.querySelectorAll('[data-ui-theme]').forEach(b=>b.classList.toggle('active',b.dataset.uiTheme===mode));
   scheduleSave();
@@ -525,7 +525,7 @@ window.matchMedia('(prefers-color-scheme:light)').addEventListener('change',()=>
 });
 
 function setLang(l){
-  LANG=l; S.lang=l;
+  LANG=l; S.lang=l; D.ws().lang=l;
   const btn=document.getElementById('btn-lang');
   if(btn) btn.textContent=LANG_LABELS[l]||l;
   document.querySelectorAll('.lang-opt').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
@@ -991,10 +991,10 @@ function applyBg(){
 function setBgFile(file){
   if(!file||!file.type.startsWith('image/')) return;
   const reader=new FileReader();
-  reader.onload=ev=>{ S.userBg=ev.target.result; applyBg(); scheduleSave(); };
+  reader.onload=ev=>{ S.userBg=ev.target.result; D.ws().userBg=S.userBg; applyBg(); scheduleSave(); };
   reader.readAsDataURL(file);
 }
-function clearBg(){ S.userBg=null; applyBg(); scheduleSave(); closeSettings(); }
+function clearBg(){ S.userBg=null; D.ws().userBg=null; applyBg(); scheduleSave(); closeSettings(); }
 
 // ============================================================
 // MUTATIONS
@@ -1212,7 +1212,7 @@ function setRatio(r){
 }
 
 function setRes(btn){
-  S.exportRes=parseInt(btn.dataset.res)||2160;
+  S.exportRes=parseInt(btn.dataset.res)||2160; D.ws().exportRes=S.exportRes;
   document.querySelectorAll('.res-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   scheduleSave();
@@ -1949,7 +1949,7 @@ function drawPanelFrame(ctx, X, Y, W, H, scale, th, withBg, crVal){
 }
 
 function setTheme(t){
-  S.theme = t;
+  S.theme = t; D.ws().theme = t;
   document.querySelectorAll('.theme-btn').forEach(b=>b.classList.toggle('active', b.dataset.theme===t));
   render(); scheduleSave();
 }
@@ -3009,8 +3009,8 @@ function buildMobHoleNav(){
     if(h.delta !== null) sc = S.displayMode === 'topar' ? fmtDeltaDisplay(h.delta) : String(safePar(h) + h.delta);
     btn.innerHTML = `<div class="mh-num">${i+1}</div><div class="mh-par">P${hasRealPar(h)?h.par:'—'}</div><div class="mh-sc">${sc}</div>`;
     btn.onclick = () => {
-      S.currentHole = i;
-      S.scorecardSummary = null;
+      S.currentHole = i; D.ws().currentHole = i;
+      S.scorecardSummary = null; D.ws().scorecardSummary = null;
       if(RoundManager.getRound()){
         const oh=RoundManager.getOrderedHoles();
         if(oh&&oh[i]) RoundManager.setCurrentHole(oh[i].holeId);
@@ -3202,4 +3202,5 @@ function init(){
 window.addEventListener('DOMContentLoaded',init);
 // Flush pending saves on page unload / tab switch to prevent data loss
 window.addEventListener('beforeunload',()=>{ clearTimeout(saveTimer); doSave(); });
+window.addEventListener('pagehide',()=>{ clearTimeout(saveTimer); doSave(); });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ clearTimeout(saveTimer); doSave(); } });

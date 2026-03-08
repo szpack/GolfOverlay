@@ -29,11 +29,13 @@ function setPlayerHoleDelta(pid,holeIdx,delta){
     D.setPlayerGross(pid,holeIdx,par+delta);
   }
   D.syncS(S);
+  scheduleSave();
 }
 function adjPlayerDelta(pid,inc,holeOverride){
   var hi=(holeOverride!==undefined)?holeOverride:S.currentHole;
   D.adjPlayerGross(pid,hi,inc);
   D.syncS(S);
+  scheduleSave();
 }
 function buildPlayerArea(){
   const grid=document.getElementById('player-btn-grid');
@@ -69,7 +71,7 @@ function buildPlayerArea(){
     const mBtn=document.createElement('button');
     mBtn.className='pr-adj';
     mBtn.textContent='−';
-    mBtn.onclick=()=>adjPlayerDelta(p.id,-1);
+    mBtn.onclick=()=>{ adjPlayerDelta(p.id,-1); buildPlayerArea(); render(); };
     wrap.appendChild(mBtn);
     const d=getPlayerHoleDelta(p.id,hi);
     const dBtn=document.createElement('button');
@@ -91,7 +93,7 @@ function buildPlayerArea(){
     const pBtn=document.createElement('button');
     pBtn.className='pr-adj';
     pBtn.textContent='+';
-    pBtn.onclick=()=>adjPlayerDelta(p.id,+1);
+    pBtn.onclick=()=>{ adjPlayerDelta(p.id,+1); buildPlayerArea(); render(); };
     wrap.appendChild(pBtn);
     row.appendChild(wrap);
     grid.appendChild(row);
@@ -263,8 +265,8 @@ function buildHoleNav(){
         const pg=getGross(prev);
         if(pg&&pg>0) delete prev.manualTypes[pg-1];
       }
-      S.currentHole=i;
-      S.scorecardSummary=null;
+      S.currentHole=i; D.ws().currentHole=i;
+      S.scorecardSummary=null; D.ws().scorecardSummary=null;
       // Sync round manager
       if(typeof RoundManager!=='undefined'&&RoundManager.getRound()){
         const oh=RoundManager.getOrderedHoles();
@@ -287,10 +289,10 @@ function buildHoleNav(){
   // ── Row 2: HOLE header ──
   grid.appendChild(cell('HOLE','sg-hdr sg-label'));
   for(let i=0;i<half;i++) grid.appendChild(cell(String(i+1),'sg-hdr'+(i===ci?' sg-active':''),holeClick(i),i));
-  grid.appendChild(cell('OUT','sg-hdr sg-sub',()=>{ S.scorecardSummary='out'; render(); scheduleSave(); }));
+  grid.appendChild(cell('OUT','sg-hdr sg-sub',()=>{ S.scorecardSummary='out'; D.ws().scorecardSummary='out'; render(); scheduleSave(); }));
   for(let i=half;i<totalHoles;i++) grid.appendChild(cell(String(i+1),'sg-hdr'+(i===ci?' sg-active':''),holeClick(i),i));
-  grid.appendChild(cell('IN','sg-hdr sg-sub',()=>{ S.scorecardSummary='in'; render(); scheduleSave(); }));
-  grid.appendChild(cell('TOT','sg-hdr sg-sub',()=>{ S.scorecardSummary='tot'; render(); scheduleSave(); }));
+  grid.appendChild(cell('IN','sg-hdr sg-sub',()=>{ S.scorecardSummary='in'; D.ws().scorecardSummary='in'; render(); scheduleSave(); }));
+  grid.appendChild(cell('TOT','sg-hdr sg-sub',()=>{ S.scorecardSummary='tot'; D.ws().scorecardSummary='tot'; render(); scheduleSave(); }));
 
   // ── Player score rows ──
   const players=(S.players&&S.players.length>0)?S.players:null;
@@ -307,8 +309,8 @@ function buildHoleNav(){
     // click: switch hole + player (no drawer)
     const clickFn=()=>{
       if(S.currentHole!==holeIdx){
-        S.currentHole=holeIdx;
-        S.scorecardSummary=null;
+        S.currentHole=holeIdx; D.ws().currentHole=holeIdx;
+        S.scorecardSummary=null; D.ws().scorecardSummary=null;
         resetAllShotIndex(holeIdx);
       }
       if(pid!==effectivePlayerId()) switchToPlayer(pid);
@@ -342,7 +344,7 @@ function buildHoleNav(){
     if(played>0){
       d.textContent=S.displayMode==='topar'?fmtDeltaDisplay(sumDelta(pid,a,b)):String(sumGross(pid,a,b));
     } else { d.textContent='·'; }
-    if(isSummary) d.onclick=()=>{ S.scorecardSummary=isSummary; render(); scheduleSave(); };
+    if(isSummary) d.onclick=()=>{ S.scorecardSummary=isSummary; D.ws().scorecardSummary=isSummary; render(); scheduleSave(); };
     return d;
   }
 
@@ -379,7 +381,7 @@ function buildHoleNav(){
       tot.textContent=String(sumGross(pid,0,totalHoles));
     } else { tot.textContent='·'; }
     tot.style.fontWeight='700';
-    tot.onclick=()=>{ S.scorecardSummary='tot'; render(); scheduleSave(); };
+    tot.onclick=()=>{ S.scorecardSummary='tot'; D.ws().scorecardSummary='tot'; render(); scheduleSave(); };
     grid.appendChild(tot);
   }
 
@@ -647,6 +649,7 @@ function ensureFocusSlots(){
     if(S.focusSlots.length>=4) S.focusSlots.shift();
     S.focusSlots.push(curPid);
   }
+  D.ws().focusSlots=S.focusSlots;
 }
 function buildFocusPlayerBtns(){
   const cont=document.getElementById('rp-player-btns');
@@ -1055,25 +1058,25 @@ function wireAll(){
   // Settings
   document.getElementById('sd-clear-bg').onclick=clearBg;
   document.getElementById('bg-opacity').oninput=e=>{
-    const v=parseInt(e.target.value)/100; S.bgOpacity=v;
+    const v=parseInt(e.target.value)/100; S.bgOpacity=v; D.ws().bgOpacity=v;
     document.getElementById('bg-opacity-val').textContent=e.target.value+'%';
     const img=document.getElementById('bg-img'); if(img.src) img.style.opacity=v;
     scheduleSave();
   };
-  document.getElementById('chk-sz').onchange=e=>{ S.safeZone=e.target.checked; redrawOnly(); scheduleSave(); };
-  document.getElementById('sz-size').onchange=e=>{ S.szSize=e.target.value; redrawOnly(); scheduleSave(); };
+  document.getElementById('chk-sz').onchange=e=>{ S.safeZone=e.target.checked; D.ws().safeZone=e.target.checked; redrawOnly(); scheduleSave(); };
+  document.getElementById('sz-size').onchange=e=>{ S.szSize=e.target.value; D.ws().szSize=e.target.value; redrawOnly(); scheduleSave(); };
 
   // Overlay opacity
   document.getElementById('overlay-opacity').oninput=e=>{
     const v=parseInt(e.target.value)/100;
-    S.overlayOpacity=v;
+    S.overlayOpacity=v; D.ws().overlayOpacity=v;
     document.getElementById('overlay-opacity-val').textContent=e.target.value+'%';
     redrawOnly(); scheduleSave();
   };
 
   // Player / course
-  const _inpPlayer=document.getElementById('inp-player'); if(_inpPlayer) _inpPlayer.oninput=e=>{ S.playerName=e.target.value||'PLAYER'; redrawOnly(); scheduleSave(); };
-  document.getElementById('inp-course').oninput=e=>{ S.courseName=e.target.value||''; scheduleSave(); };
+  const _inpPlayer=document.getElementById('inp-player'); if(_inpPlayer) _inpPlayer.oninput=e=>{ S.playerName=e.target.value||'PLAYER'; D.ws().playerName=S.playerName; redrawOnly(); scheduleSave(); };
+  document.getElementById('inp-course').oninput=e=>{ S.courseName=e.target.value||''; D.sc().course.courseName=S.courseName; scheduleSave(); };
 
   // Per-shot To Pin — data driven, no checkbox
   document.getElementById('inp-dist').oninput=e=>{
@@ -1081,12 +1084,12 @@ function wireAll(){
     setShotToPin(isNaN(val)?null:val);
   };
   // (custom status input removed)
-  document.getElementById('chk-total').onchange=e=>{ S.showTotal=e.target.checked; redrawOnly(); scheduleSave(); };
+  document.getElementById('chk-total').onchange=e=>{ S.showTotal=e.target.checked; D.ws().showTotal=e.target.checked; redrawOnly(); scheduleSave(); };
 
   // Overlays
-  document.getElementById('chk-shot').onchange=e=>{ S.showShot=e.target.checked; redrawOnly(); scheduleSave(); };
+  document.getElementById('chk-shot').onchange=e=>{ S.showShot=e.target.checked; D.ws().showShot=e.target.checked; redrawOnly(); scheduleSave(); };
   document.getElementById('chk-score').onchange=e=>{
-    S.showScore=e.target.checked;
+    S.showScore=e.target.checked; D.ws().showScore=e.target.checked;
     const sec=document.getElementById('score-range-sec');
     if(sec){ sec.style.display=''; sec.classList.toggle('show',e.target.checked); }
     redrawOnly(); scheduleSave();
@@ -1094,14 +1097,14 @@ function wireAll(){
   // show player name in scorecard (settings drawer)
   const chkPN=document.getElementById('chk-show-pname');
   if(chkPN) chkPN.onchange=e=>{
-    S.showPlayerName=e.target.checked;
+    S.showPlayerName=e.target.checked; D.ws().showPlayerName=e.target.checked;
     const nav=document.getElementById('chk-pname-nav'); if(nav) nav.checked=S.showPlayerName;
     redrawOnly(); scheduleSave();
   };
   // show player name in scorecard (nav bar shortcut)
   const chkPNnav=document.getElementById('chk-pname-nav');
   if(chkPNnav) chkPNnav.onchange=e=>{
-    S.showPlayerName=e.target.checked;
+    S.showPlayerName=e.target.checked; D.ws().showPlayerName=e.target.checked;
     const sd=document.getElementById('chk-show-pname'); if(sd) sd.checked=S.showPlayerName;
     redrawOnly(); scheduleSave();
   };
@@ -1113,10 +1116,11 @@ function wireAll(){
   if(pmInp) pmInp.addEventListener('keydown',e=>{ if(e.key==='Enter') addPlayerFromInput(); });
   // v4.5: auto-center scorecard when range changes
   document.querySelectorAll('[name=scr]').forEach(r=>r.onchange=()=>{
-    S.scoreRange=r.value;
-    S.scorecardSummary=null; // exit stat-card summary view so scoreRange takes effect
+    S.scoreRange=r.value; D.ws().scoreRange=r.value;
+    S.scorecardSummary=null; D.ws().scorecardSummary=null;
     // Auto center on range switch
     S.scorecardPos[S.ratio]={x:0.5, y:S.scorecardPos[S.ratio]?.y??0.83, centered:true};
+    D.ws().scorecardPos[S.ratio]=S.scorecardPos[S.ratio];
     redrawOnly(); scheduleSave();
   });
 
