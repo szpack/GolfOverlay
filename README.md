@@ -117,6 +117,9 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 <!-- Claude: keep this section updated. Newest on top. -->
 
+### v12.1.3 — 2026-03-08
+- 修复刷新丢数据：syncFromS增加安全网，将S.holes[].delta回写D.scores的gross，防止遗留代码路径绕过D API导致数据未持久化
+
 ### v12.1.2 — 2026-03-08
 - 修复计分卡导航区点击无法切换当前洞（v12.0.2回归bug：resetAllShotIndex中D.syncS覆盖了S.currentHole）
 

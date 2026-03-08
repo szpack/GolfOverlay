@@ -885,6 +885,30 @@ const D = (function(){
     // Course name
     _sc.course.courseName  = S.courseName || '';
     _sc.course.selectedTee = S.selectedTee || 'blue';
+
+    // ── Safety net: capture S.holes delta back to D.scores ──
+    // In v4, all mutations should go through D API, but legacy code may still
+    // write S.holes[].delta directly. This ensures those changes are not lost.
+    if(S.holes && S.holes.length){
+      var curPid = pid();
+      ensureScores(curPid);
+      var ph = _sc.scores[curPid].holes;
+      for(var i = 0; i < S.holes.length && i < ph.length; i++){
+        var sh = S.holes[i];
+        if(sh.delta !== null && sh.delta !== undefined){
+          var par = getCourseHole(i).par || 0;
+          var expectedGross = par + sh.delta;
+          if(ph[i].gross !== expectedGross){
+            ph[i].gross = expectedGross;
+            _syncStatus(ph[i]);
+            _reconcileShots(ph[i]);
+          }
+        } else if(sh.delta === null && ph[i].gross !== null){
+          // S says no score but D has one — S.delta=null could be stale view,
+          // do NOT clear D.gross here (D is the truth)
+        }
+      }
+    }
   }
 
   // ══════════════════════════════════════════
