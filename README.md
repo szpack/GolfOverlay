@@ -1,6 +1,6 @@
-# ⛳ Golf Overlay — 高尔夫赛事角标助手
+# ⛳ Golf Event Console — 高尔夫赛事管理与实时展示系统
 
-**Masters-style broadcast golf shot info overlay generator**
+**Round-centric golf event management & broadcast overlay system**
 作者 / Contact: szpack@qq.com
 
 ---
@@ -11,13 +11,25 @@
 
 ---
 
+## 产品定位 / Product Vision
+
+以球局（Round）为核心，以玩法（Gameplay）为主线，以 Overlay 为差异化展示层。
+
+### 三层架构
+- **Management Layer** — Players / Teams / Clubs / Rounds
+- **Round Workspace** — Scores / Gameplay / Shots
+- **Overlay Engine** — Leaderboard / Player Tag / Scoreboard / Match Board
+
+---
+
 ## 快速使用 / Quick Start
 
 1. 打开 `index.html`（Chrome / Safari / iPhone）
-2. 在下方控制栏依次设置：**球员姓名 → 洞号 → Par → 距离 → 击球类型**
-3. 点击 **"NEXT SHOT ▶"** 推进击球计数
-4. 本洞完成后选择成绩（Birdie / Par / Bogey …）
-5. 点击 **"Create Overlay PNG"** → 下载透明 PNG
+2. 在 Home 页创建或选择球局，进入 Overlay Center
+3. 在控制栏设置：**球员 → 洞号 → Par → 距离 → 击球类型**
+4. 点击 **"NEXT SHOT ▶"** 推进击球计数
+5. 本洞完成后选择成绩（Birdie / Par / Bogey …）
+6. 点击 **"Create Overlay PNG"** → 下载透明 PNG
 
 ---
 
@@ -67,9 +79,14 @@
 
 ## 数据存储 / Data Persistence
 
-- 所有状态通过 **localStorage** 自动保存（key: `golf_v531`）
+- 所有状态通过 **localStorage** 自动保存
+  - `golf_v4_scorecard` — 业务数据（球场快照、球员、成绩）
+  - `golf_v4_workspace` — UI 状态（当前洞、显示偏好、Canvas 布局）
+  - `golf_v5_rounds` — 多球局索引与快照
+  - `golf_v5_clubs` — 球会主数据
+  - `golf_v5_import_audits` — 导入审计日志
 - 刷新页面后自动恢复
-- 清空本轮：点击 **New…** 按钮（有确认弹窗）
+- 旧版 `golf_v531` 自动迁移到 v4 格式
 
 ---
 
@@ -86,18 +103,42 @@
 ## 项目结构 / Project Structure
 
 ```
-GolfOverlay/
-├── index.html          # 页面主入口
-├── css/overlay.css     # 全部样式
+Golf-Event-Console/
+├── index.html              # App Shell + Overlay Center（HTML 骨架）
+├── css/
+│   ├── overlay.css         # Overlay Center 样式
+│   └── shell.css           # App Shell 样式（Sidebar / Workspace / BottomNav）
+├── data/
+│   └── courses.json        # 球场数据库（静态 JSON）
 ├── js/
-│   ├── scoreboard.js   # 计分卡逻辑
-│   ├── ui.js           # 界面操作
-│   └── app.js          # 应用核心 & Canvas 渲染
-├── assets/icons/       # 图标资源（备用）
-├── bkimg.jpeg          # 默认背景图
-├── archive/            # 历史版本存档
-├── docs/               # 设计文档
-└── CLAUDE.md           # AI 开发说明
+│   ├── data.js             # v4.0 统一数据访问层（D API）
+│   ├── round.js            # Round 数据模型（纯函数）
+│   ├── courseDatabase.js    # 球场数据管理层
+│   ├── scoreboard.js       # 计分卡逻辑
+│   ├── ui.js               # 界面操作
+│   ├── roundManager.js     # Round 状态管理
+│   ├── coursePicker.js     # 球场选择器 UI
+│   ├── clubStore.js        # Club 球会主数据 CRUD
+│   ├── sessionIO.js        # 球局 JSON 导入导出
+│   ├── import/             # GolfLive 成绩导入模块
+│   │   ├── importTypes.js
+│   │   ├── fileSniffer.js
+│   │   ├── golfliveParser.js
+│   │   ├── roundBuilder.js
+│   │   └── importController.js
+│   ├── shell/              # App Shell 框架
+│   │   ├── router.js
+│   │   ├── shell.js
+│   │   ├── homePage.js
+│   │   ├── roundsPage.js
+│   │   ├── coursesPage.js
+│   │   ├── courseDetailPage.js
+│   │   ├── courseStructureEditor.js
+│   │   └── courseImportPage.js
+│   └── app.js              # 应用核心（Overlay Center 逻辑）
+├── assets/icons/           # 图标资源
+├── docs/                   # 设计文档
+└── CLAUDE.md               # AI 开发说明
 ```
 
 ---
@@ -106,14 +147,35 @@ GolfOverlay/
 
 ```
 No build step · No external dependencies · Vanilla JS + Canvas
-├── scoreboard.js  — 成绩计算、颜色映射、Canvas 计分卡绘制
-├── ui.js          — DOM 操作、事件绑定、面板刷新
-└── app.js         — 全局状态 S{}、持久化、Canvas 引擎、导出
+
+数据层
+├── data.js         — D API：统一数据访问，scorecardData / workspaceState 分离
+├── round.js        — Round 数据模型，纯函数，双向转换 D.sc() ↔ Round
+└── clubStore.js    — Club 球会 CRUD + localStorage 持久化
+
+业务层
+├── scoreboard.js   — 成绩计算、颜色映射、Canvas 计分卡绘制
+├── ui.js           — DOM 操作、事件绑定、面板刷新
+├── roundManager.js — Round 状态管理
+└── import/         — GolfLive Excel 导入（4 层分离）
+
+展示层
+├── app.js          — 全局状态 S{}、Canvas 引擎、PNG 导出
+└── shell/          — App Shell SPA（Sidebar + Workspace + 路由）
 ```
 
 ---
 
 ## Changelog
+
+### v19.4.2 — 2026-03-09
+- 修复 Club Detail 页面空白：`_esc()` 收到数字类型的 `source_ref` 时崩溃（GolfLive 导入的球场 source_ref 为数字）
+- 统一所有模块的 `_esc()` 函数为类型安全版本，防止非字符串输入导致 `.replace()` 报错
+
+### v19.4.1 — 2026-03-09
+- README 更新：项目名称改为 Golf Event Console，项目结构与架构描述同步至当前状态
+- 数据存储说明更新至 v4/v5 多 key 体系，补充 clubs/rounds/import_audits 等 key
+- 新增三层产品定位说明（Management / Round Workspace / Overlay Engine）
 
 ### v19.4.0 — 2026-03-09
 - Import Diff：导入预览表格新增 Nines / Layouts / Match / Action 列

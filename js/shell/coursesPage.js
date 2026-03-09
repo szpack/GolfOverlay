@@ -349,7 +349,7 @@ const CoursesPage = (function(){
   // ══════════════════════════════════════════
 
   function _esc(s){
-    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   function _fmtDate(iso){

@@ -235,7 +235,7 @@ const RoundsPage = (function(){
   // ══════════════════════════════════════════
 
   function _esc(s){
-    return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
   }
 
   return {
