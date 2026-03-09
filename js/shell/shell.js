@@ -291,6 +291,26 @@ const Shell = (function(){
     Router.navigate('/new-round');
   }
 
+  /**
+   * Direct page switch to New Round — bypasses Router entirely.
+   * Used by sidebar button as fallback when hash routing fails.
+   */
+  function showNewRound(){
+    _hideAllPages();
+    var el = document.getElementById('page-new-round');
+    if(el){
+      el.classList.remove('page-hidden');
+      el.classList.add('page-active');
+    }
+    NewRoundPage.render();
+    _updateWorkspaceHeader('newRound');
+    _leaveOverlayCenter();
+    _currentPage = 'newRound';
+    // highlight rounds nav
+    _updateNavHighlight('newRound');
+    if(window.innerWidth <= 768) closeSidebar();
+  }
+
   function importRound(){
     enterOverlay();
     setTimeout(function(){
@@ -526,6 +546,7 @@ const Shell = (function(){
     init: init,
     enterOverlay: enterOverlay,
     newRound: newRound,
+    showNewRound: showNewRound,
     importRound: importRound,
     currentPage: currentPage,
     toggleSidebar: toggleSidebar,

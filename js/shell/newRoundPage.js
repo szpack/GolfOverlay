@@ -21,7 +21,8 @@ const NewRoundPage = (function(){
 
   function render(){
     var el = document.getElementById('page-new-round-content');
-    if(!el) return;
+    if(!el){ console.error('[NewRoundPage] #page-new-round-content not found'); return; }
+    try {
 
     var html = '';
 
@@ -47,6 +48,7 @@ const NewRoundPage = (function(){
 
     // Wire events after render
     _wireEvents();
+    } catch(e){ console.error('[NewRoundPage] render error:', e); el.innerHTML = '<div style="padding:24px;color:red">Render error: ' + e.message + '</div>'; }
   }
 
   // ══════════════════════════════════════════

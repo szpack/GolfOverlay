@@ -11,8 +11,9 @@ const HomePage = (function(){
 
   function render(){
     var el = document.getElementById('page-home-content');
-    if(!el) return;
+    if(!el){ console.error('[HomePage] #page-home-content not found'); return; }
 
+    try {
     var active = _h().getActiveSummary();
     var recent = _h().getStoredRounds(5);
 
@@ -26,7 +27,7 @@ const HomePage = (function(){
     } else {
       html += '<div class="sh-empty-state sh-empty-compact">';
       html += '<div class="sh-empty-text">No active round</div>';
-      html += '<button class="sh-btn-primary" onclick="Shell.newRound()">New Round</button>';
+      html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">New Round</button>';
       html += '</div>';
     }
     html += '</div>';
@@ -45,7 +46,7 @@ const HomePage = (function(){
     html += '<div class="sh-section">';
     html += '<h2 class="sh-section-title">Quick Actions</h2>';
     html += '<div class="sh-actions">';
-    html += '<button class="sh-action-btn" onclick="Shell.newRound()">';
+    html += '<button class="sh-action-btn" onclick="Shell.showNewRound()">';
     html += '<span class="sh-action-icon">&#10133;</span><span>New Round</span></button>';
     html += '<button class="sh-action-btn" onclick="Shell.importRound()">';
     html += '<span class="sh-action-icon">&#128229;</span><span>Import</span></button>';
@@ -65,6 +66,7 @@ const HomePage = (function(){
     html += '</div>';
 
     el.innerHTML = html;
+    } catch(e){ console.error('[HomePage] render error:', e); el.innerHTML = '<div style="padding:24px;color:red">Render error: ' + e.message + '</div>'; }
   }
 
   // ── Hero card (current round) ──

@@ -45,7 +45,7 @@ const RoundsPage = (function(){
     if(all.length > 0){
       html += '<input type="text" class="sh-search-input" id="rounds-search" placeholder="Search..." value="' + _esc(_searchTerm) + '" oninput="RoundsPage.onSearch(this.value)">';
     }
-    html += '<button class="sh-btn-primary" onclick="Shell.newRound()">+ New Round</button>';
+    html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">+ New Round</button>';
     html += '</div>';
     html += '</div>';
 
@@ -53,7 +53,7 @@ const RoundsPage = (function(){
       html += '<div class="sh-empty-state">';
       html += '<div class="sh-empty-icon">&#9971;</div>';
       html += '<div class="sh-empty-text">No rounds yet</div>';
-      html += '<button class="sh-btn-primary" onclick="Shell.newRound()">Create your first round</button>';
+      html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">Create your first round</button>';
       html += '</div>';
       el.innerHTML = html;
       return;

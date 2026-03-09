@@ -311,6 +311,14 @@ body {
   font-weight: 600;
 }
 
+.sb-new-round {
+  color: var(--accent-green, #22c55e);
+}
+.sb-new-round:hover {
+  background: rgba(34,197,94,0.1);
+  color: var(--accent-green, #22c55e);
+}
+
 /* ── Icons ── */
 .sb-icon {
   font-size: 20px;

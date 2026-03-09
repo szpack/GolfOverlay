@@ -168,8 +168,13 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 ## Changelog
 
+### v20.1.2 — 2026-03-09
+- **New Round 入口重构**：左侧导航栏新增 ➕ New Round 按钮（绿色醒目），绕过 Router 直接切页面
+- 所有 New Round 入口（Sidebar / Home / Rounds 页）统一走 `Shell.showNewRound()` 直接切换
+
 ### v20.1.1 — 2026-03-09
-- **修复**：Overlay Center 右侧 "New…" 按钮仍调用旧弹窗 `openNewRound()`，改为 `Shell.newRound()` 走新页面流程
+- **修复**：所有 script/css 资源版本号从 `19.4.0` 更新到 `20.1.1`，解决浏览器缓存导致 v20 新代码不生效的问题
+- 恢复 Overlay Center 右侧 "New…" 按钮（保留旧弹窗功能不变）
 
 ### v20.1.0 — 2026-03-09
 - **输入验证**：`createNewRound()` 新增 `validateInput()` 前置验证，返回结构化错误数组
