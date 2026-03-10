@@ -3,12 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Golf Event Console v21.8.0</title>
+<title>GolfHub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/overlay.css?v=21.8.0">
-<link rel="stylesheet" href="./css/shell.css?v=21.8.0">
+<link rel="stylesheet" href="./css/overlay.css?v=23.5.4">
+<link rel="stylesheet" href="./css/shell.css?v=23.5.4">
+<style id="shell-cloak">#app-shell{opacity:0}</style>
+<script>
+/* Early theme restore — prevent dark flash on light-mode users */
+(function(){
+  try {
+    var ws = JSON.parse(localStorage.getItem('golf_v4_workspace'));
+    if(ws && ws.uiTheme){
+      var mode = ws.uiTheme;
+      var prefer = mode === 'auto'
+        ? (window.matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark')
+        : mode;
+      if(prefer === 'light') document.documentElement.classList.add('light');
+    }
+  } catch(e){}
+})();
+</script>
 <script>
 /* Narrow-screen detection: use screen.width (physical device pixels)
    — immune to Safari "Request Desktop Website" which inflates viewport to ~980px */
@@ -32,38 +48,43 @@
 
 <!-- Sidebar -->
 <nav id="app-sidebar">
-  <!-- Brand + Collapse toggle -->
+  <!-- Brand + Toggle -->
   <div class="sb-header">
     <div class="sb-brand" onclick="Router.navigate('/')">
-      <img src="gologo.png" alt="Golf Event Console" class="sb-logo">
-      <span class="sb-brand-text">Golf Event Console</span>
+      <img src="gologo.png" alt="GolfHub" class="sb-logo">
+      <span class="sb-brand-text">GolfHub</span>
     </div>
-    <button class="sb-toggle" id="sb-toggle" onclick="Shell.toggleSidebar()" title="Toggle sidebar">
+    <button id="sb-toggle" class="sb-toggle-btn" onclick="Shell.toggleSidebar()" data-tooltip="Toggle sidebar">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="1.5" x2="6" y2="14.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
+  </div>
+
+  <!-- New Button -->
+  <div class="sb-new-wrap">
+    <button class="sb-new-btn" id="sb-new-btn" onclick="Shell.showNewRound()" data-tooltip="New">
+      <span class="sb-new-icon">&#43;</span><span class="sb-new-label">New</span>
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="sb-search-wrap">
+    <button class="sb-search-btn" id="sb-search-btn" onclick="Shell.openSearch()" data-tooltip="Search">
+      <svg class="sb-search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><line x1="11" y1="11" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="sb-label">Search</span>
     </button>
   </div>
 
   <!-- Scrollable body -->
   <div class="sb-body">
-    <!-- Main -->
-    <div class="sb-section-label"><span class="sb-label" data-i18n="sbMain">Main</span></div>
-    <button class="sb-item" data-route="home" data-tooltip="Console">
-      <span class="sb-icon">&#127968;</span><span class="sb-label">Console</span>
+    <!-- Core modules -->
+    <button class="sb-item" data-route="home" data-tooltip="Home">
+      <span class="sb-icon">&#127968;</span><span class="sb-label">Home</span>
+    </button>
+    <button class="sb-item" data-route="teetimes" data-tooltip="TeeTimes">
+      <span class="sb-icon">&#128339;</span><span class="sb-label">TeeTimes</span>
     </button>
     <button class="sb-item" data-route="rounds" data-tooltip="Rounds">
       <span class="sb-icon">&#9971;</span><span class="sb-label">Rounds</span>
-    </button>
-    <button class="sb-item sb-new-round" onclick="Shell.showNewRound()" data-tooltip="New Round">
-      <span class="sb-icon">&#10133;</span><span class="sb-label">New Round</span>
-    </button>
-
-    <!-- Management -->
-    <div class="sb-section-label"><span class="sb-label" data-i18n="sbManagement">Management</span></div>
-    <button class="sb-item" data-route="courses" data-tooltip="Courses">
-      <span class="sb-icon">&#127963;</span><span class="sb-label">Courses</span>
-    </button>
-    <button class="sb-item" data-route="players" data-tooltip="Players">
-      <span class="sb-icon">&#128100;</span><span class="sb-label">Players</span>
     </button>
     <button class="sb-item" data-route="buddies" data-tooltip="Buddies">
       <span class="sb-icon">&#129309;</span><span class="sb-label">Buddies</span>
@@ -74,35 +95,44 @@
     <button class="sb-item" data-route="clubs" data-tooltip="Clubs">
       <span class="sb-icon">&#127948;</span><span class="sb-label">Clubs</span>
     </button>
+    <button class="sb-item" data-route="broadcast" data-tooltip="Broadcast">
+      <span class="sb-icon">&#128225;</span><span class="sb-label">Broadcast</span>
+    </button>
+
+    <!-- Recent -->
+    <div class="sb-section-label"><span class="sb-label" data-i18n="sbRecent">Recent</span></div>
+    <div id="sb-live-recent"></div>
+
+    <!-- System -->
+    <div class="sb-section-label"><span class="sb-label" data-i18n="sbSystem">System</span></div>
     <button class="sb-item" data-route="settings" data-tooltip="Settings">
       <span class="sb-icon">&#9881;</span><span class="sb-label">Settings</span>
     </button>
-
-    <!-- Workspace -->
-    <div class="sb-section-label"><span class="sb-label" data-i18n="sbWorkspace">Workspace</span></div>
-    <button class="sb-action" data-tooltip="Overlay Center" data-route="round" onclick="Shell.enterOverlay()">
-      <span class="sb-icon">&#127909;</span><span class="sb-label">Overlay Center</span>
+    <button class="sb-item" data-route="courses" data-tooltip="Course Management">
+      <span class="sb-icon">&#127963;</span><span class="sb-label">Course Management</span>
     </button>
-
-    <!-- Recent (dynamic, rendered by Shell.js) -->
-    <div class="sb-section-label"><span class="sb-label" data-i18n="sbRecent">Recent</span></div>
-    <div id="sb-live-recent"></div>
   </div>
 
-  <!-- Footer -->
+  <!-- Footer: Account row (avatar left, lang right) + Version -->
   <div class="sb-footer">
-    <div class="sb-divider"></div>
-    <div id="sidebar-register-entry">
-      <button class="sb-item sb-tool sb-register-btn" onclick="Router.navigate('/register')" data-tooltip="Register">
-        <span class="sb-icon">&#10133;</span><span class="sb-label">Create Account</span>
+    <div class="sb-footer-account">
+      <button id="sb-avatar-btn" class="sb-footer-btn sb-avatar-btn" onclick="Shell.goAuth()" data-tooltip="Account">
+        <span class="sb-icon" id="sb-avatar-text">&#128100;</span>
+        <span class="sb-label" id="sb-avatar-label">Sign in</span>
       </button>
+      <div id="sb-lang-wrap" class="sb-lang-wrap">
+        <button id="sb-lang-btn" class="sb-lang-toggle" onclick="Shell.toggleLangMenu()" data-tooltip="Language">
+          <span id="sb-lang-label">EN</span>
+        </button>
+        <div id="sb-lang-menu" class="sb-lang-menu">
+          <button onclick="Shell.setLang('en')">English</button>
+          <button onclick="Shell.setLang('zh')">中文</button>
+          <button onclick="Shell.setLang('ja')">日本語</button>
+          <button onclick="Shell.setLang('ko')">한국어</button>
+        </div>
+      </div>
     </div>
-    <div id="sidebar-auth-entry">
-      <button class="sb-item sb-tool" id="sidebar-btn-auth" onclick="Shell.goAuth()" data-tooltip="Account">
-        <span class="sb-icon" id="sidebar-auth-icon">&#128100;</span><span class="sb-label" id="sidebar-auth-label">Sign In</span>
-      </button>
-    </div>
-    <div class="sb-version"><span class="sb-label">v21.8.0</span></div>
+    <div class="sb-version"><span class="sb-label">v23.5.5</span></div>
   </div>
 </nav>
 
@@ -112,16 +142,18 @@
 <!-- Workspace -->
 <div id="app-workspace">
 
-<!-- Workspace Header (hidden for Overlay Center) -->
-<div id="workspace-header">
-  <button id="ws-menu-btn" class="ws-menu-btn" onclick="Shell.openSidebar()">&#9776;</button>
-  <h1 id="workspace-title">Console</h1>
-</div>
+<!-- Workspace mobile menu button (visible on mobile only) -->
+<button id="ws-menu-btn" class="ws-menu-btn" onclick="Shell.openSidebar()">&#9776;</button>
 
 <!-- Page Container -->
 <div id="app-content">
 
-<!-- ── Page: Home ── -->
+<!-- ── Landing Page (logged-out) ── -->
+<div id="page-landing" class="app-page page-hidden">
+  <div id="landing-content"></div>
+</div>
+
+<!-- ── Page: Home (Dashboard) ── -->
 <div id="page-home" class="app-page page-hidden">
   <div class="sh-page-container" id="page-home-content"></div>
 </div>
@@ -131,13 +163,13 @@
   <div class="sh-page-container" id="page-rounds-content"></div>
 </div>
 
-<!-- ── Page: Players (placeholder) ── -->
-<div id="page-players" class="app-page page-hidden">
+<!-- ── Page: TeeTimes (placeholder) ── -->
+<div id="page-teetimes" class="app-page page-hidden">
   <div class="sh-page-container">
     <div class="sh-placeholder">
-      <div class="sh-placeholder-icon">&#128100;</div>
-      <div class="sh-placeholder-title">Players</div>
-      <div class="sh-placeholder-text">Player management coming soon.</div>
+      <div class="sh-placeholder-icon">&#128339;</div>
+      <div class="sh-placeholder-title" data-i18n="sbTeeTimes">TeeTimes</div>
+      <div class="sh-placeholder-text" data-i18n="teetimesPlaceholder">Find and book tee times across clubs. Coming soon.</div>
     </div>
   </div>
 </div>
@@ -216,9 +248,9 @@
 
 <!-- HEADER -->
 <div id="hdr">
-  <img src="gologo.png" alt="Golf Overlay" class="logo-img">
-  <div class="logo" id="logo-text">GOLF <span>OVERLAY</span></div>
-  <span class="logo-meta">v21.8.0<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
+  <img src="gologo.png" alt="GolfHub" class="logo-img">
+  <div class="logo" id="logo-text">Golf<span>Hub</span> <span class="logo-sub">Broadcast</span></div>
+  <span class="logo-meta">v23.5.5<br><span id="logo-author" style="font-size:8px;color:var(--t3);letter-spacing:0">szpack@qq.com</span></span>
   <span style="flex:1"></span>
   <div id="lang-wrap">
     <button id="btn-lang" onclick="toggleLangMenu()">🇺🇸 EN</button>
@@ -232,7 +264,7 @@
   </div>
   <button id="btn-skin-narrow" class="narrow-only" onclick="openSettings()">Skin</button>
   <button id="btn-settings" onclick="openSettings()"><span>⚙️</span><span id="settings-lbl"> Settings</span></button>
-  <button id="btn-new" onclick="openNewRound()">New…</button>
+  <!-- btn-new removed: New Round now via sidebar -->
 </div>
 
 <!-- MAIN -->
@@ -699,41 +731,9 @@
   </div>
 </div>
 
-<!-- NEW ROUND MODAL -->
-<div id="newround-modal">
-  <div class="modal-box">
-    <h3 id="nr-title">🏌️ New Round</h3>
-    <div class="opt-row"><input type="checkbox" id="m-scores" checked><label for="m-scores" id="nr-clear-scores">Clear this round's scores</label></div>
-    <div class="opt-row"><input type="checkbox" id="m-pars"><label for="m-pars" id="nr-reset-pars">Reset course Par to 4 (all holes)</label></div>
-    <div class="modal-actions">
-      <button class="mbtn" onclick="closeNewRound()" id="nr-cancel">Cancel</button>
-      <button class="mbtn prim" onclick="doNewRound()" id="nr-confirm">Confirm</button>
-    </div>
-  </div>
-</div>
+<!-- newround-modal removed: New Round now via Shell page #/new-round -->
 
-<!-- COURSE PICKER MODAL -->
-<div id="cp-bg" onclick="closeCoursePicker()"></div>
-<div id="cp-modal">
-  <div id="cp-header">
-    <h3 id="cp-title">选择本轮球场</h3>
-    <button id="cp-close" onclick="closeCoursePicker()">×</button>
-  </div>
-  <div id="cp-body">
-    <div id="cp-col-club">
-      <div class="cp-col-title" id="cp-club-title">俱乐部 / Club</div>
-      <div id="cp-club-list"></div>
-    </div>
-    <div id="cp-col-step2">
-      <div id="cp-routing-placeholder" class="cp-placeholder">← 请先选择俱乐部</div>
-      <div id="cp-step2"></div>
-    </div>
-  </div>
-  <div id="cp-footer">
-    <button id="cp-cancel" onclick="closeCoursePicker()">Cancel</button>
-    <button id="cp-confirm" onclick="confirmCoursePicker()" disabled>OK</button>
-  </div>
-</div>
+<!-- Old course picker modal removed — now via Shell CoursePicker -->
 
 <div id="mini-toast"></div>
 
@@ -761,17 +761,17 @@
 <nav id="app-bottomnav">
   <button class="bn-item" data-route="home">
     <span class="bn-icon">&#127968;</span>
-    <span>Console</span>
+    <span>Home</span>
   </button>
   <button class="bn-item" data-route="rounds">
     <span class="bn-icon">&#9971;</span>
     <span>Rounds</span>
   </button>
-  <button class="bn-item" data-route="round">
-    <span class="bn-icon">&#127909;</span>
-    <span>Overlay</span>
+  <button class="bn-item" data-route="broadcast">
+    <span class="bn-icon">&#128225;</span>
+    <span>Broadcast</span>
   </button>
-  <button class="bn-item" data-route="home">
+  <button class="bn-item bn-more" onclick="Shell.openSidebar()">
     <span class="bn-icon">&#8943;</span>
     <span>More</span>
   </button>
@@ -781,44 +781,44 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="./js/data.js?v=21.8.0"></script>
-<script src="./js/roundTypes.js?v=21.8.0"></script>
-<script src="./js/round.js?v=21.8.0"></script>
-<script src="./js/courseDatabase.js?v=21.8.0"></script>
-<script src="./js/scoreboard.js?v=21.8.0"></script>
-<script src="./js/ui.js?v=21.8.0"></script>
-<script src="./js/roundManager.js?v=21.8.0"></script>
-<script src="./js/coursePicker.js?v=21.8.0"></script>
-<script src="./js/sessionIO.js?v=21.8.0"></script>
-<script src="./js/import/importTypes.js?v=21.8.0"></script>
-<script src="./js/import/fileSniffer.js?v=21.8.0"></script>
-<script src="./js/import/golfliveParser.js?v=21.8.0"></script>
-<script src="./js/import/roundBuilder.js?v=21.8.0"></script>
-<script src="./js/import/importController.js?v=21.8.0"></script>
-<script src="./js/clubStore.js?v=21.8.0"></script>
-<script src="./js/newRoundService.js?v=21.8.0"></script>
-<script src="./js/app.js?v=21.8.0"></script>
+<script src="./js/data.js?v=23.5.4"></script>
+<script src="./js/roundTypes.js?v=23.5.4"></script>
+<script src="./js/round.js?v=23.5.4"></script>
+<script src="./js/courseDatabase.js?v=23.5.4"></script>
+<script src="./js/scoreboard.js?v=23.5.4"></script>
+<script src="./js/ui.js?v=23.5.4"></script>
+<script src="./js/roundManager.js?v=23.5.4"></script>
+<!-- removed: old coursePicker.js replaced by shell/pickers/coursePicker.js -->
+<script src="./js/sessionIO.js?v=23.5.4"></script>
+<script src="./js/import/importTypes.js?v=23.5.4"></script>
+<script src="./js/import/fileSniffer.js?v=23.5.4"></script>
+<script src="./js/import/golfliveParser.js?v=23.5.4"></script>
+<script src="./js/import/roundBuilder.js?v=23.5.4"></script>
+<script src="./js/import/importController.js?v=23.5.4"></script>
+<script src="./js/clubStore.js?v=23.5.4"></script>
+<script src="./js/newRoundService.js?v=23.5.4"></script>
+<script src="./js/app.js?v=23.5.4"></script>
 <!-- Cloud layer (before shell) -->
-<script src="./js/cloud/apiClient.js?v=21.8.0"></script>
-<script src="./js/cloud/authState.js?v=21.8.0"></script>
+<script src="./js/cloud/apiClient.js?v=23.5.4"></script>
+<script src="./js/cloud/authState.js?v=23.5.4"></script>
 <!-- App Shell (loaded after app.js, existing init() already ran) -->
-<script src="./js/shell/router.js?v=21.8.0"></script>
-<script src="./js/shell/roundHelper.js?v=21.8.0"></script>
-<script src="./js/shell/homePage.js?v=21.8.0"></script>
-<script src="./js/shell/roundsPage.js?v=21.8.0"></script>
-<script src="./js/shell/coursesPage.js?v=21.8.0"></script>
-<script src="./js/shell/courseDetailPage.js?v=21.8.0"></script>
-<script src="./js/shell/courseStructureEditor.js?v=21.8.0"></script>
-<script src="./js/shell/courseImportPage.js?v=21.8.0"></script>
+<script src="./js/shell/router.js?v=23.5.4"></script>
+<script src="./js/shell/roundHelper.js?v=23.5.4"></script>
+<script src="./js/shell/homePage.js?v=23.5.4"></script>
+<script src="./js/shell/roundsPage.js?v=23.5.4"></script>
+<script src="./js/shell/coursesPage.js?v=23.5.4"></script>
+<script src="./js/shell/courseDetailPage.js?v=23.5.4"></script>
+<script src="./js/shell/courseStructureEditor.js?v=23.5.4"></script>
+<script src="./js/shell/courseImportPage.js?v=23.5.4"></script>
 <script src="./js/shell/pickers/summaryHelpers.js?v=21.11.0"></script>
 <script src="./js/shell/newRoundPage.js?v=21.11.0"></script>
 <script src="./js/shell/pickers/coursePicker.js?v=21.11.0"></script>
 <script src="./js/shell/pickers/buddyPicker.js?v=21.11.0"></script>
 <script src="./js/shell/pickers/teeTimePicker.js?v=21.11.0"></script>
 <script src="./js/shell/pickers/visibilityPicker.js?v=21.11.0"></script>
-<script src="./js/shell/buddiesPage.js?v=21.8.0"></script>
-<script src="./js/shell/authPage.js?v=21.8.0"></script>
-<script src="./js/shell/profilePage.js?v=21.8.0"></script>
-<script src="./js/shell/shell.js?v=21.8.0"></script>
+<script src="./js/shell/buddiesPage.js?v=23.5.4"></script>
+<script src="./js/shell/authPage.js?v=23.5.4"></script>
+<script src="./js/shell/profilePage.js?v=23.5.4"></script>
+<script src="./js/shell/shell.js?v=23.5.4"></script>
 </body>
 </html>

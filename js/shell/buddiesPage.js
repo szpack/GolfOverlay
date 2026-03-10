@@ -212,7 +212,7 @@ const BuddiesPage = (function(){
   }
 
   function _showModal(buddy){
-    var isEdit = !!buddy;
+    var isEdit = !!buddy && !!buddy.id;
     var title = isEdit ? T('editBuddyTitle') : T('addBuddyTitle');
 
     var overlay = document.createElement('div');
@@ -227,124 +227,120 @@ const BuddiesPage = (function(){
       + '</div>'
       + '<div class="bd-modal-body">';
 
-    // User search section (for linking to registered user)
-    if(!isEdit || !_linkedUserId){
-      html += '<div class="bd-user-search">';
-      html += '<label class="bd-form-label">' + T('searchUserPh');
-      html += '<input type="text" id="bd-f-user-search" class="bd-form-input" placeholder="' + T('searchUserPh') + '" oninput="BuddiesPage.onUserSearch(this.value)">';
-      html += '</label>';
-      html += '<div id="bd-user-results"></div>';
+    if(!isEdit){
+      // ── Add mode: Golf ID search ──
+      html += '<div class="bd-golfid-search">';
+      html += '<label class="bd-form-label">Golf ID</label>';
+      html += '<div class="bd-search-row">';
+      html += '<input type="text" id="bd-f-golfid" class="bd-form-input bd-golfid-input" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*">';
+      html += '<button class="sh-btn-primary bd-search-btn" onclick="BuddiesPage.searchGolfId()">' + T('searchBtn') + '</button>';
       html += '</div>';
-      html += '<div class="bd-modal-divider">— or —</div>';
-    }
+      html += '<div id="bd-golfid-result"></div>';
+      html += '</div>';
 
-    // Linked user indicator
-    if(_linkedUserId){
-      html += '<div class="bd-linked-indicator">'
-        + '<span>&#128279; ' + T('linkedUserLbl') + ': <strong>' + _esc(_linkedUserName || _linkedUserId.substring(0,8)) + '</strong></span>'
-        + '<button class="bd-clear-link" onclick="BuddiesPage.clearLink()">' + T('clearLinkBtn') + '</button>'
-        + '</div>';
-    }
+      html += '<div class="bd-modal-divider">— ' + T('orLbl') + ' —</div>';
 
-    html += '<label class="bd-form-label">' + T('nameLbl') + '<input type="text" id="bd-f-name" class="bd-form-input" maxlength="50" value="' + _esc(buddy ? buddy.displayName : '') + '"' + (_linkedUserId ? ' readonly' : '') + '></label>';
-    html += '<label class="bd-form-label">' + T('handicapLbl') + '<input type="number" id="bd-f-hcp" class="bd-form-input" step="0.1" min="-10" max="54" value="' + (buddy && buddy.handicap != null ? buddy.handicap : '') + '"></label>';
-    html += '<label class="bd-form-label">' + T('notesLbl') + '<textarea id="bd-f-notes" class="bd-form-textarea" rows="3" maxlength="500">' + _esc(buddy ? buddy.notes || '' : '') + '</textarea></label>';
-    html += '</div>';
-
-    html += '<div class="bd-modal-footer">';
-    if(isEdit){
+      // Manual add fallback
+      html += '<label class="bd-form-label">' + T('nameLbl') + '<input type="text" id="bd-f-name" class="bd-form-input" maxlength="50"></label>';
+      html += '<label class="bd-form-label">' + T('handicapLbl') + '<input type="number" id="bd-f-hcp" class="bd-form-input" step="0.1" min="-10" max="54"></label>';
+      html += '<label class="bd-form-label">' + T('notesLbl') + '<textarea id="bd-f-notes" class="bd-form-textarea" rows="3" maxlength="500"></textarea></label>';
+      html += '<div class="bd-modal-footer">';
+      html += '<button class="sh-btn-primary" onclick="BuddiesPage.saveBuddy(\'\')">' + T('addLbl') + '</button>';
+      html += '</div>';
+    } else {
+      // ── Edit mode ──
+      if(_linkedUserId){
+        html += '<div class="bd-linked-indicator">'
+          + '<span>&#128279; ' + T('linkedUserLbl') + ': <strong>' + _esc(_linkedUserName || '') + '</strong></span>'
+          + '</div>';
+      }
+      html += '<label class="bd-form-label">' + T('nameLbl') + '<input type="text" id="bd-f-name" class="bd-form-input" maxlength="50" value="' + _esc(buddy.displayName || '') + '"' + (_linkedUserId ? ' readonly' : '') + '></label>';
+      html += '<label class="bd-form-label">' + T('handicapLbl') + '<input type="number" id="bd-f-hcp" class="bd-form-input" step="0.1" min="-10" max="54" value="' + (buddy.handicap != null ? buddy.handicap : '') + '"></label>';
+      html += '<label class="bd-form-label">' + T('notesLbl') + '<textarea id="bd-f-notes" class="bd-form-textarea" rows="3" maxlength="500">' + _esc(buddy.notes || '') + '</textarea></label>';
+      html += '<div class="bd-modal-footer">';
       html += '<button class="sh-btn-danger-sm" onclick="BuddiesPage.deleteBuddy(\'' + buddy.id + '\')">' + T('deleteLbl') + '</button>';
+      html += '<button class="sh-btn-primary" onclick="BuddiesPage.saveBuddy(\'' + buddy.id + '\')">' + T('saveLbl') + '</button>';
+      html += '</div>';
     }
-    html += '<button class="sh-btn-primary" onclick="BuddiesPage.saveBuddy(\'' + (buddy ? buddy.id : '') + '\')">' + (isEdit ? T('saveLbl') : T('addLbl')) + '</button>';
+
     html += '</div></div>';
 
     overlay.innerHTML = html;
     document.body.appendChild(overlay);
     setTimeout(function(){
-      var inp = _linkedUserId ? document.getElementById('bd-f-hcp') : document.getElementById('bd-f-user-search') || document.getElementById('bd-f-name');
+      var inp = document.getElementById('bd-f-golfid') || document.getElementById('bd-f-name');
       if(inp) inp.focus();
     }, 100);
   }
 
-  // ── User search in modal ──
+  // ── Golf ID search + follow ──
 
-  function onUserSearch(val){
-    clearTimeout(_userSearchTimer);
-    val = (val || '').trim();
-    if(val.length < 2){
-      _userSearchResults = [];
-      _renderUserResults();
+  async function searchGolfId(){
+    var inp = document.getElementById('bd-f-golfid');
+    var el = document.getElementById('bd-golfid-result');
+    if(!inp || !el) return;
+
+    var golfId = (inp.value || '').trim();
+    if(!/^\d{6}$/.test(golfId)){
+      el.innerHTML = '<div class="bd-golfid-error">' + T('invalidGolfId') + '</div>';
       return;
     }
-    _userSearchTimer = setTimeout(async function(){
-      try {
-        var res = await ApiClient.get('/api/v1/users/search?q=' + encodeURIComponent(val));
-        if(res.ok){
-          var data = await ApiClient.json(res);
-          _userSearchResults = (data && data.users) || [];
-        } else {
-          _userSearchResults = [];
-        }
-      } catch(e){
-        _userSearchResults = [];
-      }
-      _renderUserResults();
-    }, 300);
-  }
 
-  function _renderUserResults(){
-    var el = document.getElementById('bd-user-results');
-    if(!el) return;
-    if(_userSearchResults.length === 0){
-      el.innerHTML = '';
-      return;
-    }
-    var html = '<div class="bd-user-list">';
-    for(var i = 0; i < _userSearchResults.length; i++){
-      var u = _userSearchResults[i];
-      var shortId = u.id.substring(0, 8);
-      html += '<div class="bd-user-item" onclick="BuddiesPage.selectUser(' + i + ')">';
-      if(u.avatarUrl){
-        html += '<img class="bd-user-avatar" src="' + _esc(u.avatarUrl) + '" alt="">';
-      } else {
-        html += '<div class="bd-user-avatar-letter">' + _esc((u.displayName || '?').charAt(0).toUpperCase()) + '</div>';
+    el.innerHTML = '<div class="bd-golfid-loading">' + T('searchingLbl') + '</div>';
+
+    try {
+      var res = await ApiClient.post('/api/v1/users/resolve', { type: 'golf_id', value: golfId });
+      var data = await ApiClient.json(res);
+      if(!res.ok){
+        var msg = (data && data.error === 'self_lookup') ? T('cannotAddSelf')
+                : (data && data.error === 'user_not_found') ? T('userNotFound')
+                : T('userNotFound');
+        el.innerHTML = '<div class="bd-golfid-error">' + msg + '</div>';
+        return;
       }
+      var u = data.data;
+      if(!u){
+        el.innerHTML = '<div class="bd-golfid-error">' + T('userNotFound') + '</div>';
+        return;
+      }
+
+      var html = '<div class="bd-golfid-found">';
+      html += '<div class="bd-user-avatar-letter">' + _esc((u.displayName || '?').charAt(0).toUpperCase()) + '</div>';
       html += '<div class="bd-user-info"><span class="bd-user-name">' + _esc(u.displayName) + '</span>';
-      html += '<span class="bd-user-id">' + _esc(shortId) + '</span></div>';
+      html += '<span class="bd-user-id">Golf ID: ' + _esc(u.golfId || golfId) + '</span></div>';
+      html += '<button class="sh-btn-primary bd-follow-btn" onclick="BuddiesPage.followByGolfId(\'' + _esc(golfId) + '\')">' + T('followBtn') + '</button>';
       html += '</div>';
+      el.innerHTML = html;
+    } catch(e){
+      console.error('[BuddiesPage] searchGolfId error', e);
+      el.innerHTML = '<div class="bd-golfid-error">' + T('networkError') + '</div>';
     }
-    html += '</div>';
-    el.innerHTML = html;
   }
 
-  function selectUser(index){
-    var u = _userSearchResults[index];
-    if(!u) return;
-    _linkedUserId = u.id;
-    _linkedUserName = u.displayName;
-    // Fill name field
-    var nameInp = document.getElementById('bd-f-name');
-    if(nameInp){
-      nameInp.value = u.displayName;
-      nameInp.readOnly = true;
+  async function followByGolfId(golfId){
+    var el = document.getElementById('bd-golfid-result');
+    try {
+      var res = await ApiClient.post('/api/v1/buddies/add-by-id', { golfId: golfId });
+      var data = await ApiClient.json(res);
+      if(!res.ok){
+        var msg = (data && data.error === 'already_buddy') ? T('alreadyBuddy')
+                : (data && data.error === 'self_add') ? T('cannotAddSelf')
+                : (data && data.message) || T('failedSaveBuddy');
+        if(el) el.innerHTML = '<div class="bd-golfid-error">' + msg + '</div>';
+        return;
+      }
+      _closeModal();
+      _fetch();
+    } catch(e){
+      console.error('[BuddiesPage] followByGolfId error', e);
+      if(el) el.innerHTML = '<div class="bd-golfid-error">' + T('networkError') + '</div>';
     }
-    // Update UI: hide search, show linked indicator
-    _userSearchResults = [];
-    // Re-render modal
-    _closeModal();
-    _showModal({ displayName: u.displayName, linkedUserId: u.id, handicap: null, notes: '', id: null });
   }
 
-  function clearLink(){
-    _linkedUserId = null;
-    _linkedUserName = null;
-    var nameInp = document.getElementById('bd-f-name');
-    if(nameInp){ nameInp.readOnly = false; nameInp.value = ''; }
-    // Re-render modal to show search again
-    var currentName = '';
-    _closeModal();
-    _showModal(null);
-  }
+  // Legacy compat
+  function onUserSearch(){}
+  function selectUser(){}
+  function clearLink(){}
 
   function closeModal(){
     _closeModal();
@@ -427,7 +423,9 @@ const BuddiesPage = (function(){
     deleteBuddy: deleteBuddy,
     onUserSearch: onUserSearch,
     selectUser: selectUser,
-    clearLink: clearLink
+    clearLink: clearLink,
+    searchGolfId: searchGolfId,
+    followByGolfId: followByGolfId
   };
 
 })();

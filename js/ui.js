@@ -991,45 +991,10 @@ function closeSettings(){
   document.getElementById('sd-overlay').classList.remove('show');
 }
 
-// ── NEW ROUND MODAL ──
-function openNewRound(){ document.getElementById('newround-modal').style.display='flex'; }
-function closeNewRound(){ document.getElementById('newround-modal').style.display='none'; }
-function doNewRound(){
-  if(document.getElementById('m-scores').checked){
-    S.holes.forEach(h=>{h.delta=null;h.shots=[];h.shotIndex=0;h.manualTypes={};h.toPins={};});
-    D.ws().shotIndex=-1;
-    // also clear all per-player score data via D.sc()
-    if(typeof D!=='undefined'&&D.sc){
-      const scores=D.sc().scores;
-      Object.keys(scores).forEach(pid=>{
-        if(scores[pid]&&scores[pid].holes)
-          scores[pid].holes.forEach(h=>{h.gross=null;h.putts=null;h.penalties=0;h.notes='';h.status='not_started';h.shots=[];});
-      });
-    }
-  }
-  if(document.getElementById('m-pars').checked){
-    S.holes.forEach(h=>{h.par=4;h.isPlaceholder=false;});
-    if(typeof D!=='undefined'&&D.sc) D.sc().course.holeSnapshot.forEach(ch=>{ch.par=4;});
-  }
-  // Clear active round (back to manual mode)
-  if(typeof RoundManager!=='undefined') RoundManager.clearRound();
-  S.activeRound=null;
-  // Clear course association in D
-  if(typeof D!=='undefined'&&D.sc){
-    D.sc().course.clubId=null; D.sc().course.routingId=null;
-  }
-  // Clear all players so user can re-select for new round
-  S.players=[]; S.currentPlayerId=null; S.byPlayer={};
-  if(typeof D!=='undefined'&&D.ws){
-    D.ws().currentPlayerId=null;
-    D.sc().players=[];
-    D.sc().scores={};
-  }
-  D.syncS(S);
-  if(typeof buildPlayerArea==='function') buildPlayerArea();
-  if(typeof updateScoreRangeLabels==='function') updateScoreRangeLabels();
-  closeNewRound(); render(); scheduleSave();
-}
+// ── NEW ROUND MODAL (removed — New Round now via Shell page #/new-round) ──
+function openNewRound(){}
+function closeNewRound(){}
+function doNewRound(){}
 
 // ── LONG PRESS ──
 function setupLongPress(btn,fn){
@@ -1133,10 +1098,7 @@ function wireAll(){
 
   // Par — cycleParFocus handles par cycling via #rp-par-tap onclick
 
-  // Modals
-  document.getElementById('newround-modal').onclick=e=>{
-    if(e.target===document.getElementById('newround-modal')) closeNewRound();
-  };
+  // (newround-modal removed — New Round now via Shell page #/new-round)
 
   // Keyboard — shot navigation & hotkeys
   window.addEventListener('keydown',e=>{

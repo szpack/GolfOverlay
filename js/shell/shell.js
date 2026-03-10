@@ -1,5 +1,5 @@
 // ============================================================
-// shell.js — App Shell Controller
+// shell.js — App Shell Controller (GolfHub)
 // Layout: Collapsible Sidebar | Workspace
 // Depends on: router.js, roundHelper.js, homePage.js, roundsPage.js, data.js
 // Loaded AFTER app.js — existing init() has already run
@@ -14,22 +14,23 @@ const Shell = (function(){
   var LS_SIDEBAR = 'golf_sidebar_collapsed';
 
   var PAGES = {
-    home:     { elementId:'page-home',     render: function(){ HomePage.render(); }, title:'Console' },
-    rounds:   { elementId:'page-rounds',   render: function(){ RoundsPage.render(); }, title:'Rounds' },
-    round:    { elementId:'overlay-center', title:'Overlay Center' },
-    players:  { elementId:'page-players',  title:'Players' },
-    teams:    { elementId:'page-teams',    title:'Teams' },
-    courses:  { elementId:'page-courses',  render: function(){ CoursesPage.render(); }, title:'Courses' },
+    landing:  { elementId:'page-landing',    render: function(){ _renderLandingPage(); }, title:'GolfHub' },
+    home:     { elementId:'page-home',       render: function(){ HomePage.render(); }, title:'Home' },
+    rounds:   { elementId:'page-rounds',     render: function(){ RoundsPage.render(); }, title:'Rounds' },
+    broadcast:{ elementId:'overlay-center',  title:'Broadcast' },
+    teetimes: { elementId:'page-teetimes',   title:'TeeTimes' },
+    teams:    { elementId:'page-teams',      title:'Teams' },
+    courses:  { elementId:'page-courses',    render: function(){ CoursesPage.render(); }, title:'Course Management' },
     courseDetail: { elementId:'page-course-detail', render: function(route){ CourseDetailPage.render(route && route.params ? route.params.id : null); }, title:'Club Detail' },
     courseStructure: { elementId:'page-course-structure', render: function(route){ CourseStructureEditor.render(route && route.params ? route.params.id : null); }, title:'Structure Editor' },
     courseImport: { elementId:'page-course-import', render: function(){ CourseImportPage.render(); }, title:'Import Courses' },
-    newRound: { elementId:'page-new-round', render: function(){ NewRoundPage.render(); }, title:'New Round' },
-    buddies:  { elementId:'page-buddies',  render: function(){ BuddiesPage.render(); }, title:'Buddies' },
-    clubs:    { elementId:'page-clubs',    title:'Clubs' },
-    login:    { elementId:'page-auth', render: function(route){ AuthPage.render(route); }, title:'Sign In' },
-    register: { elementId:'page-auth', render: function(route){ AuthPage.render(route); }, title:'Create Account' },
-    profile:  { elementId:'page-profile', render: function(){ ProfilePage.render(); }, title:'Profile' },
-    settings: { elementId:'page-settings', render: function(){ _renderSettingsPage(); }, title:'Settings' }
+    newRound: { elementId:'page-new-round',  render: function(){ NewRoundPage.render(); }, title:'New Round' },
+    buddies:  { elementId:'page-buddies',    render: function(){ BuddiesPage.render(); }, title:'Buddies' },
+    clubs:    { elementId:'page-clubs',      title:'Clubs' },
+    login:    { elementId:'page-auth',       render: function(route){ AuthPage.render(route); }, title:'Sign In' },
+    register: { elementId:'page-auth',       render: function(route){ AuthPage.render(route); }, title:'Create Account' },
+    profile:  { elementId:'page-profile',    render: function(){ ProfilePage.render(); }, title:'Profile' },
+    settings: { elementId:'page-settings',   render: function(){ _renderSettingsPage(); }, title:'Settings' }
   };
 
   // ══════════════════════════════════════════
@@ -37,22 +38,27 @@ const Shell = (function(){
   // ══════════════════════════════════════════
 
   function init(){
-    Router.add('/',            'home');
-    Router.add('/rounds',      'rounds');
-    Router.add('/round/:id',   'round');
-    Router.add('/players',     'players');
-    Router.add('/teams',       'teams');
-    Router.add('/courses',     'courses');
-    Router.add('/new-round', 'newRound');
-    Router.add('/courses/import', 'courseImport');
+    Router.add('/',              'home');
+    Router.add('/rounds',        'rounds');
+    Router.add('/broadcast/:id', 'broadcast');
+    Router.add('/broadcast',     'broadcast');
+    // Legacy: /round/:id redirects to broadcast
+    Router.add('/round/:id',     'broadcast');
+    Router.add('/teetimes',      'teetimes');
+    Router.add('/teams',         'teams');
+    Router.add('/courses',       'courses');
+    Router.add('/new-round',     'newRound');
+    Router.add('/courses/import','courseImport');
     Router.add('/courses/:id/structure', 'courseStructure');
-    Router.add('/courses/:id', 'courseDetail');
-    Router.add('/buddies',     'buddies');
-    Router.add('/clubs',       'clubs');
-    Router.add('/login',       'login');
-    Router.add('/register',    'register');
-    Router.add('/profile',     'profile');
-    Router.add('/settings',    'settings');
+    Router.add('/courses/:id',   'courseDetail');
+    Router.add('/buddies',       'buddies');
+    // Legacy: /players redirects to buddies
+    Router.add('/players',       'buddies');
+    Router.add('/clubs',         'clubs');
+    Router.add('/login',         'login');
+    Router.add('/register',      'register');
+    Router.add('/profile',       'profile');
+    Router.add('/settings',      'settings');
 
     _wireNav();
     _restoreSidebarState();
@@ -63,6 +69,9 @@ const Shell = (function(){
     _initAuth();
 
     document.getElementById('app-shell').classList.add('shell-ready');
+    // Remove lang-flash cloak — i18n is now applied
+    var cloak = document.getElementById('shell-cloak');
+    if(cloak) cloak.remove();
     console.log('[Shell] initialized');
   }
 
@@ -92,6 +101,12 @@ const Shell = (function(){
 
     var pageName = route ? route.name : 'home';
 
+    // Landing page override: if not logged in and navigating to home
+    var loggedIn = typeof AuthState !== 'undefined' && AuthState.isLoggedIn();
+    if(pageName === 'home' && !loggedIn){
+      pageName = 'landing';
+    }
+
     _hideAllPages();
 
     var page = PAGES[pageName];
@@ -105,14 +120,14 @@ const Shell = (function(){
 
     if(page.render) page.render(route);
 
-    if(pageName === 'round'){
-      _enterOverlayCenter(route.params.id);
+    if(pageName === 'broadcast'){
+      _enterBroadcast(route && route.params ? route.params.id : null);
     } else {
-      _leaveOverlayCenter();
+      _leaveBroadcast();
     }
 
     _updateNavHighlight(pageName);
-    _updateWorkspaceHeader(pageName);
+    _updateMobileMenuBtn(pageName);
     _renderLiveRecent();
 
     // Auto-close drawer on mobile
@@ -129,7 +144,7 @@ const Shell = (function(){
     }
   }
 
-  function _enterOverlayCenter(roundId){
+  function _enterBroadcast(roundId){
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
         if(typeof render === 'function') render();
@@ -138,9 +153,58 @@ const Shell = (function(){
     _overlayReady = true;
   }
 
-  function _leaveOverlayCenter(){
+  function _leaveBroadcast(){
     if(typeof doSave === 'function') doSave();
   }
+
+  // ══════════════════════════════════════════
+  // LANDING PAGE
+  // ══════════════════════════════════════════
+
+  function _renderLandingPage(){
+    var el = document.getElementById('landing-content');
+    if(!el) return;
+
+    var html = '';
+
+    // Hero
+    html += '<div class="landing-hero">';
+    html += '<div class="landing-hero-logo">GolfHub</div>';
+    html += '<div class="landing-hero-sub">' + T('landingHeroSub') + '</div>';
+    html += '<div class="landing-hero-actions">';
+    html += '<button class="landing-hero-btn landing-hero-btn-primary" onclick="Router.navigate(\'/teetimes\')">' + T('landingFindTeeTimes') + '</button>';
+    html += '<button class="landing-hero-btn landing-hero-btn-secondary" onclick="Router.navigate(\'/register\')">' + T('createAccountBtn') + '</button>';
+    html += '<button class="landing-hero-btn landing-hero-btn-ghost" onclick="Router.navigate(\'/login\')">' + T('signInBtn') + '</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // Features
+    html += '<div class="landing-features">';
+    html += _landingFeature('&#128339;', T('landingFeature1Title'), T('landingFeature1Desc'));
+    html += _landingFeature('&#9971;', T('landingFeature2Title'), T('landingFeature2Desc'));
+    html += _landingFeature('&#127919;', T('landingFeature3Title'), T('landingFeature3Desc'));
+    html += '</div>';
+
+    // CTA (bottom)
+    html += '<div class="landing-cta">';
+    html += '<div class="landing-cta-title">' + T('landingCtaTitle') + '</div>';
+    html += '<button class="landing-hero-btn landing-hero-btn-primary" onclick="Router.navigate(\'/register\')">' + T('createAccountBtn') + '</button>';
+    html += '</div>';
+
+    el.innerHTML = html;
+  }
+
+  function _landingFeature(icon, title, desc){
+    return '<div class="landing-feature">'
+      + '<div class="landing-feature-icon">' + icon + '</div>'
+      + '<div class="landing-feature-title">' + title + '</div>'
+      + '<div class="landing-feature-desc">' + desc + '</div>'
+      + '</div>';
+  }
+
+  // ══════════════════════════════════════════
+  // NAV HIGHLIGHT
+  // ══════════════════════════════════════════
 
   function _updateNavHighlight(pageName){
     // courseDetail / courseStructure highlight the courses nav item
@@ -153,13 +217,6 @@ const Shell = (function(){
       var route = item.getAttribute('data-route');
       item.classList.toggle('sb-active', route === navName);
     }
-    // Quick actions highlight for overlay
-    var actions = document.querySelectorAll('.sb-action[data-route]');
-    for(var i = 0; i < actions.length; i++){
-      var a = actions[i];
-      var route = a.getAttribute('data-route');
-      a.classList.toggle('sb-active', route === pageName);
-    }
     var bnItems = document.querySelectorAll('.bn-item');
     for(var i = 0; i < bnItems.length; i++){
       var item = bnItems[i];
@@ -168,23 +225,11 @@ const Shell = (function(){
     }
   }
 
-  function _updateWorkspaceHeader(pageName){
-    var titleEl = document.getElementById('workspace-title');
-    if(!titleEl) return;
-    // Use i18n keys for page titles where available
-    var titleMap = {
-      home: 'Console',
-      rounds: T('roundsTitle'),
-      round: 'Overlay Center',
-      courses: T('coursesTitle'),
-      courseDetail: T('clubDetailLbl'),
-      courseImport: T('importBtn'),
-      newRound: T('newRoundLbl'),
-      buddies: T('buddiesTitle'),
-      profile: T('accountLbl'),
-      settings: T('stLanguage') ? T('settingsLbl') : 'Settings'
-    };
-    titleEl.textContent = titleMap[pageName] || ((PAGES[pageName] && PAGES[pageName].title) || 'Console');
+  function _updateMobileMenuBtn(pageName){
+    // Workspace-level title removed — each page renders its own header.
+    // Only toggle mobile menu button visibility.
+    var menuBtn = document.getElementById('ws-menu-btn');
+    if(menuBtn) menuBtn.style.display = (pageName === 'landing' || pageName === 'broadcast') ? 'none' : '';
   }
 
   function _wireNav(){
@@ -198,8 +243,9 @@ const Shell = (function(){
     var route = this.getAttribute('data-route');
     var pathMap = {
       home:'/', rounds:'/rounds',
-      round:'/round/' + (D.getActiveRoundId() || 'current'),
-      courses:'/courses', players:'/players', buddies:'/buddies', teams:'/teams', clubs:'/clubs',
+      broadcast:'/broadcast/' + (D.getActiveRoundId() || 'current'),
+      teetimes:'/teetimes',
+      courses:'/courses', buddies:'/buddies', teams:'/teams', clubs:'/clubs',
       settings:'/settings'
     };
     Router.navigate(pathMap[route] || '/');
@@ -210,9 +256,19 @@ const Shell = (function(){
   // ══════════════════════════════════════════
 
   function toggleSidebar(){
-    _sidebarCollapsed = !_sidebarCollapsed;
-    _applySidebarState();
-    try { localStorage.setItem(LS_SIDEBAR, _sidebarCollapsed ? '1' : '0'); } catch(e){}
+    // Mobile: open/close drawer; Desktop: collapse/expand
+    if(window.innerWidth <= 768){
+      var sb = document.getElementById('app-sidebar');
+      if(sb && sb.classList.contains('sb-drawer-open')){
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    } else {
+      _sidebarCollapsed = !_sidebarCollapsed;
+      _applySidebarState();
+      try { localStorage.setItem(LS_SIDEBAR, _sidebarCollapsed ? '1' : '0'); } catch(e){}
+    }
   }
 
   function _restoreSidebarState(){
@@ -287,7 +343,7 @@ const Shell = (function(){
     var dotClass = 'sb-round-dot sb-round-dot-' + type;
     var name = _esc(r.courseName || 'Untitled');
     var meta = r.date ? r.date.slice(5) : '';
-    var path = '/round/' + r.id;
+    var path = '/broadcast/' + r.id;
     return '<div class="sb-round-item" onclick="Router.navigate(\'' + path + '\')">'
       + '<span class="' + dotClass + '"></span>'
       + '<span class="sb-round-name">' + name + '</span>'
@@ -303,19 +359,15 @@ const Shell = (function(){
   // PUBLIC ACTIONS
   // ══════════════════════════════════════════
 
-  function enterOverlay(){
+  function enterBroadcast(){
     var id = D.getActiveRoundId() || 'current';
-    Router.navigate('/round/' + id);
+    Router.navigate('/broadcast/' + id);
   }
 
   function newRound(){
     Router.navigate('/new-round');
   }
 
-  /**
-   * Direct page switch to New Round — bypasses Router entirely.
-   * Used by sidebar button as fallback when hash routing fails.
-   */
   function showNewRound(){
     _hideAllPages();
     var el = document.getElementById('page-new-round');
@@ -324,19 +376,23 @@ const Shell = (function(){
       el.classList.add('page-active');
     }
     NewRoundPage.render();
-    _updateWorkspaceHeader('newRound');
-    _leaveOverlayCenter();
+    _updateMobileMenuBtn('newRound');
+    _leaveBroadcast();
     _currentPage = 'newRound';
-    // highlight rounds nav
     _updateNavHighlight('newRound');
     if(window.innerWidth <= 768) closeSidebar();
   }
 
   function importRound(){
-    enterOverlay();
+    enterBroadcast();
     setTimeout(function(){
       if(typeof openExportModal === 'function') openExportModal();
     }, 300);
+  }
+
+  function openSearch(){
+    // Phase 1: placeholder — future command palette
+    console.log('[Shell] Search not yet implemented');
   }
 
   function currentPage(){ return _currentPage; }
@@ -385,20 +441,10 @@ const Shell = (function(){
 
     var html = '';
 
-    // Appearance
+    // Appearance (NO language section — language is now in Top Bar)
     html += '<div class="st-section">';
     html += '<div class="st-section-title">' + T('stAppearance') + '</div>';
     html += '<div class="st-btn-group">' + themeBtn('dark',T('darkLbl')) + themeBtn('light',T('lightLbl')) + themeBtn('auto',T('autoLbl')) + '</div>';
-    html += '</div>';
-
-    // Language
-    var curLang = ws.lang || 'en';
-    function langBtn(val, label){
-      return '<button class="st-btn' + (curLang===val?' st-btn-active':'') + '" onclick="Shell.setLang(\'' + val + '\')">' + label + '</button>';
-    }
-    html += '<div class="st-section">';
-    html += '<div class="st-section-title">' + T('stLanguage') + '</div>';
-    html += '<div class="st-btn-group st-btn-group-wrap">' + langBtn('en','EN') + langBtn('zh','中文') + langBtn('ja','日本語') + langBtn('ko','한국어') + langBtn('es','ES') + '</div>';
     html += '</div>';
 
     // Overlay Visibility
@@ -487,7 +533,6 @@ const Shell = (function(){
   }
 
   function settingsToggle(key, val){
-    // delegate to existing overlay functions where possible
     if(key === 'showShot'){
       var chk = document.getElementById('chk-shot');
       if(chk) chk.checked = val;
@@ -524,31 +569,26 @@ const Shell = (function(){
   }
 
   // ══════════════════════════════════════════
-  // LANGUAGE
+  // LANGUAGE (Sidebar footer)
   // ══════════════════════════════════════════
 
   function toggleLangMenu(){
-    var menu = document.getElementById('sidebar-lang-menu');
+    var menu = document.getElementById('sb-lang-menu');
     if(!menu) return;
-    var showing = menu.classList.toggle('show');
-    if(showing){
-      var btn = document.getElementById('sidebar-btn-lang');
-      if(btn){
-        var r = btn.getBoundingClientRect();
-        menu.style.left = (r.right + 4) + 'px';
-        menu.style.bottom = (window.innerHeight - r.bottom) + 'px';
-      }
-    }
+    menu.classList.toggle('show');
   }
 
   function setLang(lang){
     if(typeof window.setLang === 'function') window.setLang(lang);
     _syncLangButton();
     _applySidebarLang();
+    // Close all lang menus
+    var menus = document.querySelectorAll('.sb-lang-menu');
+    for(var i = 0; i < menus.length; i++) menus[i].classList.remove('show');
     // Re-render current page to apply new language
     var page = PAGES[_currentPage];
     if(page && page.render) page.render();
-    _updateWorkspaceHeader(_currentPage);
+    _updateMobileMenuBtn(_currentPage);
     _renderLiveRecent();
   }
 
@@ -558,17 +598,17 @@ const Shell = (function(){
 
   function _syncLangButton(){
     var lang = (typeof D !== 'undefined' && D.ws()) ? (D.ws().lang || 'en') : 'en';
-    var lbl = document.getElementById('sidebar-lang-label');
     var labels = { en:'EN', zh:'中文', ja:'日本語', ko:'한국어', es:'ES' };
-    if(lbl) lbl.textContent = labels[lang] || lang;
+    var sbLbl = document.getElementById('sb-lang-label');
+    if(sbLbl) sbLbl.textContent = labels[lang] || lang;
   }
 
   function _applySidebarLang(){
-    // Nav items: update .sb-label text by data-route
     var routeMap = {
-      home: 'sbConsole', rounds: 'sbRounds', courses: 'sbCourses',
-      players: 'sbPlayers', buddies: 'sbBuddies', teams: 'sbTeams',
-      clubs: 'sbClubs', settings: 'sbSettings'
+      home: 'sbHome', teetimes: 'sbTeeTimes',
+      rounds: 'sbRounds', buddies: 'sbBuddies', teams: 'sbTeams',
+      clubs: 'sbClubs', broadcast: 'sbBroadcast',
+      settings: 'sbSettings', courses: 'sbCourseManagement'
     };
     var items = document.querySelectorAll('.sb-item[data-route]');
     for(var i = 0; i < items.length; i++){
@@ -580,54 +620,40 @@ const Shell = (function(){
         items[i].setAttribute('data-tooltip', T(key));
       }
     }
-    // New Round button (no data-route)
-    var nrBtn = document.querySelector('.sb-new-round');
-    if(nrBtn){
-      var lbl = nrBtn.querySelector('.sb-label');
-      if(lbl) lbl.textContent = T('sbNewRound');
-      nrBtn.setAttribute('data-tooltip', T('sbNewRound'));
-    }
-    // Overlay Center action
-    var ocBtn = document.querySelector('.sb-action[data-route="round"]');
-    if(ocBtn){
-      var lbl = ocBtn.querySelector('.sb-label');
-      if(lbl) lbl.textContent = T('sbOverlayCenter');
-      ocBtn.setAttribute('data-tooltip', T('sbOverlayCenter'));
-    }
-    // Section labels (tagged with data-i18n in HTML)
     var sections = document.querySelectorAll('[data-i18n]');
     for(var j = 0; j < sections.length; j++){
       var key2 = sections[j].getAttribute('data-i18n');
       if(key2) sections[j].textContent = T(key2);
     }
-    // Footer: Create Account / Sign In (only update if not logged in)
-    var loggedIn = typeof AuthState !== 'undefined' && AuthState.isLoggedIn();
-    if(!loggedIn){
-      var regLbl = document.querySelector('.sb-register-btn .sb-label');
-      if(regLbl) regLbl.textContent = T('sbCreateAccount');
-      var authLbl = document.getElementById('sidebar-auth-label');
-      if(authLbl) authLbl.textContent = T('sbSignIn');
+    // Search button label
+    var searchLbl = document.querySelector('.sb-search-btn .sb-label');
+    if(searchLbl) searchLbl.textContent = T('searchLbl');
+    // Avatar label
+    var avatarLbl = document.getElementById('sb-avatar-label');
+    if(avatarLbl){
+      var loggedIn = typeof AuthState !== 'undefined' && AuthState.isLoggedIn();
+      var user = loggedIn ? AuthState.getUser() : null;
+      avatarLbl.textContent = loggedIn && user ? (user.displayName || T('accountLbl')) : T('signInBtn');
     }
   }
 
-  // Close lang menu on outside click
+  // Close lang menus on outside click
   document.addEventListener('click', function(e){
-    var wrap = document.getElementById('sidebar-lang-wrap');
-    if(wrap && !wrap.contains(e.target)){
-      var menu = document.getElementById('sidebar-lang-menu');
-      if(menu) menu.classList.remove('show');
+    // Sidebar lang
+    var sbWrap = document.getElementById('sb-lang-wrap');
+    if(sbWrap && !sbWrap.contains(e.target)){
+      var sbMenu = document.getElementById('sb-lang-menu');
+      if(sbMenu) sbMenu.classList.remove('show');
     }
   });
 
   // ══════════════════════════════════════════
-  // AUTH — sidebar login state
+  // AUTH
   // ══════════════════════════════════════════
 
   function _initAuth(){
     if(typeof AuthState === 'undefined') return;
-    // Listen for auth state changes
     AuthState.onChange(_updateAuthUI);
-    // Init auth (async, non-blocking)
     AuthState.init();
   }
 
@@ -635,23 +661,23 @@ const Shell = (function(){
     var loggedIn = typeof AuthState !== 'undefined' && AuthState.isLoggedIn();
     var user = loggedIn ? AuthState.getUser() : null;
 
-    // ── Sidebar auth button ──
-    var iconEl = document.getElementById('sidebar-auth-icon');
-    var labelEl = document.getElementById('sidebar-auth-label');
-    if(iconEl && labelEl){
-      if(loggedIn){
-        var initial = (user && user.displayName) ? user.displayName.charAt(0).toUpperCase() : '?';
-        iconEl.textContent = initial;
-        labelEl.textContent = user.displayName || T('accountLbl');
+    // ── Sidebar avatar ──
+    var avatarEl = document.getElementById('sb-avatar-text');
+    if(avatarEl){
+      if(loggedIn && user){
+        var initial = user.displayName ? user.displayName.charAt(0).toUpperCase() : '?';
+        avatarEl.textContent = initial;
       } else {
-        iconEl.innerHTML = '&#128100;';
-        labelEl.textContent = T('sbSignIn');
+        avatarEl.innerHTML = '&#128100;';
       }
+    }
+    var avatarLbl = document.getElementById('sb-avatar-label');
+    if(avatarLbl){
+      avatarLbl.textContent = loggedIn && user ? (user.displayName || T('accountLbl')) : T('signInBtn');
     }
 
     // ── Sidebar nav visibility ──
-    // Protected nav items: hide when not logged in
-    var protectedRoutes = ['rounds', 'courses', 'players', 'buddies', 'teams', 'clubs', 'settings'];
+    var protectedRoutes = ['rounds', 'teetimes', 'buddies', 'teams', 'clubs', 'broadcast', 'settings', 'courses'];
     var navItems = document.querySelectorAll('.sb-item[data-route]');
     for(var i = 0; i < navItems.length; i++){
       var route = navItems[i].getAttribute('data-route');
@@ -659,31 +685,30 @@ const Shell = (function(){
         navItems[i].style.display = loggedIn ? '' : 'none';
       }
     }
-    // New Round button (no data-route, has class sb-new-round)
-    var newRoundBtn = document.querySelector('.sb-new-round');
-    if(newRoundBtn) newRoundBtn.style.display = loggedIn ? '' : 'none';
-    // Overlay Center action
-    var overlayAction = document.querySelector('.sb-action[data-route="round"]');
-    if(overlayAction) overlayAction.style.display = loggedIn ? '' : 'none';
-    // Section labels: Management / Workspace / Recent (use data-i18n to identify)
+    // New button + Search
+    var newBtn = document.getElementById('sb-new-btn');
+    if(newBtn) newBtn.style.display = loggedIn ? '' : 'none';
+    var searchBtn = document.getElementById('sb-search-btn');
+    if(searchBtn) searchBtn.style.display = loggedIn ? '' : 'none';
+    // Section labels: Recent / System
     var sectionLabels = document.querySelectorAll('.sb-section-label');
     for(var i = 0; i < sectionLabels.length; i++){
       var i18nEl = sectionLabels[i].querySelector('[data-i18n]');
       var key = i18nEl ? i18nEl.getAttribute('data-i18n') : '';
-      if(key === 'sbManagement' || key === 'sbWorkspace' || key === 'sbRecent'){
+      if(key === 'sbRecent' || key === 'sbSystem'){
         sectionLabels[i].style.display = loggedIn ? '' : 'none';
       }
     }
     // Live/Recent section
     var liveRecent = document.getElementById('sb-live-recent');
     if(liveRecent) liveRecent.style.display = loggedIn ? '' : 'none';
-    // ── Sidebar register button (guest only) ──
-    var regEntry = document.getElementById('sidebar-register-entry');
-    if(regEntry) regEntry.style.display = loggedIn ? 'none' : '';
 
-    // ── Re-render current page if it's home (to switch between guest/loggedIn view) ──
-    if(_currentPage === 'home'){
-      HomePage.render();
+    // ── Re-render current page if it's home/landing ──
+    if(_currentPage === 'home' || _currentPage === 'landing'){
+      var hash = window.location.hash.slice(1) || '/';
+      if(hash === '/' || hash === ''){
+        _onRouteChange({ name:'home', params:{}, path:'/' }, null);
+      }
     }
   }
 
@@ -695,11 +720,6 @@ const Shell = (function(){
     }
   }
 
-  /**
-   * Check if the current user can access a protected page.
-   * Returns true if logged in, false otherwise.
-   * When false, renders a login prompt card into the given container.
-   */
   function requireAuth(containerId){
     if(typeof AuthState !== 'undefined' && AuthState.isLoggedIn()) return true;
     var el = document.getElementById(containerId);
@@ -730,10 +750,12 @@ const Shell = (function(){
 
   return {
     init: init,
-    enterOverlay: enterOverlay,
+    enterOverlay: function(){ enterBroadcast(); },  // backward compat
+    enterBroadcast: enterBroadcast,
     newRound: newRound,
     showNewRound: showNewRound,
     importRound: importRound,
+    openSearch: openSearch,
     currentPage: currentPage,
     toggleSidebar: toggleSidebar,
     openSidebar: openSidebar,

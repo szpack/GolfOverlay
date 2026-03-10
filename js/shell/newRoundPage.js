@@ -28,7 +28,7 @@ const NewRoundPage = (function(){
       players: [],                // {type:'self'|'member'|'guest', name, playerId?, buddyId?, sortOrder}
       teeTime: null,              // local datetime string "YYYY-MM-DDTHH:MM"
       teeTimeLabel: '',
-      visibility: 'friends',     // 'private' | 'friends' | 'public'
+      visibility: 'public',      // 'private' | 'friends' | 'public'
       visibilityLabel: ''
     };
   }
@@ -43,10 +43,10 @@ const NewRoundPage = (function(){
     _draft.teeTimeLabel = T('nrNowLbl');  // default label, will be refreshed by SummaryHelpers on render
 
     // Default visibility
-    _draft.visibility = 'friends';
+    _draft.visibility = 'public';
     _draft.visibilityLabel = typeof SummaryHelpers !== 'undefined'
-      ? SummaryHelpers.buildVisibilityLabel('friends')
-      : T('nrVisFriendsLabel');
+      ? SummaryHelpers.buildVisibilityLabel('public')
+      : T('nrVisPublicLabel');
 
     // Add self as first player
     _addSelf();
@@ -132,10 +132,9 @@ const NewRoundPage = (function(){
     try {
       var html = '';
 
-      // Header
+      // Header — back only, no duplicate title
       html += '<div class="nr-header">';
-      html += '<button class="cd-back-btn" onclick="NewRoundPage.goBack()">' + T('backBtn') + '</button>';
-      html += '<h2 class="cd-title">' + T('newRoundLbl') + '</h2>';
+      html += '<button class="cd-back-btn" onclick="NewRoundPage.goBack()">&larr; ' + T('backBtn') + '</button>';
       html += '</div>';
 
       // 4 Cards
@@ -161,18 +160,18 @@ const NewRoundPage = (function(){
     var has = !!_draft.clubId;
     var hasSH = typeof SummaryHelpers !== 'undefined';
     var html = '<div class="nr-card' + (has ? ' nr-card-filled' : '') + '" onclick="NewRoundPage.openCoursePicker()">';
-    html += '<div class="nr-card-icon">&#9971;</div>';
-    html += '<div class="nr-card-body">';
     html += '<div class="nr-card-label">' + T('courseLbl') + '</div>';
+    html += '<div class="nr-card-row">';
+    html += '<div class="nr-card-icon">&#9971;</div>';
     if(has){
       var summary = _draft.courseSummary
         || (hasSH ? SummaryHelpers.buildCourseSummary(_draft) : _draft.clubName);
-      html += '<div class="nr-card-primary">' + _esc(summary) + '</div>';
+      html += '<div class="nr-card-value">' + _esc(summary) + '</div>';
     } else {
-      html += '<div class="nr-card-placeholder">' + T('nrSelectCourse') + '</div>';
+      html += '<div class="nr-card-value">' + T('nrSelectCourse') + '</div>';
     }
-    html += '</div>';
     html += '<div class="nr-card-arrow">&#8250;</div>';
+    html += '</div>';
     html += '</div>';
     return html;
   }
@@ -180,22 +179,24 @@ const NewRoundPage = (function(){
   // ── Players Card ──
   function _renderPlayersCard(){
     var count = _draft.players.length;
+    var selfOnly = count === 1 && _draft.players[0].type === 'self';
     var hasSH = typeof SummaryHelpers !== 'undefined';
-    var html = '<div class="nr-card nr-card-filled" onclick="NewRoundPage.openBuddyPicker()">';
-    html += '<div class="nr-card-icon">&#128101;</div>';
-    html += '<div class="nr-card-body">';
+    var filled = count > 1 || (count === 1 && !selfOnly);
+    var html = '<div class="nr-card' + (filled ? ' nr-card-filled' : '') + '" onclick="NewRoundPage.openBuddyPicker()">';
     html += '<div class="nr-card-label">' + T('playersLbl') + '</div>';
-    if(count > 0){
+    html += '<div class="nr-card-row">';
+    html += '<div class="nr-card-icon">&#128101;</div>';
+    if(filled){
       var display = hasSH ? SummaryHelpers.buildPlayersSummary(_draft.players)
                           : _draft.players.map(function(p){ return p.name; }).join(' / ');
-      html += '<div class="nr-card-primary">' + _esc(display) + '</div>';
-      // Show person count only when >1 player (solo self = not "组局完成")
+      html += '<div class="nr-card-body"><div class="nr-card-value">' + _esc(display) + '</div>';
       if(count > 1) html += '<div class="nr-card-secondary">' + T('nrPersonCount', count) + '</div>';
+      html += '</div>';
     } else {
-      html += '<div class="nr-card-placeholder">' + T('nrSelectPlayers') + '</div>';
+      html += '<div class="nr-card-value">' + T('nrSelectPlayers') + '</div>';
     }
-    html += '</div>';
     html += '<div class="nr-card-arrow">&#8250;</div>';
+    html += '</div>';
     html += '</div>';
     return html;
   }
@@ -207,12 +208,12 @@ const NewRoundPage = (function(){
       || (hasSH && _draft.teeTime ? SummaryHelpers.buildTeeTimeLabel(_draft.teeTime) : '')
       || T('nrNowLbl');
     var html = '<div class="nr-card nr-card-filled" onclick="NewRoundPage.openTeeTimePicker()">';
-    html += '<div class="nr-card-icon">&#128337;</div>';
-    html += '<div class="nr-card-body">';
     html += '<div class="nr-card-label">' + T('nrTeeTimeLbl') + '</div>';
-    html += '<div class="nr-card-primary">' + _esc(label) + '</div>';
-    html += '</div>';
+    html += '<div class="nr-card-row">';
+    html += '<div class="nr-card-icon">&#128337;</div>';
+    html += '<div class="nr-card-value">' + _esc(label) + '</div>';
     html += '<div class="nr-card-arrow">&#8250;</div>';
+    html += '</div>';
     html += '</div>';
     return html;
   }
@@ -223,12 +224,12 @@ const NewRoundPage = (function(){
     var label = _draft.visibilityLabel
       || (hasSH ? SummaryHelpers.buildVisibilityLabel(_draft.visibility) : _draft.visibility || '');
     var html = '<div class="nr-card nr-card-filled" onclick="NewRoundPage.openVisibilityPicker()">';
-    html += '<div class="nr-card-icon">&#128065;</div>';
-    html += '<div class="nr-card-body">';
     html += '<div class="nr-card-label">' + T('nrVisibilityLbl') + '</div>';
-    html += '<div class="nr-card-primary">' + _esc(label) + '</div>';
-    html += '</div>';
+    html += '<div class="nr-card-row">';
+    html += '<div class="nr-card-icon">&#128065;</div>';
+    html += '<div class="nr-card-value">' + _esc(label) + '</div>';
     html += '<div class="nr-card-arrow">&#8250;</div>';
+    html += '</div>';
     html += '</div>';
     return html;
   }
@@ -278,7 +279,9 @@ const NewRoundPage = (function(){
     if(_overlayEl) return;
     _overlayEl = document.createElement('div');
     _overlayEl.className = 'nr-picker-overlay';
-    document.body.appendChild(_overlayEl);
+    // Scope picker within workspace, not full-screen
+    var ws = document.getElementById('app-workspace');
+    (ws || document.body).appendChild(_overlayEl);
   }
 
   /**
@@ -293,15 +296,16 @@ const NewRoundPage = (function(){
     _pickerBackFn = null;
 
     var html = '<div class="nr-picker-header">';
-    html += '<button class="nr-picker-back" onclick="NewRoundPage.pickerBack()">' + T('backBtn') + '</button>';
+    html += '<button class="nr-picker-back" onclick="NewRoundPage.pickerBack()">&larr; ' + T('backBtn') + '</button>';
     html += '<span class="nr-picker-title" id="nr-picker-title">' + _esc(title) + '</span>';
-    if(confirmFn){
-      html += '<button class="nr-picker-done" onclick="NewRoundPage.confirmPicker()">' + T('nrConfirmBtn') + '</button>';
-    } else {
-      html += '<span class="nr-picker-spacer"></span>';
-    }
     html += '</div>';
     html += '<div class="nr-picker-body" id="nr-picker-body"></div>';
+    // Confirm button after body so pickers don't overwrite it
+    if(confirmFn){
+      html += '<div class="nr-picker-inline-confirm" id="nr-picker-inline-confirm">';
+      html += '<button class="cs-btn cs-btn-primary nr-picker-confirm" onclick="NewRoundPage.confirmPicker()">' + T('nrConfirmBtn') + '</button>';
+      html += '</div>';
+    }
 
     _overlayEl.innerHTML = html;
     _overlayEl.classList.add('nr-picker-active');
@@ -345,9 +349,9 @@ const NewRoundPage = (function(){
   /** Let pickers show/hide the confirm button. */
   function setPickerConfirm(fn){
     _pickerConfirmFn = fn || null;
-    var doneBtn = _overlayEl && _overlayEl.querySelector('.nr-picker-done');
-    if(doneBtn){
-      doneBtn.style.visibility = fn ? 'visible' : 'hidden';
+    var wrap = _overlayEl && _overlayEl.querySelector('.nr-picker-inline-confirm');
+    if(wrap){
+      wrap.style.display = fn ? '' : 'none';
     }
   }
 

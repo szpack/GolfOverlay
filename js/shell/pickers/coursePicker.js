@@ -6,7 +6,7 @@
 
 const CoursePicker = (function(){
 
-  var NEARBY_RADIUS_KM = 50;
+  var NEARBY_RADIUS_KM = 20;
 
   var _onDone = null;    // callback(result) on confirm
   var _bodyEl = null;    // picker body DOM element
@@ -176,11 +176,10 @@ const CoursePicker = (function(){
         html += '<div class="nr-empty-hint">' + T('nrNoClubsFound') + '</div>';
       }
     } else {
-      // Priority: nearby > recent > all
+      // Priority: nearby > recent (use search for others)
       var seenIds = {};
       var nearby = _getNearbyClubs(seenIds);
       var recent = _getRecentClubs(seenIds);
-      var all = _getAllClubs(seenIds);
 
       if(nearby.length > 0){
         html += _renderSection(T('nrNearbyLbl'), nearby);
@@ -188,11 +187,8 @@ const CoursePicker = (function(){
       if(recent.length > 0){
         html += _renderSection(T('nrRecentLbl'), recent);
       }
-      if(all.length > 0){
-        html += _renderSection(T('nrAllClubsLbl'), all);
-      }
-      if(nearby.length === 0 && recent.length === 0 && all.length === 0){
-        html += '<div class="nr-empty-hint">' + T('nrNoClubsFound') + '</div>';
+      if(nearby.length === 0 && recent.length === 0){
+        html += '<div class="nr-empty-hint">' + T('nrSearchToFind') + '</div>';
       }
     }
 
@@ -234,18 +230,6 @@ const CoursePicker = (function(){
           if(ri) recent[i]._recentRouting = ri;
         }
         result.push(recent[i]);
-      }
-    }
-    return result;
-  }
-
-  function _getAllClubs(seenIds){
-    var all = ClubStore.listActive();
-    var result = [];
-    for(var i = 0; i < all.length; i++){
-      if(!seenIds[all[i].id]){
-        seenIds[all[i].id] = true;
-        result.push(all[i]);
       }
     }
     return result;

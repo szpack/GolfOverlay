@@ -78,11 +78,11 @@ const ProfilePage = (function(){
     html += '</div>';
     html += '<div class="profile-row"><span class="profile-label">Email</span><span class="profile-value">' + _esc(user.email || '—') + '</span></div>';
 
-    // User ID row with copy button
-    var shortId = user.id ? user.id.substring(0, 8) : '—';
+    // Golf ID row with copy button
+    var golfId = user.golfId || '—';
     html += '<div class="profile-row"><span class="profile-label">' + T('yourIdLbl') + '</span>';
     html += '<span class="profile-value profile-id-value">';
-    html += '<code class="profile-id-code" title="' + _esc(user.id) + '">' + _esc(shortId) + '</code>';
+    html += '<code class="profile-id-code">' + _esc(golfId) + '</code>';
     html += '<button class="profile-copy-btn" id="profile-copy-id" onclick="ProfilePage.copyId()">' + T('copyIdBtn') + '</button>';
     html += '</span></div>';
     html += '</div>';
@@ -158,8 +158,8 @@ const ProfilePage = (function(){
 
   function copyId(){
     var user = AuthState.getUser();
-    if(!user || !user.id) return;
-    navigator.clipboard.writeText(user.id).then(function(){
+    if(!user || !user.golfId) return;
+    navigator.clipboard.writeText(user.golfId).then(function(){
       var btn = document.getElementById('profile-copy-id');
       if(btn){
         btn.textContent = T('copiedLbl');

@@ -1,4 +1,4 @@
-# ⛳ Golf Event Console — 高尔夫赛事管理与实时展示系统
+# ⛳ GolfHub — 高尔夫赛事管理与实时展示系统
 
 **Round-centric golf event management & broadcast overlay system**
 作者 / Contact: szpack@qq.com
@@ -167,6 +167,84 @@ No build step · No external dependencies · Vanilla JS + Canvas
 ---
 
 ## Changelog
+
+### v23.5.5 — 2026-03-10
+- **深度代码清理**：移除旧球场选择器 HTML/CSS、`.sb-action`/`.sb-quick` 孤立样式、`#sidebar-auth-entry`/`.sb-register-btn` 死 CSS、`_getAllClubs` 死函数
+- **修复 light 模式**：`#sidebar-lang-menu` 选择器更正为 `.sb-lang-menu`
+- **buddiesPage 代码质量**：消除 `var data` 重复声明
+- **shell.js 命名清理**：`_updateWorkspaceHeader` → `_updateMobileMenuBtn`、文件头注释修正
+
+### v23.5.4 — 2026-03-10
+- **代码清理（review）**：移除旧 New Round 弹窗死代码、旧球场选择器 HTML、旧 toggleLangMenu 全局函数、btn-new 引用
+- **Picker 确认按钮 sticky**：确认按钮改为 sticky 定位，长列表滚动时始终可见
+- **CSS 修复**：分隔线 light 模式可见性、`.sb-toggle` 选择器更名、长用户名溢出省略、缓存版本号更新至 23.5.4
+- **`_defaultDraft` 一致性**：默认 visibility 改为 `'public'` 与 `_initDraft` 一致
+
+### v23.5.3 — 2026-03-10
+- **修复刷新闪黑**：在 `<head>` 中提前从 localStorage 读取 uiTheme 并应用 `light` class，避免 light 模式用户刷新时看到 dark 闪烁
+
+### v23.5.2 — 2026-03-10
+- **修复 Golf ID 搜索无结果**：后端返回 `data.data` 而前端取 `data.user`，导致始终找不到用户
+
+### v23.5.1 — 2026-03-10
+- **修复 Picker 确认按钮消失**：确认按钮从 picker-body 内部移至外部，避免被 picker 内容渲染覆盖
+
+### v23.5.0 — 2026-03-10
+- **Add Buddy Golf ID 搜索**：添加球友弹窗新增 Golf ID 搜索功能，输入6位ID搜索后显示用户卡片，点击"关注"即加入球友列表
+- **Picker 确认按钮内联**：选球场/球友确认按钮跟随内容流排列，不再固定在底部
+- **移除重复页面标题**：删除 workspace-header，消除所有页面的双层标题
+- **语言闪烁修复**：添加 opacity cloak 防止刷新时英文界面一闪而过
+- **移除旧版 New 按钮**：Overlay 区域不再显示独立的 New Round 按钮和弹窗
+
+### v23.4.0 — 2026-03-10
+- **New Round 去重标题**：移除重复的 "New Round" 标题，仅保留返回按钮
+- **Players 卡片修复**：修正 `isSelf` → `type === 'self'` 判断，独打时正确显示占位符
+- **Picker 确认按钮底部化**：选球场/球友的确认按钮从右上角移至底部全宽按钮
+- **Sidebar 视觉升级**：导航项字号 14px、行高 38px、圆角 8px；未选中色彩提亮（55% → 85% hover）；选中态纯白高亮；图标 18px 无额外透明度
+
+### v23.3.0 — 2026-03-10
+- **个人资料显示 Golf ID**：Profile 页 ID 标签统一改为 "Golf ID"
+- **多语言移至帐户行右侧**：Sidebar 底部合并为一行，头像左对齐、语言切换按钮右对齐
+- **球场选择精简**：默认仅显示附近 20km + 最近使用，去掉全部球会列表，引导用搜索查找
+
+### v23.2.0 — 2026-03-10
+- **New Round 页面重设计**：从卡片框式改为现代表单布局，标签在上、色块行在下
+- **未选字段绿色提示**：未填项显示绿色色调背景，明确可点击，已填项为低调灰底
+- **修复 CoursePicker 加载冲突**：移除旧版 `js/coursePicker.js` 重复引用，解决 `const` 重复声明导致 picker 无法打开
+- **Start 按钮左对齐**：按钮改为左对齐圆角样式，与表单流一致
+
+### v23.1.1 — 2026-03-10
+- **Visibility 默认 Public**：New Round 可见性默认改为公开
+- **Players 卡片占位符**：仅自己时显示占位提示而非姓名，引导用户添加球友
+- **Create 按钮精简**：文案缩短为 Start/开始，按钮改为居中圆角胶囊样式
+
+### v23.1.0 — 2026-03-10
+- **移除 Top Bar**：取消顶部栏，全局布局简化为 Sidebar | Workspace 纯左右结构
+- **Search 移入 Sidebar**：搜索按钮位于 [+ New] 下方，折叠态保留图标
+- **Language 移入 Sidebar 底部**：语言切换下拉菜单上弹，折叠态仅显示图标
+- **User Avatar 移入 Sidebar 底部**：登录/头像入口与语言并列在 footer
+- **Sidebar Toggle 移入 Brand 行**：`GolfHub [≡]` 结构，折叠态隐藏 logo 仅保留 toggle
+- **Landing Page 统一布局**：未登录着陆页也使用 Sidebar | Workspace 结构，不再有独立顶部导航
+- **New Round Picker 限定在 Workspace**：选球场/球员等 picker 不再全屏覆盖，限定在工作区内
+- **Picker 点击穿透修复**：隐藏态 picker 不再阻断下方元素点击事件
+
+### v23.0.1 — 2026-03-10
+- **Bottom Nav More 修复**：More 按钮改为打开侧栏 drawer，不再跳转 Home
+- **Overlay 品牌统一**：Broadcast header 从 GOLF`HUB` 改为 Golf`Hub`，符合品牌规范
+- **Top Bar toggle 语义优化**：桌面端 collapse/expand sidebar，移动端 open/close drawer
+- **New 按钮白字**：全局 [+ New] 按钮文字改为白色，提升可读性
+
+### v23.0.0 — 2026-03-10
+- **GolfHub 品牌升级**：产品名从 Golf Event Console 统一为 GolfHub，全局替换品牌标识
+- **全新 Shell 架构**：Top Bar（搜索/语言/头像）+ 可折叠侧栏 + 工作区三层布局
+- **侧栏重构**：Brand + [+ New] 全局主行动按钮 → 核心模块（Home/TeeTimes/Rounds/Buddies/Teams/Clubs/Broadcast）→ Recent → System（Settings/Course Management）
+- **Landing Page**：未登录用户展示独立着陆页（Hero + 三大功能特性 + CTA），替代旧版登录墙
+- **Broadcast 模块**：原 Overlay Center / Console 统一为 Broadcast 一级模块
+- **TeeTimes 占位页**：作为一级导航项，暂显示 Coming Soon
+- **Players 合并至 Buddies**：/players 路由自动重定向至 /buddies
+- **语言切换移至 Top Bar**：全局可见，登录前后均可操作，Settings 中移除语言选项
+- **用户入口移至 Top Bar**：头像/登录按钮统一在顶部栏右侧
+- **5 语言新增 Landing / 导航翻译 key**
 
 ### v22.3.0 — 2026-03-10
 - **全界面多语言切换**：语言切换时自动重渲染当前页面，所有 Shell 页面即时响应语言变更
