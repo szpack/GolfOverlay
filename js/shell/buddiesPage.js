@@ -33,33 +33,45 @@ const BuddiesPage = (function(){
   // ── Data fetch ──
 
   async function _fetch(){
-    if(typeof ApiClient === 'undefined') return;
     _loading = true;
     _renderBody();
 
-    var params = new URLSearchParams();
-    if(_filter.search) params.set('search', _filter.search);
-    if(_filter.isFavorite !== null) params.set('isFavorite', _filter.isFavorite);
-    if(_filter.sortBy) params.set('sortBy', _filter.sortBy);
-    if(_filter.sortDir) params.set('sortDir', _filter.sortDir);
-    params.set('limit', _pageSize);
-    params.set('offset', _page * _pageSize);
+    // Try API first
+    var apiOk = false;
+    if(typeof ApiClient !== 'undefined'){
+      var params = new URLSearchParams();
+      if(_filter.search) params.set('search', _filter.search);
+      if(_filter.isFavorite !== null) params.set('isFavorite', _filter.isFavorite);
+      if(_filter.sortBy) params.set('sortBy', _filter.sortBy);
+      if(_filter.sortDir) params.set('sortDir', _filter.sortDir);
+      params.set('limit', _pageSize);
+      params.set('offset', _page * _pageSize);
 
-    try {
-      var res = await ApiClient.get('/api/v1/buddies?' + params.toString());
-      if(res.ok){
-        var data = await ApiClient.json(res);
-        _buddies = (data && data.buddies) || [];
-        _total = (data && data.total) || 0;
-      } else {
-        _buddies = [];
-        _total = 0;
+      try {
+        var res = await ApiClient.get('/api/v1/buddies?' + params.toString());
+        if(res.ok){
+          var data = await ApiClient.json(res);
+          _buddies = (data && data.buddies) || [];
+          _total = (data && data.total) || 0;
+          apiOk = true;
+          // Sync into local BuddyStore
+          if(typeof BuddyStore !== 'undefined') BuddyStore.mergeFromApi(_buddies);
+        }
+      } catch(e){
+        console.warn('[BuddiesPage] API unavailable, using local store');
       }
-    } catch(e){
-      console.error('[BuddiesPage] fetch error', e);
-      _buddies = [];
-      _total = 0;
     }
+
+    // Fallback to local BuddyStore
+    if(!apiOk && typeof BuddyStore !== 'undefined'){
+      var all = _filter.search ? BuddyStore.search(_filter.search) : BuddyStore.list();
+      if(_filter.isFavorite === true){
+        all = all.filter(function(b){ return b.isFavorite; });
+      }
+      _total = all.length;
+      _buddies = all.slice(_page * _pageSize, (_page + 1) * _pageSize);
+    }
+
     _loading = false;
     _renderBody();
   }
@@ -183,11 +195,18 @@ const BuddiesPage = (function(){
   }
 
   async function toggleFav(id){
-    try {
-      var res = await ApiClient.post('/api/v1/buddies/' + id + '/toggle-favorite');
-      if(!res.ok){ console.error('[BuddiesPage] toggleFav failed', res.status); }
-      _fetch();
-    } catch(e){ console.error('[BuddiesPage] toggleFav', e); }
+    // Local store toggle
+    if(typeof BuddyStore !== 'undefined') BuddyStore.toggleFavorite(id);
+
+    // API toggle
+    if(typeof ApiClient !== 'undefined'){
+      try {
+        var res = await ApiClient.post('/api/v1/buddies/' + id + '/toggle-favorite');
+        if(!res.ok){ console.warn('[BuddiesPage] API toggleFav failed', res.status); }
+      } catch(e){ console.warn('[BuddiesPage] API toggleFav unavailable', e); }
+    }
+
+    _fetch();
   }
 
   // ── Add / Edit Modal ──
@@ -371,41 +390,73 @@ const BuddiesPage = (function(){
       body.linkedUserId = _linkedUserId;
     }
 
-    try {
-      var res;
-      if(id){
-        res = await ApiClient.patch('/api/v1/buddies/' + id, body);
-      } else {
-        res = await ApiClient.post('/api/v1/buddies', body);
+    // Try API first
+    var apiOk = false;
+    if(typeof ApiClient !== 'undefined'){
+      try {
+        var res;
+        if(id){
+          res = await ApiClient.patch('/api/v1/buddies/' + id, body);
+        } else {
+          res = await ApiClient.post('/api/v1/buddies', body);
+        }
+        var data = await ApiClient.json(res);
+        if(res.ok){
+          apiOk = true;
+        } else {
+          console.warn('[BuddiesPage] API save failed:', (data && data.error));
+        }
+      } catch(e){
+        console.warn('[BuddiesPage] API unavailable, saving locally');
       }
-      var data = await ApiClient.json(res);
-      if(!res.ok){
-        alert((data && data.error) || T('failedSaveBuddy'));
-        return;
-      }
-      _closeModal();
-      _fetch();
-    } catch(e){
-      console.error('[BuddiesPage] save error', e);
-      alert(T('failedSaveBuddy'));
     }
+
+    // Always save to local BuddyStore
+    if(typeof BuddyStore !== 'undefined'){
+      if(id){
+        var existing = BuddyStore.get(id);
+        if(existing){
+          existing.displayName = name;
+          existing.handicap = body.handicap;
+          existing.notes = notes;
+          if(_linkedUserId) existing.linkedUserId = _linkedUserId;
+          BuddyStore.save(existing);
+        }
+      } else {
+        BuddyStore.create({
+          displayName: name,
+          handicap: body.handicap,
+          notes: notes,
+          linkedUserId: _linkedUserId || null
+        });
+      }
+    }
+
+    _closeModal();
+    _fetch();
   }
 
   async function deleteBuddy(id){
     if(!confirm(T('deleteBuddyConfirm'))) return;
-    try {
-      var res = await ApiClient.del('/api/v1/buddies/' + id);
-      if(!res.ok){
-        var data = await ApiClient.json(res);
-        alert((data && data.error) || T('failedDeleteBuddy'));
-        return;
+
+    // Try API
+    if(typeof ApiClient !== 'undefined'){
+      try {
+        var res = await ApiClient.del('/api/v1/buddies/' + id);
+        if(!res.ok){
+          var data = await ApiClient.json(res);
+          console.warn('[BuddiesPage] API delete failed:', (data && data.error));
+        }
+      } catch(e){
+        console.warn('[BuddiesPage] API unavailable for delete');
       }
-      _closeModal();
-      _fetch();
-    } catch(e){
-      console.error('[BuddiesPage] delete error', e);
-      alert(T('failedDeleteBuddy'));
     }
+
+    // Always remove from local store
+    if(typeof BuddyStore !== 'undefined') BuddyStore.remove(id);
+
+    _closeModal();
+    _fetch();
   }
 
   return {

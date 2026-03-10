@@ -39,6 +39,7 @@ GolfOverlay/
 │   ├── scoreboard.js   # 计分卡逻辑
 │   ├── ui.js           # 界面操作
 │   ├── clubStore.js    # Club球会主数据CRUD + localStorage持久化（唯一数据源）
+│   ├── buddyStore.js   # Buddy球友本地CRUD + localStorage（离线优先，API可选同步）
 │   ├── courseRouting.js # 球场路由工具（基于ClubStore，替代courseDatabase.js）
 │   ├── roundManager.js # Round状态管理
 │   ├── newRoundService.js # New Round 创建服务（纯逻辑，无UI）
@@ -122,6 +123,7 @@ v4.0 统一数据访问层（IIFE `D`），无依赖：
 <script src="js/scoreboard.js"></script>      <!-- 无依赖 -->
 <script src="js/ui.js"></script>              <!-- 依赖 scoreboard.js, data.js -->
 <script src="js/clubStore.js"></script>       <!-- Club 球会 CRUD（唯一数据源），依赖 data.js -->
+<script src="js/buddyStore.js"></script>      <!-- Buddy 球友本地 CRUD，依赖 data.js -->
 <script src="js/courseRouting.js"></script>   <!-- 球场路由工具，依赖 clubStore.js -->
 <script src="js/roundManager.js"></script>    <!-- 依赖 clubStore.js + courseRouting.js -->
 <script src="js/sessionIO.js"></script>      <!-- 依赖 data.js -->

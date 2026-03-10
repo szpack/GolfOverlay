@@ -102,8 +102,26 @@ const BuddyPicker = (function(){
       _recentPlayers = NewRoundService.getRecentPlayers(10) || [];
     }
 
-    // Buddies (async)
+    // Local buddies (sync, always available)
+    var localBuddies = [];
+    if(typeof BuddyStore !== 'undefined'){
+      var all = BuddyStore.list();
+      for(var i = 0; i < all.length; i++){
+        var b = all[i];
+        localBuddies.push({
+          id: b.id,
+          buddy_player_id: b.linkedPlayerId || null,
+          buddy_player: null,
+          nickname: b.nickname || b.displayName || '',
+          displayName: b.displayName || '',
+          notes: b.notes || ''
+        });
+      }
+    }
+
+    // API buddies (async) — merge with local on success
     _loading = true;
+    _buddies = localBuddies;
     _render();
 
     if(typeof ApiClient !== 'undefined'){
@@ -113,10 +131,13 @@ const BuddyPicker = (function(){
       }).then(function(data){
         if(data && data.ok && Array.isArray(data.data)){
           _buddies = data.data;
+          // Sync API results into local BuddyStore for offline use
+          if(typeof BuddyStore !== 'undefined') BuddyStore.mergeFromApi(data.data);
         }
         _loading = false;
         _render();
       }).catch(function(){
+        // API failed — keep local buddies already loaded
         _loading = false;
         _render();
       });

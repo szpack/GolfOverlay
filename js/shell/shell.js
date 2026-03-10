@@ -18,7 +18,7 @@ const Shell = (function(){
     home:     { elementId:'page-home',       render: function(){ HomePage.render(); }, title:'Home' },
     rounds:   { elementId:'page-rounds',     render: function(){ RoundsPage.render(); }, title:'Rounds' },
     broadcast:{ elementId:'overlay-center',  title:'Broadcast' },
-    teetimes: { elementId:'page-teetimes',   title:'TeeTimes' },
+    teetimes: { elementId:'page-teetimes',   render: function(){ TeeTimesPage.render(); }, title:'TeeTimes' },
     teams:    { elementId:'page-teams',      title:'Teams' },
     courses:  { elementId:'page-courses',    render: function(){ CoursesPage.render(); }, title:'Course Management' },
     courseDetail: { elementId:'page-course-detail', render: function(route){ CourseDetailPage.render(route && route.params ? route.params.id : null); }, title:'Club Detail' },
@@ -62,11 +62,18 @@ const Shell = (function(){
 
     _wireNav();
     _restoreSidebarState();
-    Router.start(_onRouteChange);
     _syncLangButton();
     _applySidebarLang();
-    _renderLiveRecent();
     _initAuth();
+
+    // Wait for ClubStore seed before starting router, so pages see all clubs
+    var seedReady = window._clubSeedReady || Promise.resolve();
+    seedReady.then(_startShell).catch(_startShell);
+  }
+
+  function _startShell(){
+    Router.start(_onRouteChange);
+    _renderLiveRecent();
 
     document.getElementById('app-shell').classList.add('shell-ready');
     // Remove lang-flash cloak — i18n is now applied

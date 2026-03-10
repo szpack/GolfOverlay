@@ -168,6 +168,15 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 ## Changelog
 
+### v23.13.0 — 2026-03-10
+- **新增 BuddyStore 本地球友存储**：离线优先的 localStorage 球友 CRUD，无需后端即可添加/管理球友
+- **BuddyPicker 显示已有球友**：新建球局选球友时，优先展示本地 BuddyStore 中的球友列表，API 可用时自动同步
+- **BuddiesPage 离线兼容**：添加/编辑/删除球友同时写入本地存储，API 不可用时自动回退到本地数据
+
+### v23.12.2 — 2026-03-10
+- **修复新球局球场列表为空**：Shell 路由延迟到 ClubStore.seedFromJSON 完成后再启动，解决首次加载/清缓存后 CoursePicker 看不到球场的竞态问题
+- **CoursePicker 默认显示全部球会**：无搜索时，在"附近"和"最近"之后显示"全部球会"分组，不再仅提示搜索
+
 ### v23.12.1 — 2026-03-10
 - **ClubStore seedFromJSON 改为增量合并**：每次启动都检查 courses.json，补入缺失球场；解决换目录/清缓存后新建球局看不到球场的问题
 

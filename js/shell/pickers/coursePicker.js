@@ -176,7 +176,7 @@ const CoursePicker = (function(){
         html += '<div class="nr-empty-hint">' + T('nrNoClubsFound') + '</div>';
       }
     } else {
-      // Priority: nearby > recent (use search for others)
+      // Priority: nearby > recent > all
       var seenIds = {};
       var nearby = _getNearbyClubs(seenIds);
       var recent = _getRecentClubs(seenIds);
@@ -187,7 +187,21 @@ const CoursePicker = (function(){
       if(recent.length > 0){
         html += _renderSection(T('nrRecentLbl'), recent);
       }
-      if(nearby.length === 0 && recent.length === 0){
+
+      // Show remaining clubs as "All Clubs" fallback
+      var all = ClubStore.listActive();
+      var remaining = [];
+      for(var i = 0; i < all.length; i++){
+        if(!seenIds[all[i].id]){
+          seenIds[all[i].id] = true;
+          remaining.push(all[i]);
+        }
+      }
+      if(remaining.length > 0){
+        html += _renderSection(T('nrAllClubsLbl'), remaining);
+      }
+
+      if(nearby.length === 0 && recent.length === 0 && remaining.length === 0){
         html += '<div class="nr-empty-hint">' + T('nrSearchToFind') + '</div>';
       }
     }

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tee Time 订场 - GolfHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            golf: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-md mx-auto min-h-screen bg-white shadow-lg">
+    
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+      <div class="flex items-center justify-between px-4 py-3">
+        <a href="index.html" class="text-gray-600 hover:text-gray-900">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </a>
+        <h1 class="text-lg font-semibold">Tee Time 订场</h1>
+        <div class="w-6"></div>
+      </div>
+    </header>
+
+    <!-- Course Hero -->
+    <section class="relative">
+      <img id="courseImage" src="https://images.unsplash.com/photo-1592919505780-303950717480?w=800" 
+           class="w-full h-48 object-cover" alt="球场">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 right-0 p-4 text-white">
+        <h2 id="courseName" class="text-xl font-bold">Pebble Coast Golf Club</h2>
+        <p class="text-sm opacity-90">17-Mile Drive, California</p>
+      </div>
+    </section>
+
+    <!-- Course Info Card -->
+    <section class="px-4 -mt-4 relative z-10">
+      <div class="bg-white rounded-xl shadow-md p-4">
+        <div class="flex justify-between text-center">
+          <div class="flex-1 border-r border-gray-100">
+            <div class="text-xs text-gray-500">标准杆</div>
+            <div class="font-semibold">Par 72</div>
+          </div>
+          <div class="flex-1 border-r border-gray-100">
+            <div class="text-xs text-gray-500">起订价</div>
+            <div class="font-semibold text-golf-600" id="coursePrice">$128</div>
+          </div>
+          <div class="flex-1">
+            <div class="text-xs text-gray-500">评分</div>
+            <div class="font-semibold">4.8 ★</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Course Selection -->
+    <section class="px-4 mt-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">选择球场</h3>
+      <div id="courseList" class="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+        <!-- JS injected -->
+      </div>
+    </section>
+
+    <!-- Date Selection -->
+    <section class="px-4 mt-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">选择日期</h3>
+      <div id="dateList" class="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+        <!-- JS injected -->
+      </div>
+    </section>
+
+    <!-- Time Period -->
+    <section class="px-4 mt-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">时间段</h3>
+      <div id="periodList" class="grid grid-cols-3 gap-3">
+        <!-- JS injected -->
+      </div>
+    </section>
+
+    <!-- Tee Time Slots -->
+    <section class="px-4 mt-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">可选开球时间</h3>
+      <div id="timeSlotList" class="grid grid-cols-3 gap-3">
+        <!-- JS injected -->
+      </div>
+    </section>
+
+    <!-- Players -->
+    <section class="px-4 mt-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">打球人数</h3>
+      <div id="playerList" class="grid grid-cols-4 gap-3">
+        <!-- JS injected -->
+      </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="px-4 mt-6 mb-24">
+      <div class="bg-gray-50 rounded-xl p-4 space-y-2">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">球场</span>
+          <span id="summaryCourse" class="font-medium">Pebble Coast</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">日期</span>
+          <span id="summaryDate" class="font-medium">3月12日</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">时间</span>
+          <span id="summaryTime" class="font-medium">08:30</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">人数</span>
+          <span id="summaryPlayers" class="font-medium">2人</span>
+        </div>
+        <div class="border-t pt-2 flex justify-between items-center">
+          <span class="text-gray-500">预估总价</span>
+          <span id="summaryTotal" class="text-xl font-bold text-golf-600">$256</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-100 p-4">
+      <button id="bookBtn" class="w-full py-3 bg-golf-600 hover:bg-golf-700 text-white font-semibold rounded-xl transition">
+        确认预约
+      </button>
+    </footer>
+
+  </div>
+
+  <script>
+    const courses = [
+      { id: 1, name: 'Pebble Coast', address: 'California', price: 128, image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=800' },
+      { id: 2, name: 'Sunset Hills', address: 'Palm Desert', price: 98, image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800' },
+      { id: 3, name: 'Lakeview', address: 'San Diego', price: 145, image: 'https://images.unsplash.com/photo-1500930287596-c1ecaa373bb2?w=800' }
+    ];
+
+    const dates = [
+      { id: 1, label: '今天', full: '3月10日' },
+      { id: 2, label: '明天', full: '3月11日' },
+      { id: 3, label: '周四', full: '3月12日' },
+      { id: 4, label: '周五', full: '3月13日' },
+      { id: 5, label: '周六', full: '3月14日' },
+      { id: 6, label: '周日', full: '3月15日' }
+    ];
+
+    const periods = [
+      { id: 'morning', label: '上午', time: '06:00-12:00' },
+      { id: 'noon', label: '中午', time: '12:00-14:00' },
+      { id: 'afternoon', label: '下午', time: '14:00-18:00' }
+    ];
+
+    const slots = {
+      morning: ['06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00'],
+      noon: ['12:00', '12:30', '13:00', '13:30'],
+      afternoon: ['14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00']
+    };
+
+    const state = {
+      courseId: 1,
+      dateId: 3,
+      period: 'morning',
+      time: '08:30',
+      players: 2
+    };
+
+    function render() {
+      const course = courses.find(c => c.id === state.courseId);
+      const date = dates.find(d => d.id === state.dateId);
+
+      // Update hero
+      document.getElementById('courseImage').src = course.image;
+      document.getElementById('courseName').textContent = course.name + ' Golf Club';
+      document.getElementById('coursePrice').textContent = '$' + course.price;
+
+      // Course list
+      document.getElementById('courseList').innerHTML = courses.map(c => `
+        <button onclick="selectCourse(${c.id})" 
+                class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 transition ${c.id === state.courseId ? 'border-golf-500 ring-2 ring-golf-200' : 'border-gray-200'}">
+          <img src="${c.image}" class="w-full h-20 object-cover">
+          <div class="p-2 text-left">
+            <div class="text-sm font-medium truncate">${c.name}</div>
+            <div class="text-xs text-golf-600">$${c.price}</div>
+          </div>
+        </button>
+      `).join('');
+
+      // Date list
+      document.getElementById('dateList').innerHTML = dates.map(d => `
+        <button onclick="selectDate(${d.id})" 
+                class="flex-shrink-0 px-4 py-2 rounded-xl border-2 text-center transition ${d.id === state.dateId ? 'border-golf-500 bg-golf-50 text-golf-700' : 'border-gray-200'}">
+          <div class="text-xs">${d.label}</div>
+          <div class="text-sm font-medium">${d.full}</div>
+        </button>
+      `).join('');
+
+      // Period list
+      document.getElementById('periodList').innerHTML = periods.map(p => `
+        <button onclick="selectPeriod('${p.id}')" 
+                class="py-3 rounded-xl border-2 text-center transition ${p.id === state.period ? 'border-golf-500 bg-golf-50 text-golf-700' : 'border-gray-200'}">
+          <div class="font-medium">${p.label}</div>
+          <div class="text-xs text-gray-500">${p.time}</div>
+        </button>
+      `).join('');
+
+      // Time slots
+      document.getElementById('timeSlotList').innerHTML = slots[state.period].map(t => `
+        <button onclick="selectTime('${t}')" 
+                class="py-2 rounded-xl border-2 text-center transition ${t === state.time ? 'border-golf-500 bg-golf-600 text-white' : 'border-gray-200 hover:border-golf-300'}">
+          ${t}
+        </button>
+      `).join('');
+
+      // Players
+      document.getElementById('playerList').innerHTML = [1,2,3,4].map(n => `
+        <button onclick="selectPlayers(${n})" 
+                class="py-3 rounded-xl border-2 text-center transition ${n === state.players ? 'border-golf-500 bg-golf-600 text-white' : 'border-gray-200'}">
+          ${n}人
+        </button>
+      `).join('');
+
+      // Summary
+      document.getElementById('summaryCourse').textContent = course.name;
+      document.getElementById('summaryDate').textContent = date.full;
+      document.getElementById('summaryTime').textContent = state.time;
+      document.getElementById('summaryPlayers').textContent = state.players + '人';
+      document.getElementById('summaryTotal').textContent = '$' + (course.price * state.players);
+    }
+
+    function selectCourse(id) { state.courseId = id; render(); }
+    function selectDate(id) { state.dateId = id; render(); }
+    function selectPeriod(id) { state.period = id; state.time = slots[id][2]; render(); }
+    function selectTime(t) { state.time = t; render(); }
+    function selectPlayers(n) { state.players = n; render(); }
+
+    document.getElementById('bookBtn').addEventListener('click', () => {
+      alert('预约成功！\n\n' + 
+            '球场: ' + courses.find(c => c.id === state.courseId).name + '\n' +
+            '日期: ' + dates.find(d => d.id === state.dateId).full + '\n' +
+            '时间: ' + state.time + '\n' +
+            '人数: ' + state.players + '人');
+    });
+
+    render();
+  </script>
+</body>
+</html>

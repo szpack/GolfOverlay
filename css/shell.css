@@ -4872,6 +4872,593 @@ html.light .sh-welcome strong { color: #1a1a1a; }
 html.light .sh-legacy-notice { background: rgba(202,138,4,0.06); border-color: rgba(202,138,4,0.15); }
 html.light .sh-legacy-title { color: #ca8a04; }
 
+/* ══════════════════════════════════════════
+   TEE TIMES PAGE
+   ══════════════════════════════════════════ */
+
+#page-teetimes .sh-page-container {
+  max-width: 980px;
+}
+
+.tt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.tt-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tt-course-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+}
+
+.tt-course-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tt-course-location {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.tt-course-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tt-rating {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.tt-date-nav {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tt-date-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.tt-date-btn:hover {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.tt-date-active {
+  background: rgba(34,197,94,0.10);
+  border-color: var(--accent-green);
+  color: var(--text-primary);
+}
+
+.tt-day-name {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tt-day-num {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tt-month {
+  font-size: 11px;
+}
+
+.tt-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.tt-tab {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tt-tab:hover {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.tt-tab-active {
+  background: rgba(34,197,94,0.12);
+  border-color: var(--accent-green);
+  color: var(--text-primary);
+}
+
+.tt-loading,
+.tt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.tt-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255,255,255,0.10);
+  border-top-color: var(--accent-green);
+  border-radius: 50%;
+  animation: tt-spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes tt-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tt-empty-icon {
+  font-size: 48px;
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+
+.tt-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.tt-empty-text,
+.tt-loading-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.tt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.tt-hour-group {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.tt-hour-label {
+  padding-top: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-section);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tt-hour-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.tt-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.tt-slot:hover {
+  background: var(--bg-active);
+  border-color: rgba(255,255,255,0.12);
+  transform: translateY(-1px);
+}
+
+.tt-slot-selected {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 1px rgba(34,197,94,0.2);
+}
+
+.tt-slot-main,
+.tt-slot-availability,
+.tt-slot-price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tt-slot-time {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tt-slot-holes,
+.tt-slot-spots,
+.tt-price-per {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tt-slot-availability {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.tt-slot-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tt-badge-popular {
+  background: rgba(251,191,36,0.14);
+  color: #fbbf24;
+}
+
+.tt-badge-limited {
+  background: rgba(248,113,113,0.12);
+  color: #f87171;
+}
+
+.tt-slot-price {
+  align-items: baseline;
+}
+
+.tt-price-amount {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent-green);
+}
+
+.tt-slot-btn,
+.tt-booking-submit {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--accent-green);
+  color: #000;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.tt-slot-btn:hover,
+.tt-booking-submit:hover {
+  opacity: 0.88;
+}
+
+.tt-policy-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.16);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.tt-policy-icon {
+  color: #60a5fa;
+}
+
+.tt-modal {
+  display: none;
+}
+
+.tt-modal-show {
+  display: block;
+}
+
+.tt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.56);
+  z-index: 1000;
+}
+
+.tt-modal-content {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 460px);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  z-index: 1001;
+}
+
+.tt-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tt-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.tt-modal-close {
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.tt-modal-body {
+  padding: 18px 20px 20px;
+}
+
+.tt-booking-details,
+.tt-policy-box {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.tt-booking-details {
+  margin-bottom: 16px;
+}
+
+.tt-booking-row,
+.tt-booking-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tt-booking-row + .tt-booking-row {
+  margin-top: 10px;
+}
+
+.tt-booking-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.tt-booking-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tt-price-highlight {
+  color: var(--accent-green);
+}
+
+.tt-booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tt-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.tt-select {
+  width: 100%;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+}
+
+.tt-select:focus {
+  border-color: var(--accent-green);
+}
+
+.tt-policy-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.tt-policy-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.tt-policy-list li + li {
+  margin-top: 6px;
+}
+
+.tt-booking-total {
+  margin: 18px 0 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tt-auth-required {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+
+.tt-auth-icon {
+  font-size: 42px;
+  opacity: 0.7;
+}
+
+.tt-auth-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tt-auth-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.tt-auth-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+html.light .tt-title,
+html.light .tt-course-name,
+html.light .tt-empty-title,
+html.light .tt-modal-header h3,
+html.light .tt-booking-value,
+html.light .tt-auth-title,
+html.light .tt-policy-title {
+  color: #1a1a1a;
+}
+
+html.light .tt-course-card,
+html.light .tt-slot,
+html.light .tt-booking-details,
+html.light .tt-policy-box,
+html.light .tt-modal-content {
+  background: #fff;
+  border-color: rgba(0,0,0,0.08);
+}
+
+html.light .tt-date-btn,
+html.light .tt-tab,
+html.light .tt-select {
+  background: #fff;
+  border-color: rgba(0,0,0,0.08);
+}
+
+html.light .tt-date-btn:hover,
+html.light .tt-tab:hover,
+html.light .tt-slot:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+html.light .tt-policy-summary {
+  background: rgba(59,130,246,0.06);
+  border-color: rgba(59,130,246,0.14);
+}
+
+html.light .tt-loading-spinner {
+  border-color: rgba(0,0,0,0.10);
+  border-top-color: var(--accent-green);
+}
+
+@media (max-width: 768px) {
+  .tt-date-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .tt-hour-group {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .tt-hour-label {
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .tt-date-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tt-hour-slots {
+    grid-template-columns: 1fr;
+  }
+
+  .tt-auth-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+}
+
 /* ── Buddies Page ── */
 .bd-page { max-width: 680px; margin: 0 auto; }
 .bd-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -4960,3 +5547,436 @@ html.light .bd-page-btn { border-color: rgba(0,0,0,0.1); }
 html.light .bd-modal { background: #fff; border-color: rgba(0,0,0,0.1); }
 html.light .bd-form-input, html.light .bd-form-textarea { background: #f9fafb; border-color: rgba(0,0,0,0.1); }
 html.light .bd-title { color: #1a1a1a; }
+
+/* ============================================================
+   TeeTimes Page Styles
+   ============================================================ */
+
+.tt-course-list { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.tt-course-list::-webkit-scrollbar { display: none; }
+.tt-course-card { flex-shrink: 0; width: 200px; border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; }
+.tt-course-card:hover { border-color: rgba(255,255,255,0.2); }
+.tt-course-active { border-color: var(--accent-green); box-shadow: 0 0 0 2px rgba(34,197,94,0.2); }
+.tt-course-img { width: 100%; height: 100px; object-fit: cover; }
+.tt-course-info { padding: 10px; }
+.tt-course-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tt-course-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.tt-course-price { font-size: 14px; font-weight: 600; color: var(--accent-green); margin-top: 6px; }
+.tt-price-unit { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
+
+.tt-date-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.tt-date-list::-webkit-scrollbar { display: none; }
+.tt-date-btn { flex-shrink: 0; min-width: 70px; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: inherit; cursor: pointer; text-align: center; transition: all 0.2s; }
+.tt-date-btn:hover { background: rgba(255,255,255,0.08); }
+.tt-date-active { border-color: var(--accent-green); background: rgba(34,197,94,0.1); }
+.tt-date-label { display: block; font-size: 11px; color: var(--text-secondary); }
+.tt-date-full { display: block; font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+.tt-period-tabs { display: flex; gap: 8px; }
+.tt-period-tab { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: inherit; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.tt-period-tab:hover { background: rgba(255,255,255,0.08); }
+.tt-period-active { border-color: var(--accent-green); background: rgba(34,197,94,0.1); }
+
+.tt-slots-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tt-slot-btn { padding: 12px 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: inherit; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.tt-slot-btn:hover { background: rgba(255,255,255,0.08); }
+.tt-slot-active { border-color: var(--accent-green); background: var(--accent-green); color: white; }
+
+.tt-players-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tt-player-btn { padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: inherit; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.tt-player-btn:hover { background: rgba(255,255,255,0.08); }
+.tt-player-active { border-color: var(--accent-green); background: var(--accent-green); color: white; }
+
+.tt-summary-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; }
+.tt-summary-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.tt-summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.tt-summary-row:last-child { border-bottom: none; }
+.tt-summary-total { margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
+.tt-summary-price { font-size: 18px; font-weight: 700; color: var(--accent-green); }
+.tt-summary-note { font-size: 11px; color: var(--text-secondary); margin-top: 8px; text-align: right; }
+
+.tt-book-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--accent-green); color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.tt-book-btn:hover { background: #16a34a; }
+
+.tt-empty-state { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 14px; }
+
+/* ══════════════════════════════════════════
+   TEE TIMES PAGE - INTENT BAR (Step 4)
+   ══════════════════════════════════════════ */
+
+/* Page Header */
+.tt-page-header {
+  margin-bottom: 24px;
+}
+
+.tt-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Intent Bar Container */
+.tt-intent-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 32px;
+  padding: 16px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  flex-wrap: wrap;
+}
+
+/* Intent Field */
+.tt-intent-field {
+  position: relative;
+  flex: 1;
+  min-width: 160px;
+}
+
+.tt-field-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tt-field-inner:hover {
+  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.03);
+}
+
+.tt-field-active .tt-field-inner {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 1px rgba(34,197,94,0.2);
+}
+
+.tt-field-filled .tt-field-inner {
+  background: rgba(34,197,94,0.06);
+  border-color: rgba(34,197,94,0.2);
+}
+
+.tt-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-section);
+}
+
+.tt-field-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tt-field-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--text-section);
+  pointer-events: none;
+}
+
+/* Dropdown */
+.tt-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 280px;
+  max-width: 360px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  z-index: 100;
+  padding: 8px 0;
+}
+
+.tt-dropdown-wide {
+  min-width: 320px;
+}
+
+.tt-dropdown-narrow {
+  min-width: 200px;
+}
+
+.tt-dropdown-section {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tt-dropdown-section:last-child {
+  border-bottom: none;
+}
+
+.tt-dropdown-title {
+  padding: 4px 16px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-section);
+}
+
+.tt-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tt-dropdown-item:hover {
+  background: var(--bg-hover);
+}
+
+.tt-dropdown-item-selected {
+  background: rgba(34,197,94,0.1);
+}
+
+.tt-dropdown-item-selected:hover {
+  background: rgba(34,197,94,0.15);
+}
+
+.tt-dropdown-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.tt-dropdown-text {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.tt-dropdown-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Search Button */
+.tt-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--accent-green);
+  border: none;
+  border-radius: 12px;
+  color: #000;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.tt-search-btn:hover {
+  opacity: 0.88;
+}
+
+.tt-search-icon {
+  font-size: 16px;
+}
+
+/* Mini Calendar */
+.tt-calendar {
+  padding: 0 16px 8px;
+}
+
+.tt-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.tt-calendar-nav {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.tt-calendar-nav:hover {
+  background: var(--bg-hover);
+}
+
+.tt-calendar-month {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tt-calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.tt-calendar-day-header {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-section);
+  padding: 4px;
+}
+
+.tt-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.tt-calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.tt-calendar-cell:hover:not(.tt-calendar-cell-empty):not(.tt-calendar-cell-past) {
+  background: var(--bg-hover);
+}
+
+.tt-calendar-cell-empty {
+  cursor: default;
+}
+
+.tt-calendar-cell-past {
+  color: var(--text-section);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tt-calendar-cell-today {
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.tt-calendar-cell-selected {
+  background: var(--accent-green);
+  color: #000;
+  font-weight: 600;
+}
+
+.tt-calendar-cell-selected:hover {
+  background: var(--accent-green);
+}
+
+/* Results Area */
+.tt-results-area {
+  min-height: 300px;
+}
+
+.tt-results-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tt-results-count {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.tt-results-list {
+  min-height: 200px;
+}
+
+.tt-results-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.tt-results-empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.tt-results-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.tt-results-empty-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 400px;
+}
+
+/* ── TeeTimes Intent Bar - Light Theme ── */
+html.light .tt-page-title { color: #1a1a1a; }
+html.light .tt-intent-bar { background: #f9fafb; border-color: rgba(0,0,0,0.06); }
+html.light .tt-field-inner { background: #fff; border-color: rgba(0,0,0,0.08); }
+html.light .tt-field-inner:hover { border-color: rgba(0,0,0,0.12); background: #fafafa; }
+html.light .tt-field-active .tt-field-inner { border-color: var(--accent-green); }
+html.light .tt-field-filled .tt-field-inner { background: rgba(34,197,94,0.04); border-color: rgba(34,197,94,0.15); }
+html.light .tt-dropdown { background: #fff; border-color: rgba(0,0,0,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+html.light .tt-dropdown-section { border-color: rgba(0,0,0,0.06); }
+html.light .tt-dropdown-item:hover { background: rgba(0,0,0,0.03); }
+html.light .tt-dropdown-item-selected { background: rgba(34,197,94,0.08); }
+html.light .tt-dropdown-item-selected:hover { background: rgba(34,197,94,0.12); }
+html.light .tt-calendar-nav:hover { background: rgba(0,0,0,0.04); }
+html.light .tt-calendar-cell:hover:not(.tt-calendar-cell-empty):not(.tt-calendar-cell-past) { background: rgba(0,0,0,0.04); }
+html.light .tt-results-header { border-color: rgba(0,0,0,0.06); }
+html.light .tt-results-empty-title { color: #1a1a1a; }
+
+/* ── TeeTimes Intent Bar - Responsive ── */
+@media (max-width: 768px) {
+  .tt-intent-bar {
+    flex-direction: column;
+  }
+
+  .tt-intent-field {
+    min-width: 100%;
+  }
+
+  .tt-dropdown,
+  .tt-dropdown-wide,
+  .tt-dropdown-narrow {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .tt-search-btn {
+    width: 100%;
+  }
+}
+
