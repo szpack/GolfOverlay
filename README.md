@@ -7,7 +7,7 @@
 
 ## 🌐 在线访问 / Live Demo
 
-**GitHub Pages:** https://szpack.github.io/GolfOverlay/
+**GitHub Pages:** https://szpack.github.io/GolfHub/
 
 ---
 
@@ -37,7 +37,7 @@
 
 | 参数 | 推荐值 |
 |------|--------|
-| **URL** | `https://szpack.github.io/GolfOverlay/` 或本地 `file:///…/index.html` |
+| **URL** | `https://szpack.github.io/GolfHub/` 或本地 `file:///…/index.html` |
 | **Width** | `1920` |
 | **Height** | `1080` |
 | **FPS** | `60` |
