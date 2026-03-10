@@ -34,11 +34,13 @@
 <nav id="app-sidebar">
   <!-- Brand + Collapse toggle -->
   <div class="sb-header">
-    <button class="sb-toggle" id="sb-toggle" onclick="Shell.toggleSidebar()" title="Toggle sidebar">&#9776;</button>
     <div class="sb-brand" onclick="Router.navigate('/')">
       <img src="gologo.png" alt="Golf Event Console" class="sb-logo">
       <span class="sb-brand-text">Golf Event Console</span>
     </div>
+    <button class="sb-toggle" id="sb-toggle" onclick="Shell.toggleSidebar()" title="Toggle sidebar">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="1.5" x2="6" y2="14.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
   </div>
 
   <!-- Scrollable body -->
@@ -69,6 +71,9 @@
     <button class="sb-item" data-route="clubs" data-tooltip="Clubs">
       <span class="sb-icon">&#127948;</span><span class="sb-label">Clubs</span>
     </button>
+    <button class="sb-item" data-route="settings" data-tooltip="Settings">
+      <span class="sb-icon">&#9881;</span><span class="sb-label">Settings</span>
+    </button>
 
     <!-- Workspace -->
     <div class="sb-section-label"><span class="sb-label">Workspace</span></div>
@@ -84,21 +89,6 @@
   <!-- Footer -->
   <div class="sb-footer">
     <div class="sb-divider"></div>
-    <div id="sidebar-lang-wrap">
-      <button id="sidebar-btn-lang" class="sb-item sb-tool" onclick="Shell.toggleLangMenu()">
-        <span class="sb-icon">&#127760;</span><span class="sb-label" id="sidebar-lang-label">EN</span>
-      </button>
-      <div id="sidebar-lang-menu">
-        <button data-lang="en" onclick="Shell.setLang('en')">EN</button>
-        <button data-lang="zh" onclick="Shell.setLang('zh')">中文</button>
-        <button data-lang="ja" onclick="Shell.setLang('ja')">日本語</button>
-        <button data-lang="ko" onclick="Shell.setLang('ko')">한국어</button>
-        <button data-lang="es" onclick="Shell.setLang('es')">ES</button>
-      </div>
-    </div>
-    <button class="sb-item sb-tool" data-route="settings" data-tooltip="Settings">
-      <span class="sb-icon">&#9881;</span><span class="sb-label">Settings</span>
-    </button>
     <div id="sidebar-register-entry">
       <button class="sb-item sb-tool sb-register-btn" onclick="Router.navigate('/register')" data-tooltip="Register">
         <span class="sb-icon">&#10133;</span><span class="sb-label">Create Account</span>
@@ -109,7 +99,7 @@
         <span class="sb-icon" id="sidebar-auth-icon">&#128100;</span><span class="sb-label" id="sidebar-auth-label">Sign In</span>
       </button>
     </div>
-    <div class="sb-version"><span class="sb-label">v21.3.0</span></div>
+    <div class="sb-version"><span class="sb-label">v21.3.1</span></div>
   </div>
 </nav>
 

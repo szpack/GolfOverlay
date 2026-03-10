@@ -377,6 +377,16 @@ const Shell = (function(){
     html += '<div class="st-btn-group">' + themeBtn('dark','Dark') + themeBtn('light','Light') + themeBtn('auto','Auto') + '</div>';
     html += '</div>';
 
+    // Language
+    var curLang = ws.lang || 'en';
+    function langBtn(val, label){
+      return '<button class="st-btn' + (curLang===val?' st-btn-active':'') + '" onclick="Shell.setLang(\'' + val + '\')">' + label + '</button>';
+    }
+    html += '<div class="st-section">';
+    html += '<div class="st-section-title">Language</div>';
+    html += '<div class="st-btn-group st-btn-group-wrap">' + langBtn('en','EN') + langBtn('zh','中文') + langBtn('ja','日本語') + langBtn('ko','한국어') + langBtn('es','ES') + '</div>';
+    html += '</div>';
+
     // Overlay Visibility
     html += '<div class="st-section">';
     html += '<div class="st-section-title">Overlay</div>';
@@ -518,12 +528,9 @@ const Shell = (function(){
   }
 
   function setLang(lang){
-    var menu = document.getElementById('sidebar-lang-menu');
-    if(menu) menu.classList.remove('show');
-    var lbl = document.getElementById('sidebar-lang-label');
-    var labels = { en:'EN', zh:'中文', ja:'日本語', ko:'한국어', es:'ES' };
-    if(lbl) lbl.textContent = labels[lang] || lang;
     if(typeof window.setLang === 'function') window.setLang(lang);
+    // Re-render settings page to update active button
+    if(_currentPage === 'settings') _renderSettingsPage();
   }
 
   function openSettings(){
@@ -578,7 +585,7 @@ const Shell = (function(){
 
     // ── Sidebar nav visibility ──
     // Protected nav items: hide when not logged in
-    var protectedRoutes = ['rounds', 'courses', 'players', 'teams', 'clubs'];
+    var protectedRoutes = ['rounds', 'courses', 'players', 'teams', 'clubs', 'settings'];
     var navItems = document.querySelectorAll('.sb-item[data-route]');
     for(var i = 0; i < navItems.length; i++){
       var route = navItems[i].getAttribute('data-route');
@@ -603,10 +610,6 @@ const Shell = (function(){
     // Live/Recent section
     var liveRecent = document.getElementById('sb-live-recent');
     if(liveRecent) liveRecent.style.display = loggedIn ? '' : 'none';
-    // Settings
-    var settingsBtn = document.querySelector('.sb-item[data-route="settings"]');
-    if(settingsBtn) settingsBtn.style.display = loggedIn ? '' : 'none';
-
     // ── Sidebar register button (guest only) ──
     var regEntry = document.getElementById('sidebar-register-entry');
     if(regEntry) regEntry.style.display = loggedIn ? 'none' : '';

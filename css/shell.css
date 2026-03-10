@@ -116,7 +116,11 @@ body {
 
 #app-sidebar.sb-collapsed .sb-header {
   justify-content: center;
-  padding: 20px 0 12px;
+  padding: 14px 8px 10px;
+}
+
+#app-sidebar.sb-collapsed .sb-brand {
+  display: none;
 }
 
 #app-sidebar.sb-collapsed #sb-live-recent {
@@ -158,27 +162,29 @@ body {
   pointer-events: none;
 }
 
-/* ── Sidebar Header (logo section ~80px) ── */
+/* ── Sidebar Header ── */
 .sb-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 24px 20px 16px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 16px 12px;
   flex-shrink: 0;
-  min-height: 80px;
   box-sizing: border-box;
 }
 
 .sb-toggle {
   background: none;
   border: none;
-  color: var(--text-secondary);
-  font-size: 18px;
+  color: var(--text-section);
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 5px;
   border-radius: 6px;
   transition: background 0.15s, color 0.15s;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sb-toggle:hover {
@@ -189,19 +195,20 @@ body {
 .sb-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
   min-width: 0;
+  flex: 1;
 }
 
 .sb-logo {
-  height: 24px;
+  height: 22px;
   width: auto;
   flex-shrink: 0;
 }
 
 .sb-brand-text {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 0.01em;
@@ -243,16 +250,16 @@ body {
 .sb-action {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 44px;
-  padding: 0 12px;
+  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   background: none;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   width: 100%;
   text-align: left;
@@ -272,8 +279,8 @@ body {
 
 /* ── Section Labels ── */
 .sb-section-label {
-  padding: 28px 12px 8px;
-  font-size: 11px;
+  padding: 16px 12px 4px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -284,11 +291,11 @@ body {
 .sb-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 44px;
-  padding: 0 12px;
+  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
@@ -296,7 +303,7 @@ body {
   background: none;
   width: 100%;
   text-align: left;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: background 0.15s, color 0.15s;
 }
 
@@ -321,8 +328,8 @@ body {
 
 /* ── Icons ── */
 .sb-icon {
-  font-size: 20px;
-  width: 24px;
+  font-size: 16px;
+  width: 22px;
   text-align: center;
   flex-shrink: 0;
   opacity: 0.85;
@@ -339,9 +346,9 @@ body {
 .sb-round-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  gap: 10px;
+  padding: 5px 10px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s;
   min-width: 0;
@@ -381,7 +388,7 @@ body {
 /* ── Footer ── */
 .sb-footer {
   flex-shrink: 0;
-  padding: 8px 16px 16px;
+  padding: 4px 16px 12px;
 }
 
 .sb-tool {

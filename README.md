@@ -168,6 +168,12 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 ## Changelog
 
+### v21.4.0 — 2026-03-10
+- **Sidebar 紧凑化**：导航项高度从 44px 压缩到 34px，图标缩小，section label 间距收窄
+- **Brand 布局调整**：收起按钮移至 "Golf Event Console" 右侧，图标改为 ChatGPT 风格的侧边栏面板图标（SVG），品牌字体缩小至 14px 避免截断
+- **Language 移入 Settings**：移除 sidebar footer 的语言菜单和 Settings 入口，Settings 移入 Management 区域，语言切换在 Settings 页面内操作
+- **Sidebar footer 精简**：仅保留注册按钮（未登录）、用户入口和版本号
+
 ### v21.3.1 — 2026-03-10
 - **修复版本号**：title 和 Overlay Center header 中 v20.1.3 更新为 v21.3.0，缓存标签统一
 - **Legacy 数据清理**：登录用户首页检测到旧 round 数据时显示黄色提示条，提供一键 "Clear All" 按钮清除所有本地残留 round/scorecard/workspace 数据
