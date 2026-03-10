@@ -168,6 +168,77 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 ## Changelog
 
+### v23.12.1 — 2026-03-10
+- **ClubStore seedFromJSON 改为增量合并**：每次启动都检查 courses.json，补入缺失球场；解决换目录/清缓存后新建球局看不到球场的问题
+
+### v23.12.0 — 2026-03-10
+- **My Rounds 页面重写**：基于 RoundIndex.query() 实现，无全量扫描
+- 状态标签筛选（All / Playing / Scheduled / Finished / Abandoned）
+- 球场下拉筛选 + 文本搜索
+- 卡片展示 summaryStats、球员列表、abandon 原因
+- 活跃球局实时注入 D.sc() 进度数据
+- 新增 mr-filters / mr-status-tabs / mr-select 等筛选组件样式
+
+### v23.11.0 — 2026-03-10
+- **Phase D: Round Query Index**
+- 新增 `js/roundIndex.js`：倒排索引 byPlayer / byCourse / byStatus / byDate / byUpdated
+- `RoundIndex.query(opts)` 支持 playerId / courseId / status / dateFrom / dateTo / limit / offset 组合查询
+- 便捷 API：`byPlayer(pid)` / `byCourse(cid)` / `byDateRange(from, to)` / `today()`
+- RoundStore 写入自动通知索引更新（putRound / putSummary / remove）
+- 索引持久化到 `golf_v6_round_index`，首次运行或数据不一致时自动 rebuild
+
+### v23.10.0 — 2026-03-10
+- **Phase C Batch 2+3：putts/penalties/shots 写入权威迁移**
+- `D.setHolePutts` / `D.setHolePenalties` / `D.setHoleStatus` / `D.setHoleNotes` 改为先写 RoundStore
+- `D.setShotTag` / `D.setShotToPin` / `D.setShotNotes` 改为先写 RoundStore.updateShot()
+- RoundStore 新增 `updateShot(roundId, rpId, holeIdx, shotIdx, patch)` — 单击球 merge-patch
+- **写入节流**：`updateHoleScore` / `clearHoleScore` / `updateShot` 不再立即持久化，改为 dirty 标记 + `flushProgress()` 批量刷新
+- **Dev 断言**：`D._DEV = true` 开启 _sc ↔ RoundData gross 一致性检查
+
+### v23.9.0 — 2026-03-10
+- **Phase C Batch 1：gross 写入权威迁移**
+- `D.setPlayerGross` / `D.adjPlayerGross` / `D.clearPlayerHole` 改为先写 RoundStore 再投影 _sc
+- RoundStore 新增 `updateHoleScore(roundId, rpId, holeIdx, patch)` — merge-patch 语义
+- RoundStore 新增 `clearHoleScore(roundId, rpId, holeIdx)` — 清空单洞
+- RoundStore 新增 `recomputeProgress(roundId)` / `flushProgress()` — dirty 标记延迟更新 holesCompleted
+- `D.save()` 调用 `flushProgress()` 刷新进度
+
+### v23.8.1 — 2026-03-10
+- **summaryStats/derivedStats 分层**：RoundSummary 仅存轻量 summaryStats（name/totalGross/toPar），RoundData 存完整 derivedStats
+- **derivedStats key 改为 playerId**：便于未来跨 Round 球员历史统计
+- **finishRound/abandonRound 自动清除 activeRoundId**
+- **RoundsPage 仅依赖 RoundSummary**：列表渲染不加载 RoundData
+
+### v23.8.0 — 2026-03-10
+- **Phase B: Round 生命周期**：新增 `startRound` / `finishRound` / `abandonRound` API
+- **状态机**：合法转换校验 scheduled→in_progress→finished/abandoned，终态不可逆
+- **derivedStats**：finishRound/abandonRound 自动计算 totalGross/toPar/birdie/par/bogey/double+/putts
+- **Rounds 列表**：finished/abandoned 卡片显示球员成绩摘要和 abandon 原因
+- **CSS**：新增 `sh-status-scheduled` / `sh-status-in_progress` / `sh-status-abandoned` 样式
+
+### v23.7.1 — 2026-03-10
+- 修复 roundsPage 分组使用旧状态键（playing/planned → in_progress/scheduled）
+- 修复 round.js cloneRound 默认状态为 'scheduled'
+- 修复 roundBuilder 导入状态为 'in_progress'
+- CLAUDE.md 补全 roundStore.js / roundHelper.js 加载顺序
+
+### v23.7.0 — 2026-03-10
+- **Round Store（Phase A）**：新增 `roundStore.js`，Round 成为一级实体，Summary + Data 分层存储
+- **localStorage 升级至 v6**：`golf_v6_store_meta` / `golf_v6_round_summaries` / `golf_v6_rd_{id}` / `golf_v6_round_active`
+- **自动迁移**：从旧 `golf_v5_rounds` 自动迁移到 v6 分层格式
+- **状态命名统一**：`planned→scheduled`、`playing→in_progress`，新增 `abandoned` 状态
+- **D.sc() 兼容桥**：D.save() 通过 RoundStore.syncFromScorecard() 回收成绩（节流 1 秒）
+- **data.js 瘦身**：移除内嵌 Round Store 代码，Round 相关 API 委托到 RoundStore
+- **NewRoundService**：创建/激活球局同时写入 RoundStore
+- **RoundHelper**：改为从 RoundStore 读取球局列表
+
+### v23.6.0 — 2026-03-10
+- **统一数据源**：移除 CourseDatabase（courseDatabase.js），ClubStore 成为唯一球场数据源
+- **新增 courseRouting.js**：轻量级路由工具模块，基于 ClubStore 数据生成路由，替代原 CourseDatabase 的路由功能
+- **首次运行自动导入**：ClubStore.seedFromJSON() 直接 fetch courses.json 并转换导入，无需 CourseDatabase 中间层
+- **向后兼容**：CourseRouting.rebuildFromSavedRound() 支持旧格式（fixed_course/composed_segments）的存档恢复
+- roundManager.js 重写为依赖 ClubStore + CourseRouting
+
 ### v23.5.5 — 2026-03-10
 - **深度代码清理**：移除旧球场选择器 HTML/CSS、`.sb-action`/`.sb-quick` 孤立样式、`#sidebar-auth-entry`/`.sb-register-btn` 死 CSS、`_getAllClubs` 死函数
 - **修复 light 模式**：`#sidebar-lang-menu` 选择器更正为 `.sb-lang-menu`

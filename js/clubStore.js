@@ -908,6 +908,185 @@ const ClubStore = (function(){
   }
 
   // ══════════════════════════════════════════
+  // SEED FROM courses.json (first-time setup)
+  // ══════════════════════════════════════════
+
+  /**
+   * Fetch courses.json and merge clubs into ClubStore.
+   * Incremental: only imports clubs whose id is not already present.
+   * Returns a Promise that resolves with the number of clubs imported.
+   */
+  function seedFromJSON(url){
+    var src = url || './data/courses.json';
+    return fetch(src).then(function(res){
+      if(!res.ok) throw new Error('seedFromJSON: fetch failed (' + res.status + ')');
+      return res.json();
+    }).then(function(data){
+      if(!data || !Array.isArray(data.clubs)) return 0;
+      return _importClubsFromJSON(data.clubs);
+    }).catch(function(e){
+      console.warn('[ClubStore] seedFromJSON failed:', e.message);
+      return 0;
+    });
+  }
+
+  /**
+   * Import an array of clubs in courses.json format into ClubStore.
+   * @param {Array} cdClubs - clubs array from courses.json
+   * @returns {number} count of clubs imported
+   */
+  function _importClubsFromJSON(cdClubs){
+    if(!cdClubs || cdClubs.length === 0) return 0;
+
+    var count = 0;
+    var now = new Date().toISOString();
+
+    for(var ci = 0; ci < cdClubs.length; ci++){
+      var src = cdClubs[ci];
+      // Skip clubs already in the store (incremental merge)
+      if(src.id && _clubs[src.id]) continue;
+      var mode = src.routingMode || 'fixed_18';
+      var nines = [];
+      var layouts = [];
+
+      if(mode === 'composable_9'){
+        // Each segment → one nine
+        var segs = src.segments || [];
+        for(var si = 0; si < segs.length; si++){
+          var seg = segs[si];
+          var holes = [];
+          var srcHoles = seg.holes || [];
+          for(var hi = 0; hi < srcHoles.length; hi++){
+            var sh = srcHoles[hi];
+            holes.push({
+              number: sh.number || (hi + 1),
+              par: sh.par || 4,
+              hcp: null,
+              tees: _extractTees(sh)
+            });
+          }
+          nines.push({
+            id: src.id + '_' + seg.id,
+            name: seg.name || seg.id,
+            display_name: seg.name || seg.id,
+            sequence: si + 1,
+            hole_start: 1,
+            hole_end: holes.length,
+            holes: holes
+          });
+        }
+        // Generate default layouts: all valid 2-segment combos
+        var rules = src.compositionRules || {};
+        var allowRepeat = rules.allowRepeat || false;
+        for(var a = 0; a < nines.length; a++){
+          for(var b = 0; b < nines.length; b++){
+            if(!allowRepeat && a === b) continue;
+            layouts.push({
+              id: src.id + '_layout_' + nines[a].id + '_' + nines[b].id,
+              name: nines[a].name + ' + ' + nines[b].name,
+              segments: [
+                { nine_id: nines[a].id, sequence: 1 },
+                { nine_id: nines[b].id, sequence: 2 }
+              ],
+              hole_count: (nines[a].holes.length + nines[b].holes.length),
+              is_default: (a === 0 && b === 1)
+            });
+          }
+        }
+      } else {
+        // fixed_18: each course → split into front 9 + back 9
+        var courses = src.courses || [];
+        for(var coi = 0; coi < courses.length; coi++){
+          var course = courses[coi];
+          var srcHoles = course.holes || [];
+          var frontHoles = [], backHoles = [];
+
+          for(var hi = 0; hi < srcHoles.length; hi++){
+            var sh = srcHoles[hi];
+            var holeObj = {
+              number: sh.number || (hi + 1),
+              par: sh.par || 4,
+              hcp: null,
+              tees: _extractTees(sh)
+            };
+            if(hi < 9) frontHoles.push(holeObj);
+            else backHoles.push(holeObj);
+          }
+
+          var frontId = src.id + '_' + course.id + '_front';
+          var backId = src.id + '_' + course.id + '_back';
+          nines.push({
+            id: frontId,
+            name: (course.name || course.id) + ' 前9',
+            display_name: (course.name || course.id) + ' 前9',
+            sequence: coi * 2 + 1,
+            hole_start: 1,
+            hole_end: frontHoles.length,
+            holes: frontHoles
+          });
+          if(backHoles.length > 0){
+            nines.push({
+              id: backId,
+              name: (course.name || course.id) + ' 后9',
+              display_name: (course.name || course.id) + ' 后9',
+              sequence: coi * 2 + 2,
+              hole_start: 10,
+              hole_end: 9 + backHoles.length,
+              holes: backHoles
+            });
+            layouts.push({
+              id: src.id + '_layout_' + course.id,
+              name: course.name || course.id,
+              segments: [
+                { nine_id: frontId, sequence: 1 },
+                { nine_id: backId, sequence: 2 }
+              ],
+              hole_count: srcHoles.length,
+              is_default: (coi === 0)
+            });
+          }
+        }
+      }
+
+      var club = defaultClub({
+        id: src.id,
+        name: src.name || '',
+        city: src.location || '',
+        aliases: src.aliases || [],
+        nines: nines,
+        layouts: layouts,
+        source: 'import',
+        source_ref: 'courses.json',
+        verification_level: 'verified',
+        createdAt: now,
+        updatedAt: now
+      });
+
+      _clubs[club.id] = club;
+      count++;
+    }
+
+    if(count > 0){
+      _persist();
+      console.log('[ClubStore] merged', count, 'new clubs from courses.json');
+    }
+    return count;
+  }
+
+  /** Extract tee yard data from a course.json hole */
+  function _extractTees(hole){
+    var tees = {};
+    if(hole.teeYards){
+      for(var k in hole.teeYards){
+        if(hole.teeYards.hasOwnProperty(k)){
+          tees[k] = hole.teeYards[k];
+        }
+      }
+    }
+    return tees;
+  }
+
+  // ══════════════════════════════════════════
   // INIT
   // ══════════════════════════════════════════
 
@@ -952,7 +1131,9 @@ const ClubStore = (function(){
     buildLayoutsFromNines: buildLayoutsFromNines,
     executeImportPlan: executeImportPlan,
     importGolfLiveCourses: importGolfLiveCourses,
-    getImportAudits: getImportAudits
+    getImportAudits: getImportAudits,
+    // Seed
+    seedFromJSON: seedFromJSON
   };
 
 })();
