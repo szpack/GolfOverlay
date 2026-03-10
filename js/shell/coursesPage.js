@@ -25,10 +25,10 @@ const CoursesPage = (function(){
 
     // Header row
     html += '<div class="cs-header">';
-    html += '<h2 class="cs-page-title">Courses</h2>';
+    html += '<h2 class="cs-page-title">' + T('coursesTitle') + '</h2>';
     html += '<div class="cs-header-actions">';
-    html += '<button class="cs-btn cs-btn-default" onclick="Router.navigate(\'/courses/import\')">Import</button>';
-    html += '<button class="cs-btn cs-btn-primary" onclick="CoursesPage.createNew()">+ New Club</button>';
+    html += '<button class="cs-btn cs-btn-default" onclick="Router.navigate(\'/courses/import\')">' + T('importBtn') + '</button>';
+    html += '<button class="cs-btn cs-btn-primary" onclick="CoursesPage.createNew()">' + T('newClubBtn') + '</button>';
     html += '</div>';
     html += '</div>';
 
@@ -38,29 +38,29 @@ const CoursesPage = (function(){
     var cities = _extractCities(allClubs, _filter.province);
 
     html += '<div class="cs-filters">';
-    html += '<input type="text" class="cs-search" id="cs-search" placeholder="Search clubs..." value="' + _esc(_filter.query) + '">';
+    html += '<input type="text" class="cs-search" id="cs-search" placeholder="' + T('searchClubsPh') + '" value="' + _esc(_filter.query) + '">';
     html += '<select class="cs-select" id="cs-filter-province" onchange="CoursesPage.onFilterProvince(this.value)">';
-    html += '<option value="">All Provinces</option>';
+    html += '<option value="">' + T('allProvincesLbl') + '</option>';
     for(var pi = 0; pi < provinces.length; pi++){
       html += '<option value="' + _esc(provinces[pi]) + '"' + (_filter.province===provinces[pi]?' selected':'') + '>' + _esc(provinces[pi]) + '</option>';
     }
     html += '</select>';
     html += '<select class="cs-select" id="cs-filter-city" onchange="CoursesPage.onFilterCity(this.value)">';
-    html += '<option value="">All Cities</option>';
+    html += '<option value="">' + T('allCitiesLbl') + '</option>';
     for(var ci = 0; ci < cities.length; ci++){
       html += '<option value="' + _esc(cities[ci]) + '"' + (_filter.city===cities[ci]?' selected':'') + '>' + _esc(cities[ci]) + '</option>';
     }
     html += '</select>';
     html += '<select class="cs-select" id="cs-filter-status" onchange="CoursesPage.onFilterStatus(this.value)">';
-    html += '<option value="">All Status</option>';
-    html += '<option value="operating"' + (_filter.status==='operating'?' selected':'') + '>Operating</option>';
-    html += '<option value="unknown"' + (_filter.status==='unknown'?' selected':'') + '>Unknown</option>';
+    html += '<option value="">' + T('allStatusLbl') + '</option>';
+    html += '<option value="operating"' + (_filter.status==='operating'?' selected':'') + '>' + T('operatingLbl') + '</option>';
+    html += '<option value="unknown"' + (_filter.status==='unknown'?' selected':'') + '>' + T('unknownLbl') + '</option>';
     html += '</select>';
     html += '<select class="cs-select" id="cs-filter-source" onchange="CoursesPage.onFilterSource(this.value)">';
-    html += '<option value="">All Sources</option>';
-    html += '<option value="manual"' + (_filter.source==='manual'?' selected':'') + '>Manual</option>';
-    html += '<option value="golflive"' + (_filter.source==='golflive'?' selected':'') + '>GolfLive</option>';
-    html += '<option value="import"' + (_filter.source==='import'?' selected':'') + '>Import</option>';
+    html += '<option value="">' + T('allSourcesLbl') + '</option>';
+    html += '<option value="manual"' + (_filter.source==='manual'?' selected':'') + '>' + T('manualLbl') + '</option>';
+    html += '<option value="golflive"' + (_filter.source==='golflive'?' selected':'') + '>' + T('golfliveSourceLbl') + '</option>';
+    html += '<option value="import"' + (_filter.source==='import'?' selected':'') + '>' + T('importSourceLbl') + '</option>';
     html += '</select>';
     html += '</div>';
 
@@ -82,23 +82,23 @@ const CoursesPage = (function(){
     html += '<div class="cs-stats">';
     html += '<span class="cs-stats-count">';
     if(hasFilter){
-      html += totalCount + ' / ' + totalAll + ' clubs';
+      html += totalCount + ' / ' + totalAll + ' ' + T('clubsCountLbl', totalAll).replace(/^\d+\s*/, '');
     } else {
-      html += totalCount + ' club' + (totalCount !== 1 ? 's' : '');
+      html += T('clubsCountLbl', totalCount);
     }
-    if(totalPages > 1) html += ' &middot; Page ' + (_page + 1) + '/' + totalPages;
+    if(totalPages > 1) html += ' &middot; ' + T('pageLbl') + ' ' + (_page + 1) + '/' + totalPages;
     html += '</span>';
     html += '<span class="cs-stats-right">';
     // Page size selector
     html += '<select class="cs-select cs-pagesize-select" onchange="CoursesPage.setPageSize(+this.value)">';
     var sizes = [10, 20, 50];
     for(var si = 0; si < sizes.length; si++){
-      html += '<option value="' + sizes[si] + '"' + (_pageSize === sizes[si] ? ' selected' : '') + '>' + sizes[si] + ' / page</option>';
+      html += '<option value="' + sizes[si] + '"' + (_pageSize === sizes[si] ? ' selected' : '') + '>' + sizes[si] + ' ' + T('perPageLbl') + '</option>';
     }
     html += '</select>';
     var archived = ClubStore.listArchived();
     if(archived.length > 0){
-      html += '<button class="cs-link-btn" onclick="CoursesPage.showArchived()">Archived (' + archived.length + ')</button>';
+      html += '<button class="cs-link-btn" onclick="CoursesPage.showArchived()">' + T('archivedLbl', archived.length) + '</button>';
     }
     html += '</span>';
     html += '</div>';
@@ -107,25 +107,25 @@ const CoursesPage = (function(){
     if(totalCount === 0){
       html += '<div class="cs-empty">';
       html += '<div class="cs-empty-icon">&#127948;</div>';
-      html += '<div class="cs-empty-title">No clubs found</div>';
+      html += '<div class="cs-empty-title">' + T('noClubsFound') + '</div>';
       if(_filter.query || _filter.status || _filter.source || _filter.province || _filter.city){
-        html += '<div class="cs-empty-text">Try adjusting your filters.</div>';
+        html += '<div class="cs-empty-text">' + T('adjustFilters') + '</div>';
       } else {
-        html += '<div class="cs-empty-text">Add your first golf club to get started.</div>';
-        html += '<button class="cs-btn cs-btn-primary" onclick="CoursesPage.createNew()" style="margin-top:16px">+ New Club</button>';
+        html += '<div class="cs-empty-text">' + T('addFirstClub') + '</div>';
+        html += '<button class="cs-btn cs-btn-primary" onclick="CoursesPage.createNew()" style="margin-top:16px">' + T('newClubBtn') + '</button>';
       }
       html += '</div>';
     } else {
       html += '<div class="cs-table-wrap">';
       html += '<table class="cs-table">';
       html += '<thead><tr>';
-      html += _thSortable('name', 'Name', 'cs-th-name');
-      html += _thSortable('city', 'City', 'cs-th-city');
-      html += '<th class="cs-th-holes">Holes</th>';
-      html += '<th class="cs-th-layouts">Layouts</th>';
-      html += _thSortable('status', 'Status', 'cs-th-status');
-      html += _thSortable('updated', 'Updated', 'cs-th-updated');
-      html += '<th class="cs-th-actions">Actions</th>';
+      html += _thSortable('name', T('thName'), 'cs-th-name');
+      html += _thSortable('city', T('thCity'), 'cs-th-city');
+      html += '<th class="cs-th-holes">' + T('thHoles') + '</th>';
+      html += '<th class="cs-th-layouts">' + T('thLayouts') + '</th>';
+      html += _thSortable('status', T('thStatus'), 'cs-th-status');
+      html += _thSortable('updated', T('thUpdated'), 'cs-th-updated');
+      html += '<th class="cs-th-actions">' + T('thActions') + '</th>';
       html += '</tr></thead>';
       html += '<tbody>';
       for(var i = 0; i < pageClubs.length; i++){
@@ -184,8 +184,8 @@ const CoursesPage = (function(){
     html += '<td class="cs-td-status"><span class="cs-status ' + statusCls + '"><span class="cs-status-dot"></span>' + statusLabel + '</span></td>';
     html += '<td class="cs-td-updated">' + _fmtDate(club.updatedAt || club.createdAt) + '</td>';
     html += '<td class="cs-td-actions">';
-    html += '<button class="cs-row-btn cs-row-btn-edit" onclick="event.stopPropagation();CoursesPage.editClub(\'' + club.id + '\')" title="Edit">Edit</button>';
-    html += '<button class="cs-row-btn cs-row-btn-del" onclick="event.stopPropagation();CoursesPage.deleteClub(\'' + club.id + '\')" title="Delete">Del</button>';
+    html += '<button class="cs-row-btn cs-row-btn-edit" onclick="event.stopPropagation();CoursesPage.editClub(\'' + club.id + '\')" title="' + T('editBtn2') + '">' + T('editBtn2') + '</button>';
+    html += '<button class="cs-row-btn cs-row-btn-del" onclick="event.stopPropagation();CoursesPage.deleteClub(\'' + club.id + '\')" title="' + T('deleteBtn') + '">' + T('delBtn') + '</button>';
     html += '</td>';
     html += '</tr>';
     return html;
@@ -229,14 +229,14 @@ const CoursesPage = (function(){
 
     // Info cards
     html += '<div class="cs-drawer-section">';
-    html += '<div class="cs-drawer-label">Location</div>';
+    html += '<div class="cs-drawer-label">' + T('locationLbl') + '</div>';
     html += '<div class="cs-drawer-value">' + _esc([club.city, club.province, club.country].filter(Boolean).join(', ') || '—') + '</div>';
     html += '</div>';
 
     // Structure summary
     html += '<div class="cs-drawer-section">';
-    html += '<div class="cs-drawer-label">Structure</div>';
-    html += '<div class="cs-drawer-value">' + holes + ' holes across ' + (club.nines || []).length + ' nine(s)</div>';
+    html += '<div class="cs-drawer-label">' + T('structureLbl') + '</div>';
+    html += '<div class="cs-drawer-value">' + T('holesAcrossLbl', holes, (club.nines || []).length) + '</div>';
     if(club.nines && club.nines.length > 0){
       html += '<div class="cs-drawer-nines">';
       for(var i = 0; i < club.nines.length; i++){
@@ -250,13 +250,13 @@ const CoursesPage = (function(){
     // Layouts
     if(club.layouts && club.layouts.length > 0){
       html += '<div class="cs-drawer-section">';
-      html += '<div class="cs-drawer-label">Layouts (' + club.layouts.length + ')</div>';
+      html += '<div class="cs-drawer-label">' + T('layoutsLbl', club.layouts.length) + '</div>';
       for(var i = 0; i < club.layouts.length; i++){
         var lay = club.layouts[i];
         html += '<div class="cs-layout-item">';
         html += '<span class="cs-layout-name">' + _esc(lay.name || 'Layout ' + (i+1)) + '</span>';
         html += '<span class="cs-layout-holes">' + lay.hole_count + 'H</span>';
-        if(lay.is_default) html += '<span class="cs-layout-default">Default</span>';
+        if(lay.is_default) html += '<span class="cs-layout-default">' + T('defaultLbl') + '</span>';
         html += '</div>';
       }
       html += '</div>';
@@ -265,7 +265,7 @@ const CoursesPage = (function(){
     // Tee Sets
     if(club.tee_sets && club.tee_sets.length > 0){
       html += '<div class="cs-drawer-section">';
-      html += '<div class="cs-drawer-label">Tee Sets (' + club.tee_sets.length + ')</div>';
+      html += '<div class="cs-drawer-label">' + T('teeSetsLbl', club.tee_sets.length) + '</div>';
       html += '<div class="cs-tee-chips">';
       for(var i = 0; i < club.tee_sets.length; i++){
         var ts = club.tee_sets[i];
@@ -282,25 +282,25 @@ const CoursesPage = (function(){
     // Aliases
     if(club.aliases && club.aliases.length > 0){
       html += '<div class="cs-drawer-section">';
-      html += '<div class="cs-drawer-label">Aliases</div>';
+      html += '<div class="cs-drawer-label">' + T('aliasesLbl') + '</div>';
       html += '<div class="cs-drawer-value">' + club.aliases.map(_esc).join(', ') + '</div>';
       html += '</div>';
     }
 
     // Metadata
     html += '<div class="cs-drawer-section">';
-    html += '<div class="cs-drawer-label">Metadata</div>';
-    if(club.phone) html += '<div class="cs-drawer-value">Phone: ' + _esc(club.phone) + '</div>';
-    if(club.website) html += '<div class="cs-drawer-value">Web: ' + _esc(club.website) + '</div>';
-    html += '<div class="cs-drawer-value">Source: ' + _esc(club.source || '—') + '</div>';
-    html += '<div class="cs-drawer-value">Created: ' + _fmtDate(club.createdAt) + '</div>';
-    html += '<div class="cs-drawer-value">Updated: ' + _fmtDate(club.updatedAt) + '</div>';
+    html += '<div class="cs-drawer-label">' + T('metadataLbl') + '</div>';
+    if(club.phone) html += '<div class="cs-drawer-value">' + T('phoneLbl') + ': ' + _esc(club.phone) + '</div>';
+    if(club.website) html += '<div class="cs-drawer-value">' + T('webLbl') + ': ' + _esc(club.website) + '</div>';
+    html += '<div class="cs-drawer-value">' + T('sourceLbl') + ': ' + _esc(club.source || '—') + '</div>';
+    html += '<div class="cs-drawer-value">' + T('createdLbl') + ': ' + _fmtDate(club.createdAt) + '</div>';
+    html += '<div class="cs-drawer-value">' + T('updatedLbl') + ': ' + _fmtDate(club.updatedAt) + '</div>';
     html += '</div>';
 
     // Actions
     html += '<div class="cs-drawer-actions">';
-    html += '<button class="cs-btn cs-btn-default" onclick="CoursesPage.editClub(\'' + club.id + '\')">Edit Details</button>';
-    html += '<button class="cs-btn cs-btn-danger" onclick="CoursesPage.deleteClub(\'' + club.id + '\')">Delete</button>';
+    html += '<button class="cs-btn cs-btn-default" onclick="CoursesPage.editClub(\'' + club.id + '\')">' + T('editDetailsBtn') + '</button>';
+    html += '<button class="cs-btn cs-btn-danger" onclick="CoursesPage.deleteClub(\'' + club.id + '\')">' + T('deleteBtn') + '</button>';
     html += '</div>';
 
     el.innerHTML = html;
@@ -331,7 +331,7 @@ const CoursesPage = (function(){
     drawer.id = 'cs-drawer';
     drawer.className = 'cs-drawer';
     drawer.innerHTML = '<div class="cs-drawer-hdr">'
-      + '<span class="cs-drawer-title">Club Detail</span>'
+      + '<span class="cs-drawer-title">' + T('clubDetailLbl') + '</span>'
       + '<button class="cs-drawer-close" onclick="CoursesPage.closeDrawer()">&times;</button>'
       + '</div>'
       + '<div class="cs-drawer-body" id="cs-drawer-body"></div>';
@@ -477,7 +477,7 @@ const CoursesPage = (function(){
   // ══════════════════════════════════════════
 
   function createNew(){
-    var name = prompt('Club name:');
+    var name = prompt(T('clubNamePrompt'));
     if(!name) return;
     var club = ClubStore.create({ name: name });
     render();
@@ -494,9 +494,9 @@ const CoursesPage = (function(){
     if(!club) return;
     var label = club.name || club.name_en || 'Untitled';
     var refs = ClubStore.getRefCount(id);
-    var msg = 'Are you sure you want to delete "' + label + '"?';
+    var msg = T('deleteClubConfirm', label);
     if(refs > 0){
-      msg = '"' + label + '" is referenced by ' + refs + ' round(s). It will be archived instead of permanently deleted.\n\nContinue?';
+      msg = T('deleteClubRefConfirm', label, refs);
     }
     if(!confirm(msg)) return;
     ClubStore.archive(id, 'archived');
@@ -529,7 +529,7 @@ const CoursesPage = (function(){
   }
 
   function _statusLabel(s){
-    var map = { operating:'Operating', closed:'Closed', archived:'Archived', unknown:'Unknown' };
+    var map = { operating: T('operatingLbl'), unknown: T('unknownLbl') };
     return map[s] || s || '—';
   }
 

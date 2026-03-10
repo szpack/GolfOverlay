@@ -14,11 +14,13 @@ const RoundsPage = (function(){
   var _confirmTimer = null;
 
   // ── Status group order ──
-  var GROUPS = [
-    { key:'playing',  label:'Playing' },
-    { key:'planned',  label:'Planned' },
-    { key:'finished', label:'Finished' }
-  ];
+  function _groups(){
+    return [
+      { key:'playing',  label:T('playingLbl') },
+      { key:'planned',  label:T('plannedLbl') },
+      { key:'finished', label:T('finishedLbl') }
+    ];
+  }
 
   // ══════════════════════════════════════════
   // RENDER
@@ -41,20 +43,20 @@ const RoundsPage = (function(){
 
     // ── Header with search ──
     html += '<div class="sh-page-header">';
-    html += '<h1 class="sh-page-title">Rounds</h1>';
+    html += '<h1 class="sh-page-title">' + T('roundsTitle') + '</h1>';
     html += '<div class="sh-header-right">';
     if(all.length > 0){
-      html += '<input type="text" class="sh-search-input" id="rounds-search" placeholder="Search..." value="' + _esc(_searchTerm) + '" oninput="RoundsPage.onSearch(this.value)">';
+      html += '<input type="text" class="sh-search-input" id="rounds-search" placeholder="' + T('searchPh') + '" value="' + _esc(_searchTerm) + '" oninput="RoundsPage.onSearch(this.value)">';
     }
-    html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">+ New Round</button>';
+    html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">' + T('newRoundBtn2') + '</button>';
     html += '</div>';
     html += '</div>';
 
     if(all.length === 0){
       html += '<div class="sh-empty-state">';
       html += '<div class="sh-empty-icon">&#9971;</div>';
-      html += '<div class="sh-empty-text">No rounds yet</div>';
-      html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">Create your first round</button>';
+      html += '<div class="sh-empty-text">' + T('noRoundsYet') + '</div>';
+      html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">' + T('createFirstRound') + '</button>';
       html += '</div>';
       el.innerHTML = html;
       return;
@@ -65,7 +67,7 @@ const RoundsPage = (function(){
 
     if(filtered.length === 0){
       html += '<div class="sh-empty">';
-      html += 'No matching rounds';
+      html += T('noMatchingRounds');
       html += '</div>';
       el.innerHTML = html;
       return;
@@ -87,7 +89,7 @@ const RoundsPage = (function(){
     }
 
     // Render groups in order
-    GROUPS.forEach(function(g){
+    _groups().forEach(function(g){
       var items = groups[g.key];
       if(!items || items.length === 0) return;
 
@@ -136,15 +138,15 @@ const RoundsPage = (function(){
 
     // Actions
     html += '<div class="sh-card-actions">';
-    html += '<button class="sh-btn-sm" onclick="event.stopPropagation(); Router.navigate(\'/round/' + r.id + '\')">Open</button>';
-    html += '<button class="sh-btn-sm" onclick="event.stopPropagation(); RoundsPage.duplicateRound(\'' + r.id + '\', ' + r.isActive + ')">Duplicate</button>';
+    html += '<button class="sh-btn-sm" onclick="event.stopPropagation(); Router.navigate(\'/round/' + r.id + '\')">' + T('openBtn') + '</button>';
+    html += '<button class="sh-btn-sm" onclick="event.stopPropagation(); RoundsPage.duplicateRound(\'' + r.id + '\', ' + r.isActive + ')">' + T('duplicateBtn') + '</button>';
 
     if(!r.isActive){
       if(_confirmingId === r.id){
-        html += '<button class="sh-btn-sm sh-btn-confirm-del" onclick="event.stopPropagation(); RoundsPage.confirmDelete(\'' + r.id + '\')">Confirm</button>';
-        html += '<button class="sh-btn-sm" onclick="event.stopPropagation(); RoundsPage.cancelDelete()">Cancel</button>';
+        html += '<button class="sh-btn-sm sh-btn-confirm-del" onclick="event.stopPropagation(); RoundsPage.confirmDelete(\'' + r.id + '\')">' + T('confirmBtn') + '</button>';
+        html += '<button class="sh-btn-sm" onclick="event.stopPropagation(); RoundsPage.cancelDelete()">' + T('cancelBtn') + '</button>';
       } else {
-        html += '<button class="sh-btn-sm sh-btn-danger" onclick="event.stopPropagation(); RoundsPage.startDelete(\'' + r.id + '\')">Delete</button>';
+        html += '<button class="sh-btn-sm sh-btn-danger" onclick="event.stopPropagation(); RoundsPage.startDelete(\'' + r.id + '\')">' + T('deleteBtn') + '</button>';
       }
     }
     html += '</div>';

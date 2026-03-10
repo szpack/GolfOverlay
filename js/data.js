@@ -1338,6 +1338,9 @@ const D = (function(){
       localStorage.setItem(LS_ROUNDS, JSON.stringify(_rounds));
       localStorage.setItem(LS_SC, JSON.stringify(_sc));
       localStorage.setItem(LS_WS, JSON.stringify(_ws));
+      // Also purge legacy v531 data and background
+      localStorage.removeItem(LS_OLD);
+      localStorage.removeItem(LS_BG);
     } catch(e){}
   }
 

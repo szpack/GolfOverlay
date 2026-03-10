@@ -771,6 +771,7 @@ const ClubStore = (function(){
           name: name,
           province: (gl.Region || '').trim(),
           city: (gl.City || '').trim(),
+          country: 'CN',
           geo: geo,
           nines: nines,
           layouts: layouts,

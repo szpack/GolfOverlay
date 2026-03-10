@@ -1,6 +1,6 @@
 // ============================================================
 // buddiesPage.js — Buddies (BuddyContact) list page
-// Depends on: data.js, shell.js, ApiClient
+// Depends on: data.js, shell.js, ApiClient, T()
 // ============================================================
 
 const BuddiesPage = (function(){
@@ -12,10 +12,16 @@ const BuddiesPage = (function(){
   var _page = 0;
   var _pageSize = 20;
 
+  // Modal state
+  var _linkedUserId = null;
+  var _linkedUserName = null;
+  var _userSearchResults = [];
+  var _userSearchTimer = null;
+
   // ── Helpers ──
 
   function _esc(s){
-    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
   function _fmtDate(d){
@@ -41,9 +47,10 @@ const BuddiesPage = (function(){
 
     try {
       var res = await ApiClient.get('/api/v1/buddies?' + params.toString());
-      if(res && !res.error){
-        _buddies = res.buddies || [];
-        _total = res.total || 0;
+      if(res.ok){
+        var data = await ApiClient.json(res);
+        _buddies = (data && data.buddies) || [];
+        _total = (data && data.total) || 0;
       } else {
         _buddies = [];
         _total = 0;
@@ -66,18 +73,18 @@ const BuddiesPage = (function(){
 
     el.innerHTML = '<div class="bd-page">'
       + '<div class="bd-header">'
-      + '<h2 class="bd-title">Buddies</h2>'
-      + '<button class="sh-btn-primary bd-add-btn" onclick="BuddiesPage.showAdd()">+ Add Buddy</button>'
+      + '<h2 class="bd-title">' + T('buddiesTitle') + '</h2>'
+      + '<button class="sh-btn-primary bd-add-btn" onclick="BuddiesPage.showAdd()">' + T('addBuddyBtn') + '</button>'
       + '</div>'
       + '<div class="bd-toolbar">'
-      + '<input type="text" id="bd-search" class="bd-search-input" placeholder="Search by name..." oninput="BuddiesPage.onSearch(this.value)">'
+      + '<input type="text" id="bd-search" class="bd-search-input" placeholder="' + T('searchByNamePh') + '" oninput="BuddiesPage.onSearch(this.value)">'
       + '<div class="bd-filters">'
-      + '<button class="bd-filter-btn' + (_filter.isFavorite === true ? ' bd-filter-active' : '') + '" onclick="BuddiesPage.toggleFavFilter()">&#9733; Favorites</button>'
+      + '<button class="bd-filter-btn' + (_filter.isFavorite === true ? ' bd-filter-active' : '') + '" onclick="BuddiesPage.toggleFavFilter()">&#9733; ' + T('favoritesLbl') + '</button>'
       + '<select class="bd-sort-select" onchange="BuddiesPage.onSort(this.value)">'
-      + '<option value=""' + (!_filter.sortBy ? ' selected' : '') + '>Default</option>'
-      + '<option value="name"' + (_filter.sortBy === 'name' ? ' selected' : '') + '>Name</option>'
-      + '<option value="lastPlayed"' + (_filter.sortBy === 'lastPlayed' ? ' selected' : '') + '>Last Played</option>'
-      + '<option value="rounds"' + (_filter.sortBy === 'rounds' ? ' selected' : '') + '>Rounds Together</option>'
+      + '<option value=""' + (!_filter.sortBy ? ' selected' : '') + '>' + T('sortDefaultLbl') + '</option>'
+      + '<option value="name"' + (_filter.sortBy === 'name' ? ' selected' : '') + '>' + T('sortNameLbl') + '</option>'
+      + '<option value="lastPlayed"' + (_filter.sortBy === 'lastPlayed' ? ' selected' : '') + '>' + T('sortLastPlayedLbl') + '</option>'
+      + '<option value="rounds"' + (_filter.sortBy === 'rounds' ? ' selected' : '') + '>' + T('sortRoundsLbl') + '</option>'
       + '</select>'
       + '</div>'
       + '</div>'
@@ -92,14 +99,14 @@ const BuddiesPage = (function(){
     if(!el) return;
 
     if(_loading){
-      el.innerHTML = '<div class="bd-loading">Loading...</div>';
+      el.innerHTML = '<div class="bd-loading">' + T('loadingLbl') + '</div>';
       return;
     }
 
     if(_buddies.length === 0){
       el.innerHTML = '<div class="bd-empty">'
         + '<div class="bd-empty-icon">&#129309;</div>'
-        + '<div class="bd-empty-text">' + (_filter.search || _filter.isFavorite ? 'No matching buddies found.' : 'No buddies yet. Add your first golf buddy!') + '</div>'
+        + '<div class="bd-empty-text">' + (_filter.search || _filter.isFavorite ? T('noMatchingBuddies') : T('noBuddiesYet')) + '</div>'
         + '</div>';
       return;
     }
@@ -114,7 +121,7 @@ const BuddiesPage = (function(){
     var totalPages = Math.ceil(_total / _pageSize);
     if(totalPages > 1){
       html += '<div class="bd-pagination">';
-      html += '<span class="bd-page-info">' + (_page * _pageSize + 1) + '–' + Math.min((_page + 1) * _pageSize, _total) + ' of ' + _total + '</span>';
+      html += '<span class="bd-page-info">' + (_page * _pageSize + 1) + '–' + Math.min((_page + 1) * _pageSize, _total) + ' ' + T('ofLbl') + ' ' + _total + '</span>';
       html += '<button class="bd-page-btn" onclick="BuddiesPage.prevPage()"' + (_page === 0 ? ' disabled' : '') + '>&laquo;</button>';
       html += '<button class="bd-page-btn" onclick="BuddiesPage.nextPage()"' + (_page >= totalPages - 1 ? ' disabled' : '') + '>&raquo;</button>';
       html += '</div>';
@@ -130,11 +137,11 @@ const BuddiesPage = (function(){
       + '<div class="bd-card-main" onclick="BuddiesPage.showEdit(\'' + b.id + '\')">'
       + '<div class="bd-card-avatar">' + _esc((b.displayName || '?').charAt(0).toUpperCase()) + '</div>'
       + '<div class="bd-card-info">'
-      + '<div class="bd-card-name">' + _esc(b.displayName) + '</div>'
+      + '<div class="bd-card-name">' + _esc(b.displayName) + (b.linkedUserId ? ' <span class="bd-linked-badge">&#128279;</span>' : '') + '</div>'
       + '<div class="bd-card-meta">'
-      + '<span class="bd-meta-item">HCP ' + hcp + '</span>'
-      + '<span class="bd-meta-item">' + b.roundsTogetherCount + ' rounds</span>'
-      + (b.lastPlayedAt ? '<span class="bd-meta-item">Last: ' + _fmtDate(b.lastPlayedAt) + '</span>' : '')
+      + '<span class="bd-meta-item">' + T('hcpLbl') + ' ' + hcp + '</span>'
+      + '<span class="bd-meta-item">' + b.roundsTogetherCount + ' ' + T('roundsCountLbl') + '</span>'
+      + (b.lastPlayedAt ? '<span class="bd-meta-item">' + T('lastPlayedLbl') + ' ' + _fmtDate(b.lastPlayedAt) + '</span>' : '')
       + '</div>'
       + (b.notes ? '<div class="bd-card-notes">' + _esc(b.notes) + '</div>' : '')
       + '</div>'
@@ -159,7 +166,6 @@ const BuddiesPage = (function(){
     _filter.isFavorite = _filter.isFavorite === true ? null : true;
     _page = 0;
     _fetch();
-    // Re-render toolbar to update button state
     var btn = document.querySelector('.bd-filter-btn');
     if(btn) btn.classList.toggle('bd-filter-active', _filter.isFavorite === true);
   }
@@ -178,7 +184,8 @@ const BuddiesPage = (function(){
 
   async function toggleFav(id){
     try {
-      await ApiClient.post('/api/v1/buddies/' + id + '/toggle-favorite');
+      var res = await ApiClient.post('/api/v1/buddies/' + id + '/toggle-favorite');
+      if(!res.ok){ console.error('[BuddiesPage] toggleFav failed', res.status); }
       _fetch();
     } catch(e){ console.error('[BuddiesPage] toggleFav', e); }
   }
@@ -186,6 +193,9 @@ const BuddiesPage = (function(){
   // ── Add / Edit Modal ──
 
   function showAdd(){
+    _linkedUserId = null;
+    _linkedUserName = null;
+    _userSearchResults = [];
     _showModal(null);
   }
 
@@ -194,12 +204,16 @@ const BuddiesPage = (function(){
     for(var i = 0; i < _buddies.length; i++){
       if(_buddies[i].id === id){ buddy = _buddies[i]; break; }
     }
-    if(buddy) _showModal(buddy);
+    if(!buddy) return;
+    _linkedUserId = buddy.linkedUserId || null;
+    _linkedUserName = _linkedUserId ? buddy.displayName : null;
+    _userSearchResults = [];
+    _showModal(buddy);
   }
 
   function _showModal(buddy){
     var isEdit = !!buddy;
-    var title = isEdit ? 'Edit Buddy' : 'Add Buddy';
+    var title = isEdit ? T('editBuddyTitle') : T('addBuddyTitle');
 
     var overlay = document.createElement('div');
     overlay.className = 'bd-modal-overlay';
@@ -211,25 +225,125 @@ const BuddiesPage = (function(){
       + '<h3>' + title + '</h3>'
       + '<button class="bd-modal-close" onclick="BuddiesPage.closeModal()">&times;</button>'
       + '</div>'
-      + '<div class="bd-modal-body">'
-      + '<label class="bd-form-label">Name<input type="text" id="bd-f-name" class="bd-form-input" maxlength="50" value="' + _esc(buddy ? buddy.displayName : '') + '"></label>'
-      + '<label class="bd-form-label">Handicap<input type="number" id="bd-f-hcp" class="bd-form-input" step="0.1" min="-10" max="54" value="' + (buddy && buddy.handicap != null ? buddy.handicap : '') + '"></label>'
-      + '<label class="bd-form-label">Notes<textarea id="bd-f-notes" class="bd-form-textarea" rows="3" maxlength="500">' + _esc(buddy ? buddy.notes || '' : '') + '</textarea></label>'
-      + '</div>'
-      + '<div class="bd-modal-footer">';
+      + '<div class="bd-modal-body">';
 
-    if(isEdit){
-      html += '<button class="sh-btn-danger-sm" onclick="BuddiesPage.deleteBuddy(\'' + buddy.id + '\')">Delete</button>';
+    // User search section (for linking to registered user)
+    if(!isEdit || !_linkedUserId){
+      html += '<div class="bd-user-search">';
+      html += '<label class="bd-form-label">' + T('searchUserPh');
+      html += '<input type="text" id="bd-f-user-search" class="bd-form-input" placeholder="' + T('searchUserPh') + '" oninput="BuddiesPage.onUserSearch(this.value)">';
+      html += '</label>';
+      html += '<div id="bd-user-results"></div>';
+      html += '</div>';
+      html += '<div class="bd-modal-divider">— or —</div>';
     }
-    html += '<button class="sh-btn-primary" onclick="BuddiesPage.saveBuddy(\'' + (buddy ? buddy.id : '') + '\')">' + (isEdit ? 'Save' : 'Add') + '</button>';
+
+    // Linked user indicator
+    if(_linkedUserId){
+      html += '<div class="bd-linked-indicator">'
+        + '<span>&#128279; ' + T('linkedUserLbl') + ': <strong>' + _esc(_linkedUserName || _linkedUserId.substring(0,8)) + '</strong></span>'
+        + '<button class="bd-clear-link" onclick="BuddiesPage.clearLink()">' + T('clearLinkBtn') + '</button>'
+        + '</div>';
+    }
+
+    html += '<label class="bd-form-label">' + T('nameLbl') + '<input type="text" id="bd-f-name" class="bd-form-input" maxlength="50" value="' + _esc(buddy ? buddy.displayName : '') + '"' + (_linkedUserId ? ' readonly' : '') + '></label>';
+    html += '<label class="bd-form-label">' + T('handicapLbl') + '<input type="number" id="bd-f-hcp" class="bd-form-input" step="0.1" min="-10" max="54" value="' + (buddy && buddy.handicap != null ? buddy.handicap : '') + '"></label>';
+    html += '<label class="bd-form-label">' + T('notesLbl') + '<textarea id="bd-f-notes" class="bd-form-textarea" rows="3" maxlength="500">' + _esc(buddy ? buddy.notes || '' : '') + '</textarea></label>';
+    html += '</div>';
+
+    html += '<div class="bd-modal-footer">';
+    if(isEdit){
+      html += '<button class="sh-btn-danger-sm" onclick="BuddiesPage.deleteBuddy(\'' + buddy.id + '\')">' + T('deleteLbl') + '</button>';
+    }
+    html += '<button class="sh-btn-primary" onclick="BuddiesPage.saveBuddy(\'' + (buddy ? buddy.id : '') + '\')">' + (isEdit ? T('saveLbl') : T('addLbl')) + '</button>';
     html += '</div></div>';
 
     overlay.innerHTML = html;
     document.body.appendChild(overlay);
     setTimeout(function(){
-      var inp = document.getElementById('bd-f-name');
+      var inp = _linkedUserId ? document.getElementById('bd-f-hcp') : document.getElementById('bd-f-user-search') || document.getElementById('bd-f-name');
       if(inp) inp.focus();
     }, 100);
+  }
+
+  // ── User search in modal ──
+
+  function onUserSearch(val){
+    clearTimeout(_userSearchTimer);
+    val = (val || '').trim();
+    if(val.length < 2){
+      _userSearchResults = [];
+      _renderUserResults();
+      return;
+    }
+    _userSearchTimer = setTimeout(async function(){
+      try {
+        var res = await ApiClient.get('/api/v1/users/search?q=' + encodeURIComponent(val));
+        if(res.ok){
+          var data = await ApiClient.json(res);
+          _userSearchResults = (data && data.users) || [];
+        } else {
+          _userSearchResults = [];
+        }
+      } catch(e){
+        _userSearchResults = [];
+      }
+      _renderUserResults();
+    }, 300);
+  }
+
+  function _renderUserResults(){
+    var el = document.getElementById('bd-user-results');
+    if(!el) return;
+    if(_userSearchResults.length === 0){
+      el.innerHTML = '';
+      return;
+    }
+    var html = '<div class="bd-user-list">';
+    for(var i = 0; i < _userSearchResults.length; i++){
+      var u = _userSearchResults[i];
+      var shortId = u.id.substring(0, 8);
+      html += '<div class="bd-user-item" onclick="BuddiesPage.selectUser(' + i + ')">';
+      if(u.avatarUrl){
+        html += '<img class="bd-user-avatar" src="' + _esc(u.avatarUrl) + '" alt="">';
+      } else {
+        html += '<div class="bd-user-avatar-letter">' + _esc((u.displayName || '?').charAt(0).toUpperCase()) + '</div>';
+      }
+      html += '<div class="bd-user-info"><span class="bd-user-name">' + _esc(u.displayName) + '</span>';
+      html += '<span class="bd-user-id">' + _esc(shortId) + '</span></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  }
+
+  function selectUser(index){
+    var u = _userSearchResults[index];
+    if(!u) return;
+    _linkedUserId = u.id;
+    _linkedUserName = u.displayName;
+    // Fill name field
+    var nameInp = document.getElementById('bd-f-name');
+    if(nameInp){
+      nameInp.value = u.displayName;
+      nameInp.readOnly = true;
+    }
+    // Update UI: hide search, show linked indicator
+    _userSearchResults = [];
+    // Re-render modal
+    _closeModal();
+    _showModal({ displayName: u.displayName, linkedUserId: u.id, handicap: null, notes: '', id: null });
+  }
+
+  function clearLink(){
+    _linkedUserId = null;
+    _linkedUserName = null;
+    var nameInp = document.getElementById('bd-f-name');
+    if(nameInp){ nameInp.readOnly = false; nameInp.value = ''; }
+    // Re-render modal to show search again
+    var currentName = '';
+    _closeModal();
+    _showModal(null);
   }
 
   function closeModal(){
@@ -247,7 +361,7 @@ const BuddiesPage = (function(){
     var notes = (document.getElementById('bd-f-notes').value || '').trim();
 
     if(!name){
-      alert('Name is required');
+      alert(T('nameRequiredMsg'));
       return;
     }
 
@@ -257,6 +371,9 @@ const BuddiesPage = (function(){
     } else {
       body.handicap = null;
     }
+    if(_linkedUserId){
+      body.linkedUserId = _linkedUserId;
+    }
 
     try {
       var res;
@@ -265,27 +382,33 @@ const BuddiesPage = (function(){
       } else {
         res = await ApiClient.post('/api/v1/buddies', body);
       }
-      if(res && res.error){
-        alert(res.error);
+      var data = await ApiClient.json(res);
+      if(!res.ok){
+        alert((data && data.error) || T('failedSaveBuddy'));
         return;
       }
       _closeModal();
       _fetch();
     } catch(e){
       console.error('[BuddiesPage] save error', e);
-      alert('Failed to save buddy');
+      alert(T('failedSaveBuddy'));
     }
   }
 
   async function deleteBuddy(id){
-    if(!confirm('Delete this buddy?')) return;
+    if(!confirm(T('deleteBuddyConfirm'))) return;
     try {
-      await ApiClient.delete('/api/v1/buddies/' + id);
+      var res = await ApiClient.del('/api/v1/buddies/' + id);
+      if(!res.ok){
+        var data = await ApiClient.json(res);
+        alert((data && data.error) || T('failedDeleteBuddy'));
+        return;
+      }
       _closeModal();
       _fetch();
     } catch(e){
       console.error('[BuddiesPage] delete error', e);
-      alert('Failed to delete buddy');
+      alert(T('failedDeleteBuddy'));
     }
   }
 
@@ -301,7 +424,10 @@ const BuddiesPage = (function(){
     showEdit: showEdit,
     closeModal: closeModal,
     saveBuddy: saveBuddy,
-    deleteBuddy: deleteBuddy
+    deleteBuddy: deleteBuddy,
+    onUserSearch: onUserSearch,
+    selectUser: selectUser,
+    clearLink: clearLink
   };
 
 })();

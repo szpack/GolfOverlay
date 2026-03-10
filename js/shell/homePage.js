@@ -1,6 +1,6 @@
 // ============================================================
 // homePage.js — Home Page Renderer
-// Depends on: roundHelper.js
+// Depends on: roundHelper.js, T()
 // ============================================================
 
 const HomePage = (function(){
@@ -31,18 +31,18 @@ const HomePage = (function(){
     // Welcome
     var displayName = (user && user.displayName) ? user.displayName : 'Golfer';
     html += '<div class="sh-welcome">';
-    html += '<span class="sh-welcome-text">Welcome back, <strong>' + _h().esc(displayName) + '</strong></span>';
+    html += '<span class="sh-welcome-text">' + T('welcomeBack', '<strong>' + _h().esc(displayName) + '</strong>') + '</span>';
     html += '</div>';
 
     // ── 1. Current Round ──
     html += '<div class="sh-section">';
-    html += '<h2 class="sh-section-title">Current Round</h2>';
+    html += '<h2 class="sh-section-title">' + T('currentRoundLbl') + '</h2>';
     if(active){
       html += _renderHero(active);
     } else {
       html += '<div class="sh-empty-state sh-empty-compact">';
-      html += '<div class="sh-empty-text">No active round</div>';
-      html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">New Round</button>';
+      html += '<div class="sh-empty-text">' + T('noActiveRound') + '</div>';
+      html += '<button class="sh-btn-primary" onclick="Shell.showNewRound()">' + T('newRoundLbl') + '</button>';
       html += '</div>';
     }
     html += '</div>';
@@ -50,7 +50,7 @@ const HomePage = (function(){
     // ── 2. Recent Rounds ──
     if(recent.length > 0){
       html += '<div class="sh-section">';
-      html += '<h2 class="sh-section-title">Recent Rounds</h2>';
+      html += '<h2 class="sh-section-title">' + T('recentRoundsLbl') + '</h2>';
       html += '<div class="sh-round-list">';
       recent.forEach(function(r){ html += _renderCard(r); });
       html += '</div>';
@@ -63,31 +63,32 @@ const HomePage = (function(){
       html += '<div class="sh-legacy-notice">';
       html += '<span class="sh-legacy-icon">&#9888;</span>';
       html += '<div class="sh-legacy-body">';
-      html += '<div class="sh-legacy-title">Legacy data detected</div>';
-      html += '<div class="sh-legacy-text">These rounds were created before the account system. They are stored locally and not synced to your account.</div>';
+      html += '<div class="sh-legacy-title">' + T('legacyDataTitle') + '</div>';
+      html += '<div class="sh-legacy-text">' + T('legacyDataText') + '</div>';
       html += '</div>';
-      html += '<button class="sh-btn-danger-sm" onclick="HomePage.clearLegacyData()">Clear All</button>';
+      html += '<button class="sh-btn-danger-sm" onclick="HomePage.clearLegacyData()">' + T('clearAllBtn') + '</button>';
       html += '</div>';
     }
 
     // ── 3. Quick Actions ──
     html += '<div class="sh-section">';
-    html += '<h2 class="sh-section-title">Quick Actions</h2>';
+    html += '<h2 class="sh-section-title">' + T('quickActionsLbl') + '</h2>';
     html += '<div class="sh-actions">';
     html += '<button class="sh-action-btn" onclick="Shell.showNewRound()">';
-    html += '<span class="sh-action-icon">&#10133;</span><span>New Round</span></button>';
+    html += '<span class="sh-action-icon">&#10133;</span><span>' + T('newRoundLbl') + '</span></button>';
     html += '<button class="sh-action-btn" onclick="Shell.importRound()">';
-    html += '<span class="sh-action-icon">&#128229;</span><span>Import</span></button>';
+    html += '<span class="sh-action-icon">&#128229;</span><span>' + T('importLbl') + '</span></button>';
     html += '<button class="sh-action-btn" onclick="Router.navigate(\'/rounds\')">';
-    html += '<span class="sh-action-icon">&#128203;</span><span>All Rounds</span></button>';
+    html += '<span class="sh-action-icon">&#128203;</span><span>' + T('allRoundsLbl') + '</span></button>';
     html += '</div>';
     html += '</div>';
 
     // ── 4. Management (subdued) ──
     html += '<div class="sh-section sh-section-subdued">';
-    html += '<h2 class="sh-section-title">Management</h2>';
+    html += '<h2 class="sh-section-title">' + T('managementLbl') + '</h2>';
     html += '<div class="sh-mgmt-row">';
-    html += _pill('Players', '/players');
+    html += _pill(T('playersLbl'), '/players');
+    html += _pill(T('buddiesTitle'), '/buddies');
     html += _pill('Teams', '/teams');
     html += _pill('Clubs', '/clubs');
     html += '</div>';
@@ -102,17 +103,17 @@ const HomePage = (function(){
     var html = '<div class="guest-home">';
     html += '<div class="guest-hero">';
     html += '<div class="guest-hero-icon">&#9971;</div>';
-    html += '<h1 class="guest-hero-title">Golf Event Console</h1>';
-    html += '<p class="guest-hero-subtitle">Professional golf event management and live overlay system.</p>';
+    html += '<h1 class="guest-hero-title">' + T('guestHeroTitle') + '</h1>';
+    html += '<p class="guest-hero-subtitle">' + T('guestHeroSubtitle') + '</p>';
     html += '</div>';
     html += '<div class="guest-cta">';
-    html += '<button class="sh-btn-primary sh-btn-lg" onclick="Router.navigate(\'/login\')">Sign In</button>';
-    html += '<button class="sh-btn-outline sh-btn-lg" onclick="Router.navigate(\'/register\')">Create Account</button>';
+    html += '<button class="sh-btn-primary sh-btn-lg" onclick="Router.navigate(\'/login\')">' + T('guestSignIn') + '</button>';
+    html += '<button class="sh-btn-outline sh-btn-lg" onclick="Router.navigate(\'/register\')">' + T('guestCreateAccount') + '</button>';
     html += '</div>';
     html += '<div class="guest-features">';
-    html += _featureCard('&#127963;', 'Course Management', 'Manage golf clubs with full course structure, tees, and layouts.');
-    html += _featureCard('&#9971;', 'Round Tracking', 'Score tracking with real-time leaderboard and player statistics.');
-    html += _featureCard('&#127909;', 'Live Overlay', 'Broadcast-quality overlays for streaming and content creation.');
+    html += _featureCard('&#127963;', T('featureCourseTitle'), T('featureCourseDesc'));
+    html += _featureCard('&#9971;', T('featureRoundTitle'), T('featureRoundDesc'));
+    html += _featureCard('&#127909;', T('featureOverlayTitle'), T('featureOverlayDesc'));
     html += '</div>';
     html += '</div>';
     return html;
@@ -147,9 +148,9 @@ const HomePage = (function(){
 
     // Stats
     html += '<div class="sh-hero-stats">';
-    html += _stat(r.playerCount, 'Players');
-    html += _stat(r.holeCount, 'Holes');
-    html += _stat(r.playedCount + '/' + r.holeCount, 'Progress');
+    html += _stat(r.playerCount, T('playersLbl'));
+    html += _stat(r.holeCount, T('holesLbl'));
+    html += _stat(r.playedCount + '/' + r.holeCount, T('progressLbl'));
     html += '</div>';
 
     // Progress bar
@@ -163,14 +164,14 @@ const HomePage = (function(){
 
     // Actions
     html += '<div class="sh-hero-actions">';
-    html += '<button class="sh-btn-primary sh-btn-lg" onclick="Shell.enterOverlay()">Continue Round</button>';
+    html += '<button class="sh-btn-primary sh-btn-lg" onclick="Shell.enterOverlay()">' + T('continueRoundBtn') + '</button>';
     html += '</div>';
 
     html += '</div>';
     return html;
   }
 
-  // ── Compact card (recent rounds, same as Rounds page card) ──
+  // ── Compact card (recent rounds) ──
 
   function _renderCard(r){
     var html = '<div class="sh-card sh-card-compact" onclick="Router.navigate(\'/round/' + r.id + '\')">';
@@ -193,9 +194,11 @@ const HomePage = (function(){
   }
 
   function clearLegacyData(){
-    if(!confirm('This will permanently delete all local rounds and scorecard data. Continue?')) return;
+    if(!confirm(T('clearLegacyConfirm'))) return;
     if(typeof D !== 'undefined' && D.clearAllRounds) D.clearAllRounds();
-    render();
+    // Force full page re-render by re-navigating to home
+    if(typeof Router !== 'undefined') Router.navigate('/');
+    else render();
   }
 
   return { render: render, clearLegacyData: clearLegacyData };

@@ -58,6 +58,7 @@ const Shell = (function(){
     _restoreSidebarState();
     Router.start(_onRouteChange);
     _syncLangButton();
+    _applySidebarLang();
     _renderLiveRecent();
     _initAuth();
 
@@ -169,10 +170,21 @@ const Shell = (function(){
 
   function _updateWorkspaceHeader(pageName){
     var titleEl = document.getElementById('workspace-title');
-    if(titleEl){
-      var page = PAGES[pageName];
-      titleEl.textContent = (page && page.title) || 'Console';
-    }
+    if(!titleEl) return;
+    // Use i18n keys for page titles where available
+    var titleMap = {
+      home: 'Console',
+      rounds: T('roundsTitle'),
+      round: 'Overlay Center',
+      courses: T('coursesTitle'),
+      courseDetail: T('clubDetailLbl'),
+      courseImport: T('importBtn'),
+      newRound: T('newRoundLbl'),
+      buddies: T('buddiesTitle'),
+      profile: T('accountLbl'),
+      settings: T('stLanguage') ? T('settingsLbl') : 'Settings'
+    };
+    titleEl.textContent = titleMap[pageName] || ((PAGES[pageName] && PAGES[pageName].title) || 'Console');
   }
 
   function _wireNav(){
@@ -265,7 +277,7 @@ const Shell = (function(){
     recent.slice(0, 5).forEach(function(r){ html += _roundItem(r, 'finished'); });
 
     if(!html){
-      html = '<div class="sb-round-empty" style="padding:8px 12px;font-size:12px;color:#6b7280;">No rounds yet</div>';
+      html = '<div class="sb-round-empty" style="padding:8px 12px;font-size:12px;color:#6b7280;">' + T('noRoundsYet') + '</div>';
     }
 
     el.innerHTML = html;
@@ -375,8 +387,8 @@ const Shell = (function(){
 
     // Appearance
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Appearance</div>';
-    html += '<div class="st-btn-group">' + themeBtn('dark','Dark') + themeBtn('light','Light') + themeBtn('auto','Auto') + '</div>';
+    html += '<div class="st-section-title">' + T('stAppearance') + '</div>';
+    html += '<div class="st-btn-group">' + themeBtn('dark',T('darkLbl')) + themeBtn('light',T('lightLbl')) + themeBtn('auto',T('autoLbl')) + '</div>';
     html += '</div>';
 
     // Language
@@ -385,24 +397,24 @@ const Shell = (function(){
       return '<button class="st-btn' + (curLang===val?' st-btn-active':'') + '" onclick="Shell.setLang(\'' + val + '\')">' + label + '</button>';
     }
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Language</div>';
+    html += '<div class="st-section-title">' + T('stLanguage') + '</div>';
     html += '<div class="st-btn-group st-btn-group-wrap">' + langBtn('en','EN') + langBtn('zh','中文') + langBtn('ja','日本語') + langBtn('ko','한국어') + langBtn('es','ES') + '</div>';
     html += '</div>';
 
     // Overlay Visibility
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Overlay</div>';
-    html += chk('st-chk-shot', showShot, 'Shot Overlay', 'Shell.settingsToggle(\"showShot\",this.checked)');
-    html += chk('st-chk-score', showScore, 'Scorecard', 'Shell.settingsToggle(\"showScore\",this.checked)');
+    html += '<div class="st-section-title">' + T('stOverlay') + '</div>';
+    html += chk('st-chk-shot', showShot, T('stShotOverlay'), 'Shell.settingsToggle(\"showShot\",this.checked)');
+    html += chk('st-chk-score', showScore, T('stScorecard'), 'Shell.settingsToggle(\"showScore\",this.checked)');
     if(showScore){
       html += '<div class="st-indent">';
       html += '<div class="st-btn-group st-btn-group-sm">' + scRadio('front9','F9') + scRadio('back9','B9') + scRadio('18','18H') + '</div>';
-      html += chk('st-chk-pname-nav', showPnameNav, 'Player Name on Nav');
+      html += chk('st-chk-pname-nav', showPnameNav, T('stPlayerNameNav'));
       html += '</div>';
     }
-    html += chk('st-chk-total', showTotal, 'Total', 'Shell.settingsToggle(\"showTotal\",this.checked)');
+    html += chk('st-chk-total', showTotal, T('stTotal'), 'Shell.settingsToggle(\"showTotal\",this.checked)');
     html += '<div class="st-row">';
-    html += '<span class="st-row-label">Display</span>';
+    html += '<span class="st-row-label">' + T('stDisplay') + '</span>';
     html += '<div class="st-btn-group st-btn-group-sm">';
     html += '<button class="st-btn' + (mode==='topar'?' st-btn-active':'') + '" onclick="setMode(\'topar\')">To Par</button>';
     html += '<button class="st-btn' + (mode==='gross'?' st-btn-active':'') + '" onclick="setMode(\'gross\')">Gross</button>';
@@ -411,56 +423,56 @@ const Shell = (function(){
 
     // Aspect Ratio
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Aspect Ratio</div>';
+    html += '<div class="st-section-title">' + T('stAspectRatio') + '</div>';
     html += '<div class="st-btn-group">' + ratioBtn('16:9','16:9') + ratioBtn('9:16','9:16') + ratioBtn('1:1','1:1') + '</div>';
     html += '</div>';
 
     // Overlay Style
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Overlay Style</div>';
+    html += '<div class="st-section-title">' + T('stOverlayStyle') + '</div>';
     html += '<div class="st-btn-group st-btn-group-wrap">';
-    html += overlayThemeBtn('classic','Classic');
-    html += overlayThemeBtn('broadcast_gold','Broadcast Gold');
-    html += overlayThemeBtn('pgatour','PGA Tour');
-    html += overlayThemeBtn('livgolf','LIV Golf');
-    html += overlayThemeBtn('vivid','Vivid');
+    html += overlayThemeBtn('classic',T('classicLbl'));
+    html += overlayThemeBtn('broadcast_gold',T('broadcastGoldLbl'));
+    html += overlayThemeBtn('pgatour',T('pgaTourLbl'));
+    html += overlayThemeBtn('livgolf',T('livGolfLbl'));
+    html += overlayThemeBtn('vivid',T('vividLbl'));
     html += '</div></div>';
 
     // Background
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Background Image</div>';
-    html += '<div class="st-row"><span class="st-row-label">BG Opacity</span><input type="range" id="st-bg-opacity" min="0" max="100" value="' + (ws.bgOpacity != null ? ws.bgOpacity : 100) + '" style="flex:1" oninput="Shell.settingsSlider(\'bgOpacity\',this.value)"><span class="st-range-val" id="st-bg-opacity-val">' + (ws.bgOpacity != null ? ws.bgOpacity : 100) + '%</span></div>';
+    html += '<div class="st-section-title">' + T('stBgImage') + '</div>';
+    html += '<div class="st-row"><span class="st-row-label">' + T('stBgOpacity') + '</span><input type="range" id="st-bg-opacity" min="0" max="100" value="' + (ws.bgOpacity != null ? ws.bgOpacity : 100) + '" style="flex:1" oninput="Shell.settingsSlider(\'bgOpacity\',this.value)"><span class="st-range-val" id="st-bg-opacity-val">' + (ws.bgOpacity != null ? ws.bgOpacity : 100) + '%</span></div>';
     html += '<div class="st-btn-row">';
-    html += '<button class="st-action-btn" onclick="document.getElementById(\'bg-file-input\').click()">Upload Background</button>';
-    html += '<button class="st-action-btn st-action-danger" onclick="clearBg()">Clear Background</button>';
+    html += '<button class="st-action-btn" onclick="document.getElementById(\'bg-file-input\').click()">' + T('stUploadBg') + '</button>';
+    html += '<button class="st-action-btn st-action-danger" onclick="clearBg()">' + T('stClearBg') + '</button>';
     html += '</div></div>';
 
     // Scorecard Overlay
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Scorecard Overlay</div>';
-    html += '<button class="st-action-btn" onclick="resetScorecardPos()">Reset Scorecard Position</button>';
-    html += chk('st-chk-show-pname', showPname, 'Show Player Name');
+    html += '<div class="st-section-title">' + T('stScorecardOverlay') + '</div>';
+    html += '<button class="st-action-btn" onclick="resetScorecardPos()">' + T('stResetScPos') + '</button>';
+    html += chk('st-chk-show-pname', showPname, T('stShowPname'));
     html += '</div>';
 
     // Export
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Export</div>';
+    html += '<div class="st-section-title">' + T('stExport') + '</div>';
     html += '<div class="st-btn-group">' + resBtn('2160','4K') + resBtn('1440','1440P') + resBtn('1080','1080P') + '</div>';
-    html += '<div class="st-row"><span class="st-row-label">Opacity</span><input type="range" id="st-overlay-opacity" min="0" max="100" value="' + (ws.overlayOpacity != null ? ws.overlayOpacity : 100) + '" style="flex:1" oninput="Shell.settingsSlider(\'overlayOpacity\',this.value)"><span class="st-range-val" id="st-overlay-opacity-val">' + (ws.overlayOpacity != null ? ws.overlayOpacity : 100) + '%</span></div>';
+    html += '<div class="st-row"><span class="st-row-label">' + T('stExportOpacity') + '</span><input type="range" id="st-overlay-opacity" min="0" max="100" value="' + (ws.overlayOpacity != null ? ws.overlayOpacity : 100) + '" style="flex:1" oninput="Shell.settingsSlider(\'overlayOpacity\',this.value)"><span class="st-range-val" id="st-overlay-opacity-val">' + (ws.overlayOpacity != null ? ws.overlayOpacity : 100) + '%</span></div>';
     html += '</div>';
 
     // Safe Zone
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Safe Zone</div>';
-    html += chk('st-chk-sz', showSZ, 'Show safe zone guides');
-    html += '<div class="st-row"><span class="st-row-label">Zone size</span><select id="st-sz-size" class="st-select" onchange="Shell.settingsSelect(\'szSize\',this.value)"><option value="5"' + (szSize==='5'?' selected':'') + '>5% Action Safe</option><option value="10"' + (szSize==='10'?' selected':'') + '>10% Title Safe</option><option value="both"' + (szSize==='both'?' selected':'') + '>Both</option></select></div>';
+    html += '<div class="st-section-title">' + T('stSafeZone') + '</div>';
+    html += chk('st-chk-sz', showSZ, T('stShowSZ'));
+    html += '<div class="st-row"><span class="st-row-label">' + T('stZoneSize') + '</span><select id="st-sz-size" class="st-select" onchange="Shell.settingsSelect(\'szSize\',this.value)"><option value="5"' + (szSize==='5'?' selected':'') + '>' + T('actionSafe') + '</option><option value="10"' + (szSize==='10'?' selected':'') + '>' + T('titleSafe') + '</option><option value="both"' + (szSize==='both'?' selected':'') + '>' + T('bothLbl') + '</option></select></div>';
     html += '</div>';
 
     // Course
     html += '<div class="st-section">';
-    html += '<div class="st-section-title">Course</div>';
-    html += '<div class="st-row"><span class="st-row-label">Name</span><input type="text" id="st-inp-course" class="st-input" placeholder="COURSE" maxlength="24" value="' + _esc(ws.courseName || '') + '"></div>';
-    html += '<button class="st-action-btn" onclick="resetAllPars()">Reset All to Par 4</button>';
+    html += '<div class="st-section-title">' + T('stCourse') + '</div>';
+    html += '<div class="st-row"><span class="st-row-label">' + T('thName') + '</span><input type="text" id="st-inp-course" class="st-input" placeholder="' + T('stCoursePh') + '" maxlength="24" value="' + _esc(ws.courseName || '') + '"></div>';
+    html += '<button class="st-action-btn" onclick="resetAllPars()">' + T('stResetPar') + '</button>';
     html += '</div>';
 
     el.innerHTML = html;
@@ -531,8 +543,13 @@ const Shell = (function(){
 
   function setLang(lang){
     if(typeof window.setLang === 'function') window.setLang(lang);
-    // Re-render settings page to update active button
-    if(_currentPage === 'settings') _renderSettingsPage();
+    _syncLangButton();
+    _applySidebarLang();
+    // Re-render current page to apply new language
+    var page = PAGES[_currentPage];
+    if(page && page.render) page.render();
+    _updateWorkspaceHeader(_currentPage);
+    _renderLiveRecent();
   }
 
   function openSettings(){
@@ -544,6 +561,53 @@ const Shell = (function(){
     var lbl = document.getElementById('sidebar-lang-label');
     var labels = { en:'EN', zh:'中文', ja:'日本語', ko:'한국어', es:'ES' };
     if(lbl) lbl.textContent = labels[lang] || lang;
+  }
+
+  function _applySidebarLang(){
+    // Nav items: update .sb-label text by data-route
+    var routeMap = {
+      home: 'sbConsole', rounds: 'sbRounds', courses: 'sbCourses',
+      players: 'sbPlayers', buddies: 'sbBuddies', teams: 'sbTeams',
+      clubs: 'sbClubs', settings: 'sbSettings'
+    };
+    var items = document.querySelectorAll('.sb-item[data-route]');
+    for(var i = 0; i < items.length; i++){
+      var route = items[i].getAttribute('data-route');
+      var key = routeMap[route];
+      if(key){
+        var lbl = items[i].querySelector('.sb-label');
+        if(lbl) lbl.textContent = T(key);
+        items[i].setAttribute('data-tooltip', T(key));
+      }
+    }
+    // New Round button (no data-route)
+    var nrBtn = document.querySelector('.sb-new-round');
+    if(nrBtn){
+      var lbl = nrBtn.querySelector('.sb-label');
+      if(lbl) lbl.textContent = T('sbNewRound');
+      nrBtn.setAttribute('data-tooltip', T('sbNewRound'));
+    }
+    // Overlay Center action
+    var ocBtn = document.querySelector('.sb-action[data-route="round"]');
+    if(ocBtn){
+      var lbl = ocBtn.querySelector('.sb-label');
+      if(lbl) lbl.textContent = T('sbOverlayCenter');
+      ocBtn.setAttribute('data-tooltip', T('sbOverlayCenter'));
+    }
+    // Section labels (tagged with data-i18n in HTML)
+    var sections = document.querySelectorAll('[data-i18n]');
+    for(var j = 0; j < sections.length; j++){
+      var key2 = sections[j].getAttribute('data-i18n');
+      if(key2) sections[j].textContent = T(key2);
+    }
+    // Footer: Create Account / Sign In (only update if not logged in)
+    var loggedIn = typeof AuthState !== 'undefined' && AuthState.isLoggedIn();
+    if(!loggedIn){
+      var regLbl = document.querySelector('.sb-register-btn .sb-label');
+      if(regLbl) regLbl.textContent = T('sbCreateAccount');
+      var authLbl = document.getElementById('sidebar-auth-label');
+      if(authLbl) authLbl.textContent = T('sbSignIn');
+    }
   }
 
   // Close lang menu on outside click
@@ -578,10 +642,10 @@ const Shell = (function(){
       if(loggedIn){
         var initial = (user && user.displayName) ? user.displayName.charAt(0).toUpperCase() : '?';
         iconEl.textContent = initial;
-        labelEl.textContent = user.displayName || 'Profile';
+        labelEl.textContent = user.displayName || T('accountLbl');
       } else {
         iconEl.innerHTML = '&#128100;';
-        labelEl.textContent = 'Sign In';
+        labelEl.textContent = T('sbSignIn');
       }
     }
 
@@ -601,11 +665,12 @@ const Shell = (function(){
     // Overlay Center action
     var overlayAction = document.querySelector('.sb-action[data-route="round"]');
     if(overlayAction) overlayAction.style.display = loggedIn ? '' : 'none';
-    // Section labels: Management / Workspace / Recent
+    // Section labels: Management / Workspace / Recent (use data-i18n to identify)
     var sectionLabels = document.querySelectorAll('.sb-section-label');
     for(var i = 0; i < sectionLabels.length; i++){
-      var labelText = sectionLabels[i].textContent.trim();
-      if(labelText === 'Management' || labelText === 'Workspace' || labelText === 'Recent'){
+      var i18nEl = sectionLabels[i].querySelector('[data-i18n]');
+      var key = i18nEl ? i18nEl.getAttribute('data-i18n') : '';
+      if(key === 'sbManagement' || key === 'sbWorkspace' || key === 'sbRecent'){
         sectionLabels[i].style.display = loggedIn ? '' : 'none';
       }
     }
@@ -641,11 +706,11 @@ const Shell = (function(){
     if(!el) return false;
     el.innerHTML = '<div class="auth-guard">'
       + '<div class="auth-guard-icon">&#128274;</div>'
-      + '<div class="auth-guard-title">Sign in to continue</div>'
-      + '<div class="auth-guard-text">This feature requires a logged-in account.</div>'
+      + '<div class="auth-guard-title">' + T('authGuardTitle') + '</div>'
+      + '<div class="auth-guard-text">' + T('authGuardText') + '</div>'
       + '<div class="auth-guard-actions">'
-      + '<button class="sh-btn-primary" onclick="Router.navigate(\'/login\')">Sign In</button>'
-      + '<button class="sh-btn-outline" onclick="Router.navigate(\'/register\')">Create Account</button>'
+      + '<button class="sh-btn-primary" onclick="Router.navigate(\'/login\')">' + T('signInBtn') + '</button>'
+      + '<button class="sh-btn-outline" onclick="Router.navigate(\'/register\')">' + T('createAccountBtn') + '</button>'
       + '</div>'
       + '</div>';
     return false;

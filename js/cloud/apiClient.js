@@ -133,6 +133,10 @@ const ApiClient = (function(){
     return request(path, Object.assign({}, options, { method: 'PATCH', body: body }));
   }
 
+  async function del(path, options){
+    return request(path, Object.assign({}, options, { method: 'DELETE' }));
+  }
+
   // ── Helper: parse JSON response ──
   async function json(response){
     try { return await response.json(); } catch(e){ return null; }
@@ -151,6 +155,7 @@ const ApiClient = (function(){
     get: get,
     post: post,
     patch: patch,
+    del: del,
     json: json
   };
 

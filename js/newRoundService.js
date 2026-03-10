@@ -388,6 +388,348 @@ const NewRoundService = (function(){
   }
 
   // ══════════════════════════════════════════
+  // DRAFT → PAYLOAD ADAPTER (P5 翻译层)
+  // ══════════════════════════════════════════
+  //
+  // RoundDraft（产品语义）→ Create Adapter → 旧 Round Payload（持久化语义）
+  //
+  // Two paths:
+  //   A. single-layout: selectedLayoutId exists → use existing buildCourseSnapshot
+  //   B. dual-nine:     frontNineId + backNineId → build holes directly from nines
+
+  /**
+   * Build hole snapshot directly from two nines, without requiring a layout.
+   * Front nine holes come first, back nine holes second.
+   * Hole numbers are renumbered 1..N sequentially.
+   *
+   * @param {Object} frontNine - nine object { id, name, holes: [...] }
+   * @param {Object} backNine  - nine object { id, name, holes: [...] }
+   * @param {string} [teeSetId] - for yardage lookup
+   * @returns {Array} hole snapshot array
+   */
+  function buildHolesFromDualNine(frontNine, backNine, teeSetId){
+    var snapshot = [];
+
+    function appendNine(nine){
+      if(!nine || !nine.holes) return;
+      var holes = nine.holes;
+      for(var h = 0; h < holes.length; h++){
+        var hole = holes[h];
+        var yards = null;
+        if(teeSetId && hole.tees && hole.tees[teeSetId]){
+          yards = hole.tees[teeSetId].yards || null;
+        }
+        snapshot.push({
+          number: snapshot.length + 1,
+          par: hole.par || 4,
+          yards: yards,
+          holeId: nine.id + '_h' + (h + 1),
+          hcpIndex: hole.hcp || null
+        });
+      }
+    }
+
+    appendNine(frontNine);
+    appendNine(backNine);
+    return snapshot;
+  }
+
+  /**
+   * Build a course snapshot result from draft route info.
+   * Handles both single-layout and dual-nine modes.
+   *
+   * @param {Object} draft - roundDraft object
+   * @returns {{ snapshot, holeCount, courseName, routingName, routeMode, routeSummary,
+   *             frontNineId, backNineId, selectedLayoutId } | null}
+   */
+  function buildCourseSnapshotFromDraft(draft){
+    if(!draft || !draft.clubId) return null;
+    var club = ClubStore.get(draft.clubId);
+    if(!club) return null;
+
+    var clubName = club.name || club.name_en || 'Untitled';
+    var snapshot, routingName, routeSummary;
+
+    if(draft.routeMode === 'single-layout' && draft.selectedLayoutId){
+      // ── Path A: existing layout ──
+      var cs = buildCourseSnapshot(draft.clubId, draft.selectedLayoutId, draft.teeSetId || null);
+      if(!cs || cs.holeCount === 0) return null;
+      routingName = cs.routingName;
+      routeSummary = cs.routingName;
+      snapshot = cs.snapshot;
+    } else if(draft.routeMode === 'dual-nine' && draft.frontNineId && draft.backNineId){
+      // ── Path B: compose from two nines ──
+      var nineMap = {};
+      for(var i = 0; i < (club.nines || []).length; i++){
+        nineMap[club.nines[i].id] = club.nines[i];
+      }
+      var frontNine = nineMap[draft.frontNineId];
+      var backNine  = nineMap[draft.backNineId];
+      if(!frontNine || !backNine) return null;
+      if(!frontNine.holes || frontNine.holes.length === 0) return null;
+      if(!backNine.holes  || backNine.holes.length === 0)  return null;
+
+      snapshot = buildHolesFromDualNine(frontNine, backNine, draft.teeSetId || null);
+      if(snapshot.length === 0) return null;
+
+      var fn = draft.frontNineName || frontNine.name || frontNine.display_name || 'Front';
+      var bn = draft.backNineName  || backNine.name  || backNine.display_name  || 'Back';
+      routingName  = fn + ' + ' + bn;
+      routeSummary = fn + ' + ' + bn;
+    } else {
+      return null;
+    }
+
+    return {
+      snapshot: snapshot,
+      holeCount: snapshot.length,
+      courseName: clubName,
+      routingName: routingName,
+      routeMode: draft.routeMode,
+      routeSummary: routeSummary,
+      frontNineId: draft.frontNineId || null,
+      backNineId: draft.backNineId || null,
+      selectedLayoutId: draft.selectedLayoutId || null
+    };
+  }
+
+  /**
+   * Normalize a roundDraft into a validated create-ready payload.
+   * This is the single translation point from product semantics to persistence semantics.
+   *
+   * @param {Object} draft - roundDraft from NewRoundPage
+   * @returns {{ success:true, payload } | { success:false, errors:string[] }}
+   */
+  /** Safe T() wrapper — T() is defined in app.js which loads after this file */
+  function _t(key, arg){
+    if(typeof T === 'function') return arg !== undefined ? T(key, arg) : T(key);
+    return key;
+  }
+
+  function normalizeDraftForCreate(draft){
+    var errors = [];
+
+    if(!draft) { return { success:false, errors:[_t('nrErrClubRequired')] }; }
+    if(!draft.clubId) errors.push(_t('nrErrClubRequired'));
+
+    // Verify club exists in store
+    if(draft.clubId && !ClubStore.get(draft.clubId)){
+      errors.push(_t('nrErrClubNotFound'));
+    }
+
+    // Route validation
+    if(draft.routeMode === 'dual-nine'){
+      if(!draft.frontNineId) errors.push(_t('nrErrFront9Required'));
+      if(!draft.backNineId)  errors.push(_t('nrErrBack9Required'));
+    } else if(draft.routeMode === 'single-layout'){
+      if(!draft.selectedLayoutId) errors.push(_t('nrErrLayoutRequired'));
+    } else {
+      errors.push(_t('nrErrRouteRequired'));
+    }
+
+    // Players
+    if(!draft.players || draft.players.length === 0){
+      errors.push(_t('nrErrPlayerRequired'));
+    } else {
+      for(var i = 0; i < draft.players.length; i++){
+        if(!draft.players[i].name || !draft.players[i].name.trim()){
+          errors.push(_t('nrErrPlayerNoName', i + 1));
+        }
+      }
+    }
+
+    if(errors.length > 0) return { success:false, errors:errors };
+
+    // Build course snapshot via adapter
+    var cs = buildCourseSnapshotFromDraft(draft);
+    if(!cs || cs.holeCount === 0){
+      return { success:false, errors:[_t('nrErrSnapshotEmpty')] };
+    }
+
+    // Build player inputs
+    var playerInputs = [];
+    for(var i = 0; i < draft.players.length; i++){
+      var p = draft.players[i];
+      playerInputs.push({
+        name: p.name.trim(),
+        playerId: p.playerId || null,
+        buddyId: p.buddyId || null
+      });
+    }
+
+    return {
+      success: true,
+      payload: {
+        clubId: draft.clubId,
+        courseSnapshot: cs,
+        players: playerInputs,
+        teeTime: draft.teeTime || null,
+        visibility: draft.visibility || 'friends',
+        title: null // auto-generate
+      }
+    };
+  }
+
+  /**
+   * Create a new round directly from a roundDraft.
+   * This is the main entry point for P5 — replaces the old createNewRound(input) path
+   * for the new 4-card picker flow.
+   *
+   * @param {Object} draft - roundDraft from NewRoundPage
+   * @returns {NewRoundResult}
+   */
+  function createFromDraft(draft){
+    // 1. Normalize & validate
+    var norm = normalizeDraftForCreate(draft);
+    if(!norm.success){
+      return { success:false, errors:norm.errors };
+    }
+
+    var pay = norm.payload;
+    var cs  = pay.courseSnapshot;
+
+    // 2. Resolve status
+    var res = resolveStatus(pay.teeTime);
+
+    // 3. Auto title
+    var title = pay.title || _autoTitle(cs.courseName, cs.routingName, pay.teeTime);
+
+    // 4. Determine routingId for backward-compat storage
+    //    For single-layout: use the actual layoutId
+    //    For dual-nine: try to find a matching layout, or use a synthetic descriptor
+    var routingId;
+    if(cs.routeMode === 'single-layout' && cs.selectedLayoutId){
+      routingId = cs.selectedLayoutId;
+    } else if(cs.routeMode === 'dual-nine'){
+      // Try to find a matching layout (best effort, not required)
+      var matchingLayout = _findMatchingLayout(pay.clubId, cs.frontNineId, cs.backNineId);
+      routingId = matchingLayout || ('dn:' + cs.frontNineId + '+' + cs.backNineId);
+    } else {
+      routingId = null;
+    }
+
+    // 5. Create Round object
+    var round = Round.createRound({
+      courseId: pay.clubId,
+      routingId: routingId,
+      holeCount: cs.holeCount,
+      status: res.status,
+      players: pay.players,
+      _courseSnapshot: cs.snapshot,
+      notes: ''
+    });
+
+    // 6. Attach extended metadata (prefixed with _ = non-schema, instance-level)
+    round._title        = title;
+    round._teeTime      = pay.teeTime;
+    round._teeSetId     = draft.teeSetId || null;
+    round._clubName     = cs.courseName;
+    round._routingName  = cs.routingName;
+    round._routeMode    = cs.routeMode;
+    round._routeSummary = cs.routeSummary;
+    round._frontNineId  = cs.frontNineId;
+    round._backNineId   = cs.backNineId;
+    round._visibility   = pay.visibility;
+
+    return {
+      success: true,
+      round: round,
+      snapshot: cs.snapshot,
+      courseName: cs.courseName,
+      routingName: cs.routingName,
+      routeSummary: cs.routeSummary,
+      routeMode: cs.routeMode,
+      holeCount: cs.holeCount,
+      activate: res.activate,
+      title: title
+    };
+  }
+
+  /**
+   * Find a matching layout by frontNineId + backNineId (best effort).
+   * @private
+   */
+  function _findMatchingLayout(clubId, frontNineId, backNineId){
+    var club = ClubStore.get(clubId);
+    if(!club) return null;
+    var layouts = club.layouts || [];
+    for(var i = 0; i < layouts.length; i++){
+      var segs = layouts[i].segments || [];
+      if(segs.length === 2 && segs[0].nine_id === frontNineId && segs[1].nine_id === backNineId){
+        return layouts[i].id;
+      }
+    }
+    return null;
+  }
+
+  // ══════════════════════════════════════════
+  // ACTIVATE ROUND — enhanced with route metadata
+  // ══════════════════════════════════════════
+
+  /**
+   * activateRound: enhanced to store route metadata in sc.course.
+   * Overwrites the original activateRound above.
+   */
+  var _origActivateRound = activateRound;
+  function activateRoundV2(result){
+    // Call original activation logic
+    _origActivateRound(result);
+
+    // Enhance sc.course with route metadata from the new create flow
+    var sc = D.sc();
+    if(result.routeMode){
+      sc.course.routeMode    = result.routeMode;
+      sc.course.routeSummary = result.routeSummary || '';
+    }
+    if(result.round._frontNineId) sc.course.frontNineId = result.round._frontNineId;
+    if(result.round._backNineId)  sc.course.backNineId  = result.round._backNineId;
+
+    // Persist visibility on scorecard for active rounds
+    if(result.round._visibility){
+      sc.course.visibility = result.round._visibility;
+    }
+
+    // Persist tee time on scorecard
+    if(result.round._teeTime){
+      sc.meta.teeTime = result.round._teeTime;
+    }
+
+    // Update recent club routing history
+    _updateRecentClubRouting(result);
+
+    D.save();
+  }
+
+  // ══════════════════════════════════════════
+  // RECENT CLUBS — enhanced with routing info
+  // ══════════════════════════════════════════
+
+  function _updateRecentClubRouting(result){
+    var ws = D.ws();
+    var history = ws.recentClubRouting || {};
+    if(result.round && result.round.courseId){
+      history[result.round.courseId] = {
+        routeMode: result.routeMode || null,
+        routeSummary: result.routeSummary || '',
+        routingName: result.routingName || '',
+        updatedAt: new Date().toISOString()
+      };
+    }
+    ws.recentClubRouting = history;
+  }
+
+  /**
+   * Get routing summary for a recently used club.
+   * @param {string} clubId
+   * @returns {{ routeSummary, routingName, updatedAt } | null}
+   */
+  function getRecentClubRouting(clubId){
+    var ws = D.ws();
+    var history = ws.recentClubRouting || {};
+    return history[clubId] || null;
+  }
+
+  // ══════════════════════════════════════════
   // SELF-TEST — call NewRoundService._selfTest() in browser console
   // ══════════════════════════════════════════
 
@@ -648,6 +990,180 @@ const NewRoundService = (function(){
     var v4 = validateInput(null);
     ok('T9: null input → error',     v4.length > 0);
 
+    // ════════════════════════════════════════
+    // Test 10: buildHolesFromDualNine — P5 hole merge
+    // ════════════════════════════════════════
+    var frontNine = mockClub.nines[0];
+    var backNine  = mockClub.nines[1];
+    var dualSnap = buildHolesFromDualNine(frontNine, backNine, 'tee_blue');
+
+    ok('T10: dual snap 18 holes',    dualSnap.length === 18, 'got ' + dualSnap.length);
+    ok('T10: hole 1 from front',     dualSnap[0].holeId === 'nine_front_h1');
+    ok('T10: hole 10 from back',     dualSnap[9].holeId === 'nine_back_h1');
+    ok('T10: sequential numbers',    dualSnap.every(function(h, i){ return h.number === i + 1; }));
+    ok('T10: hole 1 par=4',          dualSnap[0].par === 4);
+    ok('T10: hole 2 par=3',          dualSnap[1].par === 3);
+    ok('T10: hole 1 yards=380',      dualSnap[0].yards === 380);
+    ok('T10: hole 10 yards=400',     dualSnap[9].yards === 400);
+    ok('T10: hcpIndex preserved',    dualSnap[0].hcpIndex === 1 && dualSnap[9].hcpIndex === 2);
+
+    // No teeSetId → yards null
+    var dualNoTee = buildHolesFromDualNine(frontNine, backNine, null);
+    ok('T10: no tee → yards null',   dualNoTee[0].yards === null);
+
+    // Defensive: null nine
+    var defSnap = buildHolesFromDualNine(null, backNine, null);
+    ok('T10: null front → 9 holes',  defSnap.length === 9, 'got ' + defSnap.length);
+
+    // ════════════════════════════════════════
+    // Test 11: createFromDraft — single-layout path
+    // ════════════════════════════════════════
+    var draftSL = {
+      clubId: 'test_club_1',
+      routeMode: 'single-layout',
+      selectedLayoutId: 'layout_full',
+      teeSetId: 'tee_blue',
+      players: [
+        { type:'self', name:'Self', playerId:'pid_self', sortOrder:0 },
+        { type:'member', name:'Bob', playerId:'pid_bob', sortOrder:1 }
+      ],
+      teeTime: todayISO,
+      visibility: 'private'
+    };
+
+    var rSL = createFromDraft(draftSL);
+    ok('T11: SL success',             rSL.success === true, rSL.errors && rSL.errors.join('; '));
+    ok('T11: SL holeCount=18',        rSL.holeCount === 18);
+    ok('T11: SL routeMode',           rSL.routeMode === 'single-layout');
+    ok('T11: SL routingId=layoutId',  rSL.round.routingId === 'layout_full');
+    ok('T11: SL activate=true',       rSL.activate === true);
+    ok('T11: SL 2 players',           rSL.round.players.length === 2);
+    ok('T11: SL visibility',          rSL.round._visibility === 'private');
+    ok('T11: SL courseName',          rSL.courseName === 'Test Golf Club');
+    ok('T11: SL snapshot yards',      rSL.snapshot[0].yards === 380);
+    ok('T11: SL title',               rSL.title && rSL.title.indexOf('Test Golf Club') >= 0);
+
+    // ════════════════════════════════════════
+    // Test 12: createFromDraft — dual-nine path
+    // ════════════════════════════════════════
+    var draftDN = {
+      clubId: 'test_club_1',
+      routeMode: 'dual-nine',
+      frontNineId: 'nine_front',
+      frontNineName: 'Front',
+      backNineId: 'nine_back',
+      backNineName: 'Back',
+      teeSetId: 'tee_blue',
+      players: [
+        { type:'self', name:'Self', playerId:null, sortOrder:0 },
+        { type:'guest', name:'Guest1', playerId:null, sortOrder:1 }
+      ],
+      teeTime: todayISO,
+      visibility: 'friends'
+    };
+
+    var rDN = createFromDraft(draftDN);
+    ok('T12: DN success',             rDN.success === true, rDN.errors && rDN.errors.join('; '));
+    ok('T12: DN holeCount=18',        rDN.holeCount === 18);
+    ok('T12: DN routeMode',           rDN.routeMode === 'dual-nine');
+    ok('T12: DN routeSummary',        rDN.routeSummary === 'Front + Back');
+    ok('T12: DN 2 players',           rDN.round.players.length === 2);
+    ok('T12: DN guest included',      rDN.round.players[1].name === 'Guest1');
+    ok('T12: DN visibility',          rDN.round._visibility === 'friends');
+    ok('T12: DN _routeMode',          rDN.round._routeMode === 'dual-nine');
+    ok('T12: DN _frontNineId',        rDN.round._frontNineId === 'nine_front');
+    ok('T12: DN _backNineId',         rDN.round._backNineId === 'nine_back');
+    // Matching layout should be found (layout_full has front+back segments)
+    ok('T12: DN routingId=layout',    rDN.round.routingId === 'layout_full');
+
+    // ════════════════════════════════════════
+    // Test 13: createFromDraft — dual-nine without matching layout
+    // ════════════════════════════════════════
+    // Add a third nine so front+third won't match any layout
+    var _origNines = mockClub.nines;
+    mockClub.nines = _origNines.concat([{
+      id: 'nine_third',
+      name: 'Third',
+      holes: [
+        { par:4, hcp:1, tees:{ tee_blue:{ yards:360 } } },
+        { par:3, hcp:3, tees:{ tee_blue:{ yards:140 } } }
+      ]
+    }]);
+
+    var draftDN2 = {
+      clubId: 'test_club_1',
+      routeMode: 'dual-nine',
+      frontNineId: 'nine_front',
+      frontNineName: 'Front',
+      backNineId: 'nine_third',
+      backNineName: 'Third',
+      players: [{ type:'self', name:'Me', sortOrder:0 }],
+      teeTime: todayISO,
+      visibility: 'public'
+    };
+
+    var rDN2 = createFromDraft(draftDN2);
+    ok('T13: DN2 success',            rDN2.success === true, rDN2.errors && rDN2.errors.join('; '));
+    ok('T13: DN2 holeCount=11',       rDN2.holeCount === 11, 'got ' + rDN2.holeCount);
+    ok('T13: DN2 synthetic routingId', rDN2.round.routingId.indexOf('dn:') === 0);
+    ok('T13: DN2 visibility=public',  rDN2.round._visibility === 'public');
+
+    mockClub.nines = _origNines; // restore
+
+    // ════════════════════════════════════════
+    // Test 14: createFromDraft — scheduled round (future teeTime)
+    // ════════════════════════════════════════
+    var draftFuture = {
+      clubId: 'test_club_1',
+      routeMode: 'single-layout',
+      selectedLayoutId: 'layout_full',
+      players: [{ type:'self', name:'Me', sortOrder:0 }],
+      teeTime: futureISO,
+      visibility: 'friends'
+    };
+
+    var rFuture = createFromDraft(draftFuture);
+    ok('T14: future success',         rFuture.success === true);
+    ok('T14: activate=false',         rFuture.activate === false);
+    ok('T14: status=planned',         rFuture.round.status === 'planned');
+    ok('T14: teeTime stored',         rFuture.round._teeTime === futureISO);
+
+    // ════════════════════════════════════════
+    // Test 15: normalizeDraftForCreate — validation errors
+    // ════════════════════════════════════════
+    var vNoDraft = normalizeDraftForCreate(null);
+    ok('T15: null draft → fail',      vNoDraft.success === false);
+
+    var vNoClub = normalizeDraftForCreate({ routeMode:'single-layout', selectedLayoutId:'x', players:[{name:'A'}] });
+    ok('T15: no clubId → fail',       vNoClub.success === false && vNoClub.errors.length > 0);
+
+    var vBadClub = normalizeDraftForCreate({ clubId:'nonexistent', routeMode:'single-layout', selectedLayoutId:'x', players:[{name:'A'}] });
+    ok('T15: bad clubId → fail',      vBadClub.success === false);
+
+    var vDNNoFront = normalizeDraftForCreate({ clubId:'test_club_1', routeMode:'dual-nine', backNineId:'nine_back', players:[{name:'A'}] });
+    ok('T15: DN no front → fail',     vDNNoFront.success === false);
+
+    var vNoPlayers = normalizeDraftForCreate({ clubId:'test_club_1', routeMode:'single-layout', selectedLayoutId:'layout_full', players:[] });
+    ok('T15: no players → fail',      vNoPlayers.success === false);
+
+    var vBlankName = normalizeDraftForCreate({ clubId:'test_club_1', routeMode:'single-layout', selectedLayoutId:'layout_full', players:[{name:''}] });
+    ok('T15: blank name → fail',      vBlankName.success === false);
+
+    var vNoRoute = normalizeDraftForCreate({ clubId:'test_club_1', players:[{name:'A'}] });
+    ok('T15: no routeMode → fail',    vNoRoute.success === false);
+
+    // ════════════════════════════════════════
+    // Test 16: resolveStatus — edge cases
+    // ════════════════════════════════════════
+    var rsNow = resolveStatus(null);
+    ok('T16: null teeTime → active',  rsNow.status === 'playing' && rsNow.activate === true);
+
+    var rsToday = resolveStatus(todayISO);
+    ok('T16: today → active',         rsToday.status === 'playing' && rsToday.activate === true);
+
+    var rsFuture = resolveStatus(futureISO);
+    ok('T16: future → planned',       rsFuture.status === 'planned' && rsFuture.activate === false);
+
     // ── Restore mock ──
     ClubStore.get = _origGet;
 
@@ -666,14 +1182,22 @@ const NewRoundService = (function(){
   // ══════════════════════════════════════════
 
   return {
+    // Legacy API (layout-driven)
     buildCourseSnapshot: buildCourseSnapshot,
     resolveStatus: resolveStatus,
     validateInput: validateInput,
     createNewRound: createNewRound,
-    activateRound: activateRound,
+    // P5 adapter API (draft-driven)
+    buildHolesFromDualNine: buildHolesFromDualNine,
+    buildCourseSnapshotFromDraft: buildCourseSnapshotFromDraft,
+    normalizeDraftForCreate: normalizeDraftForCreate,
+    createFromDraft: createFromDraft,
+    // Shared
+    activateRound: activateRoundV2,
     storeScheduledRound: storeScheduledRound,
     getRecentPlayers: getRecentPlayers,
     getRecentClubs: getRecentClubs,
+    getRecentClubRouting: getRecentClubRouting,
     _selfTest: _selfTest
   };
 

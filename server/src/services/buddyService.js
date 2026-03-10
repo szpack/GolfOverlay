@@ -9,6 +9,7 @@ const prisma = new PrismaClient();
 
 const BUDDY_ORIGINS = {
   manual: 'manual',
+  user_lookup: 'user_lookup',
   round_sedimented: 'round_sedimented',
   browsed_followed: 'browsed_followed',
   invited: 'invited',
@@ -219,6 +220,52 @@ async function toggleFavorite(ownerUserId, buddyId) {
   return { buddy: _sanitize(buddy) };
 }
 
+// ── Add buddy by user lookup (Golf ID or email resolved to a user) ──
+
+async function addByLookup(ownerUserId, targetUserId, targetDisplayName) {
+  // Self-add guard
+  if (ownerUserId === targetUserId) {
+    return { error: 'self_add', message: 'You cannot add yourself' };
+  }
+
+  // Check if already exists (active)
+  const existing = await prisma.buddyContact.findFirst({
+    where: { ownerUserId, linkedUserId: targetUserId, status: { not: 'deleted' } }
+  });
+  if (existing) {
+    return { buddy: _sanitize(existing), created: false };
+  }
+
+  // Check if soft-deleted — reactivate instead of creating duplicate
+  const deleted = await prisma.buddyContact.findFirst({
+    where: { ownerUserId, linkedUserId: targetUserId, status: 'deleted' }
+  });
+  if (deleted) {
+    const buddy = await prisma.buddyContact.update({
+      where: { id: deleted.id },
+      data: {
+        status: BUDDY_STATUSES.active,
+        displayName: (targetDisplayName || '').trim() || deleted.displayName,
+        lastInteractionAt: new Date()
+      }
+    });
+    return { buddy: _sanitize(buddy), created: true };
+  }
+
+  // Create new buddy contact
+  const buddy = await prisma.buddyContact.create({
+    data: {
+      ownerUserId,
+      linkedUserId: targetUserId,
+      displayName: (targetDisplayName || '').trim() || 'User',
+      origin: BUDDY_ORIGINS.user_lookup,
+      lastInteractionAt: new Date()
+    }
+  });
+
+  return { buddy: _sanitize(buddy), created: true };
+}
+
 module.exports = {
   BUDDY_ORIGINS,
   BUDDY_STATUSES,
@@ -227,5 +274,6 @@ module.exports = {
   create,
   update,
   remove,
-  toggleFavorite
+  toggleFavorite,
+  addByLookup
 };

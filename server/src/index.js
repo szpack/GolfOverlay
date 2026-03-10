@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const meRoutes = require('./routes/me');
 const playerRoutes = require('./routes/players');
 const buddyRoutes = require('./routes/buddies');
+const usersRoutes = require('./routes/users');
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/api/v1/auth', rateLimit(60000, 20), authRoutes);
 app.use('/api/v1/me', meRoutes);
 app.use('/api/v1/players', playerRoutes);
 app.use('/api/v1/buddies', buddyRoutes);
+app.use('/api/v1/users', usersRoutes);
 
 // ── Health check ──
 app.get('/api/health', (req, res) => {

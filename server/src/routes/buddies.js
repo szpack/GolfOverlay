@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const buddyService = require('../services/buddyService');
+const userService = require('../services/userService');
 
 // All routes require authentication
 router.use(requireAuth);
@@ -43,6 +44,72 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     console.error('[buddies/get]', err);
     res.status(500).json({ error: 'Failed to fetch buddy' });
+  }
+});
+
+// ── POST /api/v1/buddies/add-by-id ──
+// Resolve Golf ID → create BuddyContact with linkedUserId
+router.post('/add-by-id', async (req, res) => {
+  try {
+    const { golfId } = req.body || {};
+
+    if (!golfId || typeof golfId !== 'string' || !/^\d{6}$/.test(golfId)) {
+      return res.status(400).json({ ok: false, error: 'invalid_golf_id', message: 'Golf ID must be exactly 6 digits' });
+    }
+
+    // Resolve user
+    const resolved = await userService.resolveUser('golf_id', golfId, req.userId);
+    if (resolved.error) {
+      const status = resolved.error === 'user_not_found' ? 404
+                   : resolved.error === 'self_lookup' ? 400
+                   : 400;
+      return res.status(status).json({ ok: false, error: resolved.error === 'self_lookup' ? 'self_add' : resolved.error, message: resolved.message });
+    }
+
+    // Add buddy
+    const result = await buddyService.addByLookup(req.userId, resolved.user.userId, resolved.user.displayName);
+    if (result.error) {
+      return res.status(400).json({ ok: false, error: result.error, message: result.message });
+    }
+
+    const status = result.created ? 201 : 200;
+    res.status(status).json({ ok: true, data: result.buddy, created: result.created });
+  } catch (err) {
+    console.error('[buddies/add-by-id]', err);
+    res.status(500).json({ ok: false, error: 'server_error', message: 'Failed to add buddy' });
+  }
+});
+
+// ── POST /api/v1/buddies/add-by-email ──
+// Resolve email → create BuddyContact with linkedUserId
+router.post('/add-by-email', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ ok: false, error: 'invalid_email', message: 'Please enter a valid email address' });
+    }
+
+    // Resolve user
+    const resolved = await userService.resolveUser('email', email, req.userId);
+    if (resolved.error) {
+      const status = resolved.error === 'user_not_found' ? 404
+                   : resolved.error === 'self_lookup' ? 400
+                   : 400;
+      return res.status(status).json({ ok: false, error: resolved.error === 'self_lookup' ? 'self_add' : resolved.error, message: resolved.message });
+    }
+
+    // Add buddy
+    const result = await buddyService.addByLookup(req.userId, resolved.user.userId, resolved.user.displayName);
+    if (result.error) {
+      return res.status(400).json({ ok: false, error: result.error, message: result.message });
+    }
+
+    const status = result.created ? 201 : 200;
+    res.status(status).json({ ok: true, data: result.buddy, created: result.created });
+  } catch (err) {
+    console.error('[buddies/add-by-email]', err);
+    res.status(500).json({ ok: false, error: 'server_error', message: 'Failed to add buddy' });
   }
 });
 

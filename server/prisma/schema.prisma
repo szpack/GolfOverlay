@@ -14,6 +14,7 @@ generator client {
 model User {
   id          String   @id @default(uuid()) @db.Uuid
   email       String?  @unique
+  golfId      String   @unique @map("golf_id") @db.VarChar(10) // 6-digit public identifier, e.g. "482731"
   displayName String   @map("display_name")
   status      String   @default("active") // active | suspended | deleted
   createdAt   DateTime @default(now()) @map("created_at")
@@ -82,7 +83,7 @@ model BuddyContact {
   linkedUserId        String?   @map("linked_user_id") @db.Uuid
   displayName         String    @map("display_name")
 
-  origin              String    @default("manual")   // manual | round_sedimented | browsed_followed | invited | imported
+  origin              String    @default("manual")   // manual | user_lookup | round_sedimented | browsed_followed | invited | imported
   isFollowed          Boolean   @default(false) @map("is_followed")
   isFavorite          Boolean   @default(false) @map("is_favorite")
 

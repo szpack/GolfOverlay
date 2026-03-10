@@ -24,7 +24,7 @@ router.get('/me/default', requireAuth, async (req, res) => {
 // ── PATCH /api/v1/players/me/default ──
 router.patch('/me/default', requireAuth, async (req, res) => {
   try {
-    const { displayName, handicap } = req.body || {};
+    const { displayName, handicap, avatarBase64 } = req.body || {};
 
     if (displayName !== undefined && (typeof displayName !== 'string' || displayName.trim().length === 0)) {
       return res.status(400).json({ error: 'Display name cannot be empty' });
@@ -36,12 +36,15 @@ router.patch('/me/default', requireAuth, async (req, res) => {
       }
     }
 
-    const player = await userService.updateDefaultPlayer(req.userId, { displayName, handicap });
+    const player = await userService.updateDefaultPlayer(req.userId, { displayName, handicap, avatarBase64 });
     if (!player) {
       return res.status(404).json({ error: 'Default player not found' });
     }
     res.json({ player });
   } catch (err) {
+    if (err.code === 'INVALID_AVATAR' || err.code === 'AVATAR_TOO_LARGE') {
+      return res.status(400).json({ error: err.message });
+    }
     console.error('[players/patch]', err);
     res.status(500).json({ error: 'Failed to update player' });
   }

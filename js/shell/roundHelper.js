@@ -13,7 +13,7 @@ const RoundHelper = (function(){
   function getActiveSummary(){
     if(typeof D === 'undefined') return null;
     var sc = D.sc();
-    if(!sc || !sc.course) return null;
+    if(!sc || !sc.course || !sc.course.clubId) return null;
 
     var players = sc.players || [];
     if(players.length === 0 && (!sc.scores || Object.keys(sc.scores).length === 0)) return null;

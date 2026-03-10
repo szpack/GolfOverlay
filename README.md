@@ -168,6 +168,76 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 ## Changelog
 
+### v22.3.0 — 2026-03-10
+- **全界面多语言切换**：语言切换时自动重渲染当前页面，所有 Shell 页面即时响应语言变更
+- **侧边栏 i18n 化**：导航项（Console/Rounds/Courses/Players/Buddies 等）、分区标签（Main/Management/Workspace/Recent）、登录/注册按钮均跟随语言切换
+- RoundsPage 全量 i18n 化：标题、搜索框、分组标签（进行中/已计划/已完成）、操作按钮（打开/复制/删除）
+- CoursesPage 全量 i18n 化：标题、筛选器、表头、操作按钮、抽屉详情、确认对话框
+- Settings 页面 i18n 化：外观/语言/叠加/画面比例/样式/背景/导出/安全区/球场等 25+ 标签
+- 工作区标题栏跟随语言切换实时更新
+- 5 语言（en/zh/ja/ko/es）新增 80+ 翻译 key
+
+### v22.2.0 — 2026-03-10
+- **Golf ID 系统**：注册时自动生成 6 位 Golf ID（000101~999999），User 模型新增 `golfId` 唯一字段
+- **用户查找 API**：`POST /api/v1/users/resolve` 支持按 Golf ID 或 email 精确查找用户，返回最小公开信息
+- **好友添加 API**：`POST /api/v1/buddies/add-by-id` 和 `add-by-email`，通过 Golf ID 或 email 一步查找并添加好友
+- BuddyContact 新增 `user_lookup` origin 类型，`addByLookup` 支持去重、自我添加防护、软删除后重激活
+- Prisma migration 为现有用户回填唯一 Golf ID
+- `_sanitizeUser` 响应中包含 `golfId`，`resolveUser` 不返回 email
+
+### v22.1.0 — 2026-03-10
+- **P6 收尾验证**：端到端代码审计，修复 active round 丢失 visibility/teeTime 的问题
+- `activateRoundV2` 现在将 `visibility` 写入 `sc.course`、`teeTime` 写入 `sc.meta`
+- Adapter 错误消息全量 i18n 化（5 语言 × 11 个 key），包含 nrErrClubRequired / nrErrSnapshotEmpty 等
+- `_selfTest()` 新增 7 组测试（T10-T16）：`buildHolesFromDualNine`、`createFromDraft` 单路线/双九/无匹配layout/预约球局、`normalizeDraftForCreate` 校验、`resolveStatus` 边界
+- `normalizeDraftForCreate` 增加 club 存在性检查（`ClubStore.get` 校验）
+- 新增 `nrScheduledLbl` / `nrActiveLbl` i18n key（5 语言）
+
+### v22.0.1 — 2026-03-10
+- GolfLive 导入显式写入 `country: 'CN'`，确保 country 字段在所有创建路径下稳定存在
+
+### v22.0.0 — 2026-03-10
+- **P5 Create Adapter**：New Round 创建流程翻译层 — `RoundDraft → Adapter → 旧 Round Payload`，完全解耦产品语义与持久化结构
+- `createFromDraft(draft)` 统一入口，自动分流 single-layout / dual-nine 两条路径
+- `buildHolesFromDualNine()` 合并两个 Nine 的洞数据，重编号 1~N，继承 par/hcp/tee/length
+- `buildCourseSnapshotFromDraft()` 构建球场快照，dual-nine 无需依赖已有 layoutId
+- `activateRoundV2()` 激活球局时写入 route metadata（routeMode / routeSummary / frontNineId / backNineId / visibility）
+- `getRecentClubRouting()` + CoursePicker 最近球场显示路线摘要
+- `newRoundPage.doCreate()` 重写为 adapter 调用，移除旧 layout-matching 逻辑
+- `normalizeDraftForCreate()` 校验 draft 完整性，返回结构化错误
+
+### v21.11.0 — 2026-03-10
+- **TeeTimePicker (P4)**：开球时间选择器 — 快捷选项（现在/10分钟/30分钟/1小时）+ 自定义日期时间，预览区实时显示友好标签
+- **VisibilityPicker (P4)**：可见性选择器 — 三档单选（私密/半公开/公开），radio card 形式，带说明文字
+- **SummaryHelpers**：统一摘要函数模块 — `buildCourseSummary` / `buildPlayersSummary` / `buildTeeTimeLabel` / `buildVisibilityLabel`，主页面 4 张卡片均使用
+- **P3 修正**：BuddyPicker 去重增加归一化 name 兜底；`_normalizePlayers()` 集中在 newRoundPage，保证 self+sortOrder+去重三重约束
+- 5 语言新增 i18n 键值（nrIn1Hr / nrTodayLbl / nrTomorrowLbl / nrQuickSelectLbl / nrCustomTimeLbl）
+
+### v21.10.0 — 2026-03-10
+- **BuddyPicker (P3)**：球友选择器完整实现 — Self 自动锁定、最近同组球员、Buddies API 异步加载、客户端搜索过滤、Guest 临时添加
+- 多选 toggle 模式，已选球员区域固定顶部显示，支持移除（Self 受保护）
+- **CoursePicker P2 fixes**：提取 `NEARBY_RADIUS_KM` 常量；单 Nine 多 layout 时显示列表让用户选择；提取 `buildCourseSummary()` 可复用函数
+- **Bug fix**：修复 Home 页"全部清除"按钮不工作 — `clearAllRounds` 现在同时清除旧版 v531 数据；`getActiveSummary` 增加 `clubId` 校验
+- 5 语言 BuddyPicker i18n 键值补全
+
+### v21.9.0 — 2026-03-10
+- **新建球局重构 P1+P2**：主页面改为 4 张摘要卡片（球场/球友/开球时间/可见性）+ 创建按钮
+- **统一 Picker Overlay**：全屏覆盖页骨架（返回/标题/确定），slide-in 动画，支持多步骤 back 导航
+- **CoursePicker**：球场选择器完整实现 — 附近球场（Geolocation）/ 最近使用 / 搜索 / 全部列表，dual-nine 前后9选择 + single-layout 兼容
+- **roundDraft 状态架构**：统一 draft 对象，self 玩家保护，picker 取消/确定分离
+
+### v21.8.0 — 2026-03-10
+- **New Round 页面 i18n**：所有硬编码字符串接入 T() 翻译系统（5 语言），新增 16 个翻译键
+- **Auth guard i18n**：shell.js requireAuth() 登录提示接入 T()
+- **版本号对齐**：index.html 的 title / sidebar / overlay header / 全部 cache-busting 参数统一到 v21.8.0
+
+### v21.7.0 — 2026-03-10
+- **Shell pages i18n**：为 Buddies、Profile、Home、Auth guard 页面新增完整 i18n 翻译键（en / zh / ja / ko / es 五语言）
+
+### v21.6.0 — 2026-03-10
+- **User Search API**：`GET /api/v1/users/search?q=` — 按 UUID 前缀或 displayName 模糊搜索用户，返回 id / displayName / avatarUrl
+- **Avatar base64 支持**：`PATCH /api/v1/players/me/default` 新增 `avatarBase64` 字段，支持上传 data:image URI 或清除头像
+
 ### v21.5.0 — 2026-03-10
 - **BuddyContact 系统 MVP**：球友池功能完整实现（后端 + 前端）
 - **后端**：Prisma BuddyContact 模型 + migration，buddyService.js（CRUD / 搜索 / 收藏），RESTful API `/api/v1/buddies`

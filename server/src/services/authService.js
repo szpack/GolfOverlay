@@ -6,6 +6,14 @@ const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const config = require('../config');
 const tokenService = require('./tokenService');
+// Lazy-loaded to avoid circular dependency
+let _generateGolfId = null;
+function _getGenerateGolfId() {
+  if (!_generateGolfId) {
+    _generateGolfId = require('./userService').generateGolfId;
+  }
+  return _generateGolfId;
+}
 
 const prisma = new PrismaClient();
 
@@ -26,10 +34,12 @@ async function register({ email, password, displayName }, meta = {}) {
 
   // Transaction: create user + auth_identity + default player
   const result = await prisma.$transaction(async (tx) => {
+    const golfId = await _getGenerateGolfId()(tx);
     const user = await tx.user.create({
       data: {
         email: normalizedEmail,
-        displayName: displayName.trim()
+        displayName: displayName.trim(),
+        golfId
       }
     });
 
@@ -111,6 +121,7 @@ function _sanitizeUser(user) {
   return {
     id: user.id,
     email: user.email,
+    golfId: user.golfId,
     displayName: user.displayName,
     status: user.status,
     createdAt: user.createdAt
