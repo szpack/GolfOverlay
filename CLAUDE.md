@@ -1,183 +1,125 @@
-# Golf Event Console — 项目说明
+# GolfHub — 项目规则
 
-## 项目名称
-Golf Event Console（原 GolfOverlay）
+## 项目概览
 
-## 用途
-高尔夫赛事管理与实时展示系统。以球局（Round）为核心，以玩法（Gameplay）为主线，以 Overlay 为差异化展示层。
+GolfHub 是高尔夫赛事管理与实时展示系统。以 Round（球局）为核心，以 Gameplay 为主线，以 Overlay 为差异化展示层。
 
-### 三层架构
+三层架构：
 - **Management Layer** — Players / Teams / Clubs / Rounds
 - **Round Workspace** — Scores / Gameplay / Shots
 - **Overlay Engine** — Leaderboard / Player Tag / Scoreboard / Match Board
 
-## 主要功能
-- **计分卡**：18洞成绩总览，支持前9/后9/全场显示，含OUT/IN/TOT子统计
-- **当前洞操作**：Par设置、Delta成绩录入、击球序号导航、距旗杆距离
-- **总杆统计**：实时累计 To Par / Gross 双模式
-- **UI角标显示**：Canvas实时渲染覆盖层，支持拖拽定位、缩放比例切换
-- **导出**：支持4K/1440P/1080P分辨率PNG透明导出
-- **双语**：中英文界面切换（EN / 中文）
-- **数据持久化**：所有状态通过 localStorage 自动保存
+技术栈：纯前端（无构建工具，全局 IIFE，script 加载顺序即依赖），服务端 Express + Prisma + PostgreSQL。
 
-## 项目结构
+---
+
+## 核心架构事实
+
+- 所有 JS 为全局函数/IIFE，无模块系统，脚本加载顺序在 `index.html` 中定义
+- 数据持久化基于 localStorage，分层存储（Summary + Data）
+- 云同步（Sync v1）已实现 Round + HoleScore 的 push/pull，架构为 local-first
+- Canvas 渲染基准宽度 1920px，通过 `scale = w/1920` 缩放
+- 不使用任何构建工具，浏览器直接打开 `index.html` 运行
+
+---
+
+## 不可违反的规则
+
+### Sync 硬规则
+
+1. **`applyRemote*` 绝不能 enqueue**——`applyRemoteMerge()` 和 `applyRemoteScoreMerge()` 只写 localStorage，绝不调用 SyncCoordinator 的任何 enqueue 方法。违反此规则会导致无限 push-pull 循环。
+
+2. **`localVersion` 只跟踪 round meta 本地变更**——仅 `applyLocal{Create,Finish,Abandon,Reopen,Remove}` 会 bump localVersion。Score 变更不 bump localVersion，score 脏状态通过 `dirtyFlags.score` + `dirtyHoles` 追踪。
+
+3. **Score 变更不 bump localVersion**——成绩录入走 `_markHoleDirty()` → `dirtyHoles[holeNo]` + `dirtyFlags.score` + `_markSyncPending()` 路径，不经过 `_bumpLocalVersion()`。
+
+4. **SyncCoordinator 是唯一的 enqueue 入口**——只有 `syncCoordinator.js` 调用 `SyncQueue.enqueue()`，其他模块通过调用 SyncCoordinator 的公开方法间接入队。
+
+5. **flushProgress() 是 score 同步的唯一触发点**——D.save() → RoundStore.flushProgress() → SyncCoordinator.onScoreFlush()。不存在其他路径将 score 变更推入 SyncQueue。
+
+### Round 模型硬规则
+
+6. **roundPlayerId 是局内真相键**——`scores[rpId]`、`shots[rpId]`、HoleScore 的 unique key (`roundId + holeNo + roundPlayerId`) 都以 roundPlayerId 为归属。playerId 可为 null（客人/旧数据），不可作为局内主键。
+
+7. **Snapshot 是不可变快照**——`playersSnapshot` 和 `courseSnapshot` 在 round 创建时固化。修改 BuddyStore/ClubStore 不影响已有 round。修改 round 内 snapshot 不影响源数据。
+
+8. **Summary 和 Data 不能混写**——pullSummaries 只更新 Summary 层，不能写入 Data 字段。Data 变更必须通过 flushProgress() 持久化。
+
+9. **Round 是实例，不是模板**——每个 Round 有唯一 ID，创建后不可重用。cloneRound() 生成新 ID。
+
+### API 硬规则
+
+10. **GET /rounds 返回 Summary only**——不含 playersSnapshotJson、courseSnapshotJson 等大字段。客户端不应将此接口数据写入 RoundData。
+
+11. **PUT /rounds/:id/holes/:holeNo/scores 是 upsert only**——请求中存在的 roundPlayerId 被 upsert，不存在的 roundPlayerId 不受影响。不是 replace-all，不会自动删除。
+
+12. **跨用户 round/hole-score 访问统一返回 404**——不暴露 round 是否存在。
+
+13. **POST /rounds 幂等**——同 ID + 同 owner 返回已有（200），同 ID + 不同 owner 返回 409。
+
+14. **Status 转换不通过 PATCH**——必须使用专用 action 端点（finish/abandon/reopen）。PATCH 白名单不含 status/lockState/endedAt 等字段。
+
+---
+
+## 修改代码前必须先理解的边界
+
+### RoundStore 四层分离
+
+| 层 | 方法前缀 | 调 SyncCoordinator | 说明 |
+|----|----------|-------------------|------|
+| persist | putRound/putSummary/putData/remove | 否 | 纯存储，不触发同步 |
+| applyLocal | applyLocal{Create,Finish,Abandon,Reopen,Remove} | 是 | 用户操作 → enqueue |
+| applyRemote | applyRemote{Merge,ScoreMerge} | **绝不** | 服务端数据合并 |
+| bridge | syncFromScorecard | 否 | D.sc() 兼容层 |
+
+### Score 变更数据流
 
 ```
-GolfOverlay/
-├── index.html          # App Shell + Overlay Center（HTML骨架）
-├── css/
-│   ├── overlay.css     # Overlay Center 样式（不修改）
-│   └── shell.css       # App Shell 样式（可收起Sidebar / Workspace / BottomNav / 页面）
-├── data/
-│   └── courses.json    # 球场数据库（静态JSON）
-├── js/
-│   ├── data.js         # v4.0 统一数据访问层（最先加载）
-│   ├── roundTypes.js   # Round 类型定义（JSDoc only，无运行时代码）
-│   ├── round.js        # Round 数据模型（纯函数，data.js 之后加载）
-│   ├── roundStore.js   # Round 持久层（Summary + Data 分层，一级实体）
-│   ├── roundIndex.js   # Round 查询索引（byPlayer/byCourse/byDate/byStatus）
-│   ├── scoreboard.js   # 计分卡逻辑
-│   ├── ui.js           # 界面操作
-│   ├── clubStore.js    # Club球会主数据CRUD + localStorage持久化（唯一数据源）
-│   ├── buddyStore.js   # Buddy球友本地CRUD + localStorage（离线优先，API可选同步）
-│   ├── courseRouting.js # 球场路由工具（基于ClubStore，替代courseDatabase.js）
-│   ├── roundManager.js # Round状态管理
-│   ├── newRoundService.js # New Round 创建服务（纯逻辑，无UI）
-│   ├── sessionIO.js   # 球局JSON导入导出
-│   ├── import/          # GolfLive成绩导入模块
-│   │   ├── importTypes.js      # 导入类型定义（JSDoc）
-│   │   ├── fileSniffer.js      # 文件格式识别
-│   │   ├── golfliveParser.js   # GolfLive表解析器
-│   │   ├── roundBuilder.js     # 导入数据→Round构建
-│   │   └── importController.js # 导入流程控制+UI桥接
-│   ├── shell/           # App Shell 框架（app.js 之后加载）
-│   │   ├── router.js        # Hash-based SPA 路由器
-│   │   ├── shell.js         # Shell 控制器 + 页面管理
-│   │   ├── homePage.js      # Home 页面渲染
-│   │   ├── roundsPage.js   # Rounds 列表页面渲染
-│   │   ├── coursesPage.js  # Courses 列表页面 + Drawer 详情
-│   │   ├── courseDetailPage.js # Club 详情/编辑页面
-│   │   ├── courseStructureEditor.js # 3列结构编辑器
-│   │   ├── courseImportPage.js # GolfLive球场批量导入页面
-│   │   ├── newRoundPage.js    # New Round 创建页面
-│   │   └── roundHelper.js     # Round 数据桥接（RoundStore → 页面展示）
-│   └── app.js          # 应用核心（Overlay Center 逻辑）
-├── assets/
-│   └── icons/          # 图标资源（备用）
-├── images/             # 图片资源（logo、示例背景图等）
-├── archive/            # 历史版本存档（index-4.x / 5.x）
-├── docs/               # 设计文档（功能说明书 / 视觉设计 / 架构说明）
-└── CLAUDE.md           # 本文件
+用户操作 → D.setPlayerGross() → scheduleSave(350ms)
+→ D.save() → RoundStore.flushProgress()
+  → _markHoleDirty() → dirtyFlags + dirtyHoles
+  → SyncCoordinator.onScoreFlush(dirtyHoles)
+    → enqueueScoreUpsert per dirty hole
+  → 清除 dirtyFlags + dirtyHoles
 ```
 
-## 模块说明
+### 冲突解决策略
 
-### `js/scoreboard.js`
-计分卡核心逻辑，无UI副作用：
-- `deltaColorHex / deltaCardClass / pickerClass / totalBadgeColor` — Delta颜色映射
-- `curHole / getGross / totalDelta / totalGross / fmtDeltaDisplay / deltaLabel` — 成绩计算与格式化
-- `getSCRange / getSCWidth / getSCHeight / drawScorecardOverlay` — 计分卡Canvas绘制
+- **SERVER_FIELDS**（始终服务端胜）：status, lockState, endedAt, endedBy, reopenUntil, reopenCount, startedAt, visibility, deletedAt
+- **LWW_FIELDS**（dirty+newer 本地胜）：courseName, routingName, holesPlanned, holesCompleted, lastActivityAt, date
+- **HoleScore**：dirtyHoles 中的洞本地胜，否则按 updatedAt 比较
 
-### `js/ui.js`
-界面操作与事件响应：
-- `shotTypeLabel / autoType` — 击球类型标签与自动判断
-- `miniToast` — 轻提示
-- `buildHoleNav / makeStatCard` — 18洞导航栏构建（当前洞高亮）
-- `buildDeltaBtn / buildTypeButtons / updateRightPanel` — 右侧面板刷新
-- `openPicker / closePicker / buildPickerItems` — Delta选分弹窗
-- `openSettings / closeSettings` — 设置抽屉
-- `openNewRound / closeNewRound / doNewRound` — 新一轮模态框
-- `setupLongPress / wireAll` — 长按支持与全局事件绑定
+---
 
-### `js/data.js`
-v4.0 统一数据访问层（IIFE `D`），无依赖：
-- `D.sc()` — scorecardData（业务数据：球场快照、球员、成绩）
-- `D.ws()` — workspaceState（UI状态：当前洞、显示偏好、Canvas布局）
-- `D.pid()` — 当前活跃球员ID
-- `D.getCourseHole / setCourseHolePar / setCourseHoleYards` — 球场洞访问
-- `D.getPlayerGross / getPlayerDelta / setPlayerGross / adjPlayerGross` — 成绩读写
-- `D.setShotTag / setShotToPin / setShotNotes` — 击球标签读写
-- `D.totalGross / totalDelta / projectedGross / playedCount` — 派生计算
-- `D.save / load / migrateV531` — 持久化与迁移
-- `D.syncS(S) / syncFromS(S)` — 兼容层：S 视图重建/回写
+## 哪些模块改动要特别谨慎
 
-### `js/app.js`
-应用核心，最后加载：
-- `STRINGS / LANG / T / setLang / applyLang` — 国际化
-- `S / scheduleSave / doSave / loadSaved` — 全局状态视图与持久化（通过 D API）
-- `applyBg / setBgFile / clearBg` — 背景图管理
-- `setPar / setDelta / adjDelta / reconcileShots / clearHole` — 成绩变更
-- `setMode / prevShot / nextShot / setShotType / getShotToPin / setShotToPin` — 击球操作
-- `gotoNextHole / setRatio / setRes / resetScorecardPos / resetAllPars` — 导航与设置
-- `initCanvas / render / redrawOnly / drawOverlays / drawShotOverlay / rrect` — Canvas引擎
-- `doExport / showExpStatus` — PNG导出
-- `init` — 入口，DOMContentLoaded触发
+| 模块 | 风险点 |
+|------|--------|
+| `roundStore.js` | 四层分离边界、sync 元数据更新逻辑、flushProgress 脏标记清除 |
+| `syncCoordinator.js` | 唯一 enqueue 入口、onScoreFlush 与 dirtyHoles 的消费逻辑 |
+| `pushEngine.js` | hole_score entity_id 解析（`split(':hole:')`）、失败分类 |
+| `conflictResolver.js` | SERVER_FIELDS 和 LWW_FIELDS 列表、dirty hole 判定 |
+| `data.js` | D.sc() 与 RoundStore 的双写关系、flushProgress 触发链 |
+| `pullEngine.js` | applyRemoteMerge 调用（必须不 enqueue） |
 
-## 加载顺序
-```html
-<script src="js/data.js"></script>            <!-- v4.0 数据层，无依赖 -->
-<script src="js/roundTypes.js"></script>     <!-- JSDoc 类型定义，无运行时代码 -->
-<script src="js/round.js"></script>          <!-- Round 数据模型，纯函数，无依赖 -->
-<script src="js/roundStore.js"></script>     <!-- Round 持久层，依赖 round.js -->
-<script src="js/roundIndex.js"></script>     <!-- Round 查询索引，依赖 roundStore.js -->
-<script src="js/scoreboard.js"></script>      <!-- 无依赖 -->
-<script src="js/ui.js"></script>              <!-- 依赖 scoreboard.js, data.js -->
-<script src="js/clubStore.js"></script>       <!-- Club 球会 CRUD（唯一数据源），依赖 data.js -->
-<script src="js/buddyStore.js"></script>      <!-- Buddy 球友本地 CRUD，依赖 data.js -->
-<script src="js/courseRouting.js"></script>   <!-- 球场路由工具，依赖 clubStore.js -->
-<script src="js/roundManager.js"></script>    <!-- 依赖 clubStore.js + courseRouting.js -->
-<script src="js/sessionIO.js"></script>      <!-- 依赖 data.js -->
-<script src="js/import/importTypes.js"></script>     <!-- 无依赖，JSDoc only -->
-<script src="js/import/fileSniffer.js"></script>     <!-- 无依赖 -->
-<script src="js/import/golfliveParser.js"></script>  <!-- 依赖 SheetJS (XLSX) -->
-<script src="js/import/roundBuilder.js"></script>    <!-- 依赖 data.js -->
-<script src="js/import/importController.js"></script><!-- 依赖以上 import 模块 + UI -->
-<script src="js/newRoundService.js"></script> <!-- New Round 服务，依赖 D + Round + ClubStore -->
-<script src="js/app.js"></script>             <!-- 依赖所有以上 -->
-<!-- App Shell（app.js init 完成后加载） -->
-<script src="js/shell/router.js"></script>   <!-- Hash 路由，无依赖 -->
-<script src="js/shell/homePage.js"></script>  <!-- Home 页面，依赖 data.js -->
-<script src="js/shell/roundsPage.js"></script><!-- Rounds 页面，依赖 data.js -->
-<script src="js/shell/coursesPage.js"></script><!-- Courses 页面，依赖 clubStore.js -->
-<script src="js/shell/courseDetailPage.js"></script><!-- Club 详情编辑，依赖 clubStore.js -->
-<script src="js/shell/courseStructureEditor.js"></script><!-- 结构编辑器，依赖 clubStore.js -->
-<script src="js/shell/courseImportPage.js"></script><!-- GolfLive球场导入，依赖 clubStore.js -->
-<script src="js/shell/newRoundPage.js"></script><!-- New Round 页面，依赖 NewRoundService -->
-<script src="js/shell/roundHelper.js"></script><!-- Round 数据桥接，依赖 RoundStore -->
-<script src="js/shell/shell.js"></script>     <!-- Shell 控制器，依赖以上 shell 模块 -->
-```
+---
 
-## 数据模型 (v4.0)
-- localStorage keys: `golf_v4_scorecard`（业务数据），`golf_v4_workspace`（UI状态），`golf_v531_bg`（背景图base64）
-- 旧版 `golf_v531` 自动迁移到 v4 格式，保留不删除
-- `D.sc()` — scorecardData：球场快照 + 球员列表 + 成绩数据
-- `D.ws()` — workspaceState：当前洞、显示偏好、Canvas布局
-- `S` — 兼容视图对象，通过 `D.syncS(S)` 重建
-- 球场洞快照：`{ number, par, yards, holeId }`
-- 球员成绩：`{ gross, putts, penalties, notes, status, shots[] }`
-- 击球数据：`{ type, purpose, result, flags[], notes, lastTag, toPin }`
-- Gross 为主数据，Delta = gross - par（派生值）
+## 做改动时的输出要求
 
-## 开发注意事项
-- 所有JS为全局函数，无模块系统，脚本加载顺序即依赖顺序
-- Canvas渲染基准宽度 1920px，所有绘制坐标通过 `scale = w/1920` 缩放
-- 背景图单独存储于 localStorage（base64），超配额时静默失败
-- 不使用任何构建工具，直接浏览器打开 index.html 即可运行
+### 涉及 Sync 相关逻辑时
 
-## Release & Changelog Rules
+必须在改动说明中回答：
+1. 是否影响 SyncQueue 的 enqueue/coalesce 行为？
+2. 是否影响 dirtyFlags / dirtyHoles / syncStatus 的状态转换？
+3. 是否可能破坏 applyRemote* "绝不 enqueue" 的约束？
+4. 是否影响 localVersion 的 bump 语义？
 
-本项目使用 **Semantic Versioning**：`MAJOR.MINOR.PATCH`
+### 每次完成代码修改后
 
-| 类型 | 触发条件 | 示例 |
-|------|----------|------|
-| PATCH | UI微调、小修复、不改变行为的重构 | 颜色调整、文字修正、路径规范 |
-| MINOR | 新增功能但向后兼容 | 新增显示选项、新快捷键 |
-| MAJOR | 破坏兼容或重大架构改动 | 数据结构变更、localStorage key更换 |
-
-### 每次完成代码修改任务后，必须按顺序执行：
+必须按顺序执行：
 
 **1. 升级 VERSION 文件**
-- 读取根目录 `VERSION`（纯版本号一行，如 `5.3.2`）
+- 读取根目录 `VERSION`（纯版本号一行）
 - 按改动类型升级对应位，写回 `VERSION`（只保留一行，无空行）
 
 **2. 在 README.md 的 `## Changelog` 下方插入新条目（最新在前）**
@@ -186,9 +128,134 @@ v4.0 统一数据访问层（IIFE `D`），无依赖：
 - 变更点1（用户可感知的描述）
 - 变更点2
 ```
-- 若 `## Changelog` 区块不存在，先创建再插入
-- 只追加，不覆盖已有条目
 
 **3. 输出建议 git commit message**
 - 格式：`vX.Y.Z: <简短描述>`
-- 示例：`v5.3.2: fix OUT/IN badge color, widen shot overlay right panel`
+
+---
+
+## 项目结构
+
+```
+GolfHub/
+├── index.html              # App Shell + Overlay Center
+├── css/
+│   ├── overlay.css         # Overlay 样式（不修改）
+│   └── shell.css           # App Shell 样式
+├── data/
+│   └── courses.json        # 球场静态数据
+├── js/
+│   ├── data.js             # v4.0 统一数据访问层 D
+│   ├── roundTypes.js       # JSDoc 类型定义（无运行时）
+│   ├── round.js            # Round 数据模型（纯函数）
+│   ├── roundStore.js       # Round 持久层（Summary + Data 分层）
+│   ├── roundIndex.js       # Round 查询索引
+│   ├── scoreboard.js       # 计分卡逻辑
+│   ├── ui.js               # 界面操作
+│   ├── clubStore.js        # Club 球会 CRUD（localStorage）
+│   ├── buddyStore.js       # Buddy 球友 CRUD（localStorage）
+│   ├── courseRouting.js     # 球场路由工具
+│   ├── roundManager.js     # Round 状态管理
+│   ├── newRoundService.js  # New Round 创建服务
+│   ├── sessionIO.js        # 球局 JSON 导入导出
+│   ├── import/             # GolfLive 成绩导入
+│   ├── cloud/              # 云同步层（Sync v1）
+│   │   ├── apiClient.js    # HTTP 客户端
+│   │   ├── authState.js    # JWT 认证状态
+│   │   ├── deviceId.js     # 设备 UUID
+│   │   ├── syncQueue.js    # 同步队列（localStorage FIFO）
+│   │   ├── conflictResolver.js  # 冲突解决
+│   │   ├── pushEngine.js   # 推送引擎
+│   │   ├── pullEngine.js   # 拉取引擎
+│   │   ├── syncCoordinator.js   # 同步编排器
+│   │   └── syncDebug.js    # 控制台调试工具
+│   ├── shell/              # App Shell 框架
+│   │   ├── router.js       # Hash-based SPA 路由
+│   │   ├── shell.js        # Shell 控制器
+│   │   ├── homePage.js     # Home 页面
+│   │   ├── roundsPage.js   # Rounds 列表
+│   │   ├── coursesPage.js  # Courses 管理
+│   │   ├── courseDetailPage.js    # Club 详情
+│   │   ├── courseStructureEditor.js # 结构编辑器
+│   │   ├── courseImportPage.js    # 球场导入
+│   │   ├── newRoundPage.js # New Round 页面
+│   │   └── roundHelper.js  # Round 数据桥接
+│   └── app.js              # 应用核心（Overlay Center）
+├── server/                 # Express + Prisma 后端
+│   ├── src/
+│   │   ├── index.js        # 服务入口
+│   │   ├── routes/rounds.js     # Round API 路由
+│   │   ├── services/roundService.js  # Round 业务逻辑
+│   │   └── middleware/auth.js   # JWT 认证中间件
+│   └── prisma/schema.prisma    # 数据库 Schema
+├── docs/                   # 架构文档
+│   ├── sync-v1.md          # Sync v1 架构
+│   ├── round-model.md      # Round 业务模型
+│   ├── data-architecture.md # 数据架构
+│   ├── api-design.md       # API 设计
+│   └── environment-and-release.md  # 环境与发布
+├── VERSION                 # 当前版本号（一行）
+└── CLAUDE.md               # 本文件
+```
+
+## 加载顺序
+
+```html
+<!-- 数据层 -->
+<script src="js/data.js"></script>
+<script src="js/roundTypes.js"></script>
+<script src="js/round.js"></script>
+<script src="js/roundStore.js"></script>
+<script src="js/roundIndex.js"></script>
+
+<!-- UI 层 -->
+<script src="js/scoreboard.js"></script>
+<script src="js/ui.js"></script>
+
+<!-- 业务模块 -->
+<script src="js/clubStore.js"></script>
+<script src="js/buddyStore.js"></script>
+<script src="js/courseRouting.js"></script>
+<script src="js/roundManager.js"></script>
+<script src="js/sessionIO.js"></script>
+<script src="js/import/*.js"></script>
+<script src="js/newRoundService.js"></script>
+
+<!-- 应用核心 -->
+<script src="js/app.js"></script>
+
+<!-- 云同步层 -->
+<script src="js/cloud/apiClient.js"></script>
+<script src="js/cloud/authState.js"></script>
+<script src="js/cloud/deviceId.js"></script>
+<script src="js/cloud/syncQueue.js"></script>
+<script src="js/cloud/conflictResolver.js"></script>
+<script src="js/cloud/pushEngine.js"></script>
+<script src="js/cloud/pullEngine.js"></script>
+<script src="js/cloud/syncCoordinator.js"></script>
+<script src="js/cloud/syncDebug.js"></script>
+
+<!-- App Shell -->
+<script src="js/shell/router.js"></script>
+<script src="js/shell/roundHelper.js"></script>
+<script src="js/shell/homePage.js"></script>
+<script src="js/shell/roundsPage.js"></script>
+<script src="js/shell/*.js"></script>
+<script src="js/shell/shell.js"></script>  <!-- 必须最后 -->
+```
+
+## localStorage Keys
+
+| Key | 模块 | 内容 |
+|-----|------|------|
+| `golf_v4_scorecard` | data.js | 当前活跃 round 业务数据 |
+| `golf_v4_workspace` | data.js | UI 状态 |
+| `golf_v5_buddies` | buddyStore.js | 球友列表 |
+| `golf_v5_clubs` | clubStore.js | 球会数据 |
+| `golf_v6_store_meta` | roundStore.js | Schema 版本 |
+| `golf_v6_round_summaries` | roundStore.js | 所有 round 摘要 |
+| `golf_v6_round_active` | roundStore.js | 活跃 round ID |
+| `golf_v6_rd_{roundId}` | roundStore.js | 单个 round 详情 |
+| `golf_v7_sync_queue` | syncQueue.js | 同步队列 |
+| `golf_v7_device_id` | deviceId.js | 设备 UUID |
+| `golf_v7_conflict_log` | conflictResolver.js | 冲突日志 |

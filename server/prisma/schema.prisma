@@ -23,6 +23,7 @@ model User {
   authIdentities  AuthIdentity[]
   players         Player[]
   sessions        Session[]
+  rounds          Round[]
   buddiesOwned    BuddyContact[] @relation("BuddyOwner")
   buddiesLinkedTo BuddyContact[] @relation("BuddyLinked")
 
@@ -109,6 +110,99 @@ model BuddyContact {
   @@index([ownerUserId, status])
   @@index([ownerUserId, isFavorite])
   @@map("buddy_contacts")
+}
+
+// ══════════════════════════════════════════
+// Round — 球局根对象（Sync v1）
+// ══════════════════════════════════════════
+// id 由客户端生成（格式 rnd_YYYYMMDD_xxx），支持离线创建。
+// ownerUserId 是唯一归属键，所有读写操作必须校验 ownership。
+
+model Round {
+  id                    String    @id @db.VarChar(64)  // 客户端生成，非 UUID
+  ownerUserId           String    @map("owner_user_id") @db.Uuid
+
+  // ── 状态 ──
+  status                String    @default("scheduled") // scheduled | in_progress | finished | abandoned
+  visibility            String    @default("private")   // private | friends | public
+  lockState             String    @default("open") @map("lock_state") // open | grace | locked
+
+  // ── 球场引用（非 FK，本地 ClubStore ID） ──
+  clubId                String?   @map("club_id")
+  courseId              String?   @map("course_id")
+  courseName            String    @default("") @map("course_name")
+  routingName           String    @default("") @map("routing_name")
+
+  // ── 时间 ──
+  date                  String    @db.VarChar(10)  // YYYY-MM-DD
+  teeTime               DateTime? @map("tee_time")
+  startedAt             DateTime? @map("started_at")
+  endedAt               DateTime? @map("ended_at")
+  endedBy               String?   @map("ended_by")  // manual | auto
+
+  // ── Grace 重开 ──
+  reopenUntil           DateTime? @map("reopen_until")
+  reopenCount           Int       @default(0) @map("reopen_count")
+  lastActivityAt        DateTime? @map("last_activity_at")
+
+  // ── 局内配置 ──
+  holesPlanned          Int       @default(18) @map("holes_planned")
+  holesCompleted        Int       @default(0)  @map("holes_completed")
+
+  // ── 快照（JSON 列，不裁剪） ──
+  playersSnapshotJson   Json?     @map("players_snapshot_json")   // RoundData.playersSnapshot 完整格式
+  courseSnapshotJson    Json?     @map("course_snapshot_json")    // [{number,par,yards,holeId}]
+  settingsSnapshotJson  Json?     @map("settings_snapshot_json")  // {scoringMode,holes,...} 预留
+
+  // ── 同步版本 ──
+  serverVersion         Int       @default(1) @map("server_version")
+
+  // ── 时间戳 ──
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")  // soft delete
+
+  // ── 关系 ──
+  owner      User        @relation(fields: [ownerUserId], references: [id])
+  holeScores HoleScore[]
+
+  @@index([ownerUserId, status])
+  @@index([ownerUserId, updatedAt])
+  @@map("rounds")
+}
+
+// ══════════════════════════════════════════
+// HoleScore — 单洞成绩（Sync v1 最小集）
+// ══════════════════════════════════════════
+// 归属键为 roundPlayerId（局内唯一），不是 playerId。
+// playerId 可空，仅作冗余存档 / 未来跨局分析辅助。
+// 所有查询通过 Round.ownerUserId 做 ownership 级联约束。
+
+model HoleScore {
+  id                    String    @id @default(uuid()) @db.Uuid
+  roundId               String    @map("round_id") @db.VarChar(64)
+  holeNo                Int       @map("hole_no")        // 1-based 洞号
+  roundPlayerId         String    @map("round_player_id") // 局内唯一归属键
+  playerId              String?   @map("player_id")       // 可空，长期身份 ID（冗余存档）
+
+  // ── v1 最小成绩字段 ──
+  gross                 Int?
+  notes                 String?
+
+  // ── 同步版本 ──
+  serverVersion         Int       @default(1) @map("server_version")
+
+  // ── 时间戳 ──
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  // ── 关系 ──
+  round Round @relation(fields: [roundId], references: [id])
+
+  @@unique([roundId, holeNo, roundPlayerId])
+  @@index([roundId])
+  @@map("hole_scores")
 }
 
 // ══════════════════════════════════════════

@@ -86,6 +86,19 @@ const RoundStore = (function(){
       lastActivityAt:  null,       // ISO — last score/shot write
       deletedAt:       null,       // ISO — soft delete timestamp
 
+      // ── Sync metadata (Phase 1) ──
+      sync: {
+        syncStatus:    'local',    // 'local' | 'pending' | 'synced' | 'conflict'
+        localVersion:  1,          // bumped on every local write
+        serverVersion: 0,          // from server response
+        lastSyncedAt:  null        // ISO — last successful push
+      },
+      dirtyFlags: {
+        meta:  false,
+        score: false
+      },
+      dirtyHoles: {},              // { [holeNo]: true } — holes needing sync
+
       summaryStats:    null,
       createdAt:       now,
       updatedAt:       now
@@ -269,6 +282,30 @@ const RoundStore = (function(){
     _progressDirty[roundId] = true;
   }
 
+  /** Mark a specific hole as dirty for sync. holeIdx is 0-based. */
+  function _markHoleDirty(roundId, holeIdx){
+    var s = _summaries[roundId];
+    if(!s) return;
+    if(!s.dirtyHoles) s.dirtyHoles = {};
+    s.dirtyHoles[holeIdx + 1] = true;  // Convert to 1-based holeNo for API
+    if(!s.dirtyFlags) s.dirtyFlags = { meta: false, score: false };
+    s.dirtyFlags.score = true;
+    _markSyncPending(s);
+  }
+
+  /**
+   * Set syncStatus to 'pending' if round has been synced before or is local.
+   * Does NOT bump localVersion — localVersion only tracks round meta changes.
+   * @param {Object} s - RoundSummary
+   */
+  function _markSyncPending(s){
+    if(!s.sync) s.sync = { syncStatus: 'local', localVersion: 1, serverVersion: 0, lastSyncedAt: null };
+    if(s.sync.syncStatus === 'synced' || s.sync.syncStatus === 'local'){
+      s.sync.syncStatus = 'pending';
+    }
+    // If already 'pending' or 'conflict', leave as-is
+  }
+
   // ── Score writes ──
 
   /**
@@ -296,6 +333,7 @@ const RoundStore = (function(){
     data.updatedAt = now;
     _dataCache[roundId] = data;
     _markDataDirty(roundId);
+    _markHoleDirty(roundId, holeIdx);
 
     // Track last activity for auto-finish
     var s = _summaries[roundId];
@@ -323,6 +361,7 @@ const RoundStore = (function(){
     data.updatedAt = now;
     _dataCache[roundId] = data;
     _markDataDirty(roundId);
+    _markHoleDirty(roundId, holeIdx);
 
     var s = _summaries[roundId];
     if(s && s.lastActivityAt !== now) s.lastActivityAt = now;
@@ -389,6 +428,10 @@ const RoundStore = (function(){
     if(s.holesCompleted !== maxCompleted){
       s.holesCompleted = maxCompleted;
       s.updatedAt = new Date().toISOString();
+      // Mark meta dirty for sync — holesCompleted changed
+      if(!s.dirtyFlags) s.dirtyFlags = { meta: false, score: false };
+      s.dirtyFlags.meta = true;
+      _markSyncPending(s);
       _persistSummaries();
     }
   }
@@ -407,7 +450,23 @@ const RoundStore = (function(){
     for(var rid2 in _progressDirty){
       recomputeProgress(rid2);
     }
-    // 3. Lazy lifecycle checks
+    // 3. Notify SyncCoordinator of dirty scores/meta
+    if(typeof SyncCoordinator !== 'undefined'){
+      for(var rid3 in _summaries){
+        var s3 = _summaries[rid3];
+        if(!s3 || !s3.dirtyFlags) continue;
+        if(s3.dirtyFlags.score || s3.dirtyFlags.meta){
+          var dirtyHoles = s3.dirtyHoles ? JSON.parse(JSON.stringify(s3.dirtyHoles)) : {};
+          SyncCoordinator.onScoreFlush(rid3, s3, dirtyHoles, _dataCache[rid3] || _loadData(rid3));
+          // Clear dirty flags after enqueue
+          s3.dirtyFlags.score = false;
+          s3.dirtyFlags.meta = false;
+          s3.dirtyHoles = {};
+          _persistSummaries();
+        }
+      }
+    }
+    // 4. Lazy lifecycle checks
     checkAutoFinish();
     checkGraceLock();
   }
@@ -719,7 +778,7 @@ const RoundStore = (function(){
       var idleMs = now - new Date(lastAct).getTime();
       if(idleMs >= AUTO_FINISH_IDLE_MS){
         console.log('[RoundStore] auto-finishing idle round:', id, 'idle:', Math.round(idleMs/60000), 'min');
-        finishRound(id, { endedBy: 'auto' });
+        applyLocalFinish(id, { endedBy: 'auto' });
       }
     }
   }
@@ -1137,13 +1196,354 @@ const RoundStore = (function(){
   }
 
   // ══════════════════════════════════════════
+  // APPLY LOCAL (user-initiated → persist + enqueue)
+  // ══════════════════════════════════════════
+
+  /**
+   * Create a round locally, then enqueue sync.
+   * Callers: NewRoundService.activateRound, storeScheduledRound
+   * @param {Object} round - Round object
+   * @param {Array}  [snapshot] - courseSnapshot
+   */
+  function applyLocalCreate(round, snapshot){
+    putRound(round, snapshot);
+    _bumpLocalVersion(round.id);
+
+    if(typeof SyncCoordinator !== 'undefined'){
+      var s = _summaries[round.id];
+      var data = _dataCache[round.id];
+      SyncCoordinator.enqueueRoundCreate(round.id, {
+        id:                   round.id,
+        date:                 round.date || s.date,
+        status:               s.status,
+        visibility:           'private',
+        holesPlanned:         s.holesPlanned || 18,
+        courseName:           s.courseName || '',
+        routingName:          s.routingName || '',
+        clubId:               s.courseId || null,
+        courseId:              s.courseId || null,
+        playersSnapshotJson:  data ? data.playersSnapshot : null,
+        courseSnapshotJson:    data ? data.courseSnapshot : null
+      });
+    }
+  }
+
+  /**
+   * Finish a round locally, then enqueue sync.
+   * Callers: app.js endCurrentRound, roundsPage.js endRound
+   * @param {string} roundId
+   * @param {Object} [opts]
+   * @returns {boolean}
+   */
+  function applyLocalFinish(roundId, opts){
+    var ok = finishRound(roundId, opts);
+    if(!ok) return false;
+    _bumpLocalVersion(roundId);
+
+    if(typeof SyncCoordinator !== 'undefined'){
+      var s = _summaries[roundId];
+      SyncCoordinator.enqueueRoundFinish(roundId, {
+        endedBy: (opts && opts.endedBy) || 'manual'
+      }, (s.sync && s.sync.serverVersion) || 0);
+    }
+    return true;
+  }
+
+  /**
+   * Abandon a round locally, then enqueue sync.
+   * @param {string} roundId
+   * @param {string} [reason]
+   * @returns {boolean}
+   */
+  function applyLocalAbandon(roundId, reason){
+    var ok = abandonRound(roundId, reason);
+    if(!ok) return false;
+    _bumpLocalVersion(roundId);
+
+    if(typeof SyncCoordinator !== 'undefined'){
+      var s = _summaries[roundId];
+      SyncCoordinator.enqueueRoundAbandon(roundId, {
+        reason: reason || ''
+      }, (s.sync && s.sync.serverVersion) || 0);
+    }
+    return true;
+  }
+
+  /**
+   * Reopen a round locally, then enqueue sync.
+   * @param {string} roundId
+   * @returns {boolean}
+   */
+  function applyLocalReopen(roundId){
+    var ok = reopenRound(roundId);
+    if(!ok) return false;
+    _bumpLocalVersion(roundId);
+
+    if(typeof SyncCoordinator !== 'undefined'){
+      var s = _summaries[roundId];
+      SyncCoordinator.enqueueRoundReopen(roundId,
+        (s.sync && s.sync.serverVersion) || 0);
+    }
+    return true;
+  }
+
+  /**
+   * Soft-delete a round locally, then enqueue sync.
+   * @param {string} roundId
+   */
+  function applyLocalRemove(roundId){
+    var s = _summaries[roundId];
+    var sv = (s && s.sync && s.sync.serverVersion) || 0;
+    remove(roundId);
+
+    if(typeof SyncCoordinator !== 'undefined' && sv > 0){
+      // Only enqueue delete if round was ever synced
+      SyncCoordinator.enqueueRoundDelete(roundId, sv);
+    }
+  }
+
+  // ── Sync version helper ──
+
+  /**
+   * Bump localVersion — only for round meta changes (applyLocal* calls).
+   * Score changes do NOT bump localVersion, they use dirtyFlags.score + syncStatus.
+   */
+  function _bumpLocalVersion(roundId){
+    var s = _summaries[roundId];
+    if(!s) return;
+    if(!s.sync) s.sync = { syncStatus: 'local', localVersion: 1, serverVersion: 0, lastSyncedAt: null };
+    s.sync.localVersion = (s.sync.localVersion || 0) + 1;
+    _markSyncPending(s);
+    _persistSummaries();
+  }
+
+  // ══════════════════════════════════════════
+  // APPLY REMOTE (server data → persist, NO enqueue)
+  // ══════════════════════════════════════════
+  // Phase 2 will implement these fully.
+  // Stubs provided now so the four-layer API is stable.
+
+  /**
+   * Merge a round from server (pull response).
+   * Uses ConflictResolver for meta fields. Updates sync metadata.
+   * NEVER enqueues to SyncQueue.
+   *
+   * @param {Object} serverRound - server response from GET /rounds/:id or list item
+   * @returns {boolean} true if local data was modified
+   */
+  function applyRemoteMerge(serverRound){
+    if(!serverRound || !serverRound.id) return false;
+    var roundId = serverRound.id;
+    var existing = _summaries[roundId];
+
+    if(!existing){
+      // New round from server — create local summary + data shell
+      var playerNames = [];
+      var playerIds = [];
+      var snap = serverRound.playersSnapshotJson || [];
+      for(var i = 0; i < snap.length; i++){
+        playerNames.push(snap[i].name || '');
+        if(snap[i].playerId) playerIds.push(snap[i].playerId);
+      }
+
+      var summary = _defSummary({
+        id:              roundId,
+        status:          serverRound.status || 'scheduled',
+        date:            serverRound.date || '',
+        teeTime:         serverRound.teeTime || null,
+        courseId:         serverRound.courseId || serverRound.clubId || null,
+        courseName:      serverRound.courseName || '',
+        routingName:     serverRound.routingName || '',
+        playerIds:       playerIds,
+        playerNames:     playerNames,
+        playerCount:     snap.length,
+        holesPlanned:    serverRound.holesPlanned || 18,
+        holesCompleted:  serverRound.holesCompleted || 0,
+        startedAt:       serverRound.startedAt || null,
+        endedAt:         serverRound.endedAt || null,
+        endedBy:         serverRound.endedBy || null,
+        lockState:       serverRound.lockState || 'open',
+        reopenUntil:     serverRound.reopenUntil || null,
+        reopenCount:     serverRound.reopenCount || 0,
+        lastActivityAt:  serverRound.lastActivityAt || null,
+        visibility:      serverRound.visibility || 'private',
+        deletedAt:       serverRound.deletedAt || null,
+        createdAt:       serverRound.createdAt || new Date().toISOString(),
+        updatedAt:       serverRound.updatedAt || new Date().toISOString()
+      });
+      // Set sync metadata — this came from server
+      summary.sync = {
+        syncStatus:    'synced',
+        localVersion:  1,
+        serverVersion: serverRound.serverVersion || 1,
+        lastSyncedAt:  new Date().toISOString()
+      };
+      summary.dirtyFlags = { meta: false, score: false };
+      summary.dirtyHoles = {};
+
+      _summaries[roundId] = summary;
+      _persistSummaries();
+      _notifyIndex(roundId);
+
+      // Create data shell if we have snapshots
+      if(serverRound.playersSnapshotJson || serverRound.courseSnapshotJson){
+        var data = _defData(roundId);
+        data.playersSnapshot = serverRound.playersSnapshotJson || [];
+        data.courseSnapshot = serverRound.courseSnapshotJson || [];
+        _dataCache[roundId] = data;
+        _persistData(roundId);
+      }
+
+      console.log('[RoundStore] applyRemoteMerge: new round from server:', roundId);
+      return true;
+    }
+
+    // Existing round — resolve conflicts
+    if(typeof ConflictResolver === 'undefined'){
+      console.warn('[RoundStore] applyRemoteMerge: ConflictResolver not loaded');
+      return false;
+    }
+
+    var result = ConflictResolver.resolveRoundMeta(existing, serverRound);
+    ConflictResolver.appendLogs(result.logs);
+
+    var merged = result.merged;
+    var changed = false;
+
+    // Apply merged fields
+    for(var k in merged){
+      if(merged.hasOwnProperty(k) && existing[k] !== merged[k]){
+        existing[k] = merged[k];
+        changed = true;
+      }
+    }
+
+    // Always update sync metadata from server
+    if(!existing.sync) existing.sync = { syncStatus:'local', localVersion:1, serverVersion:0, lastSyncedAt:null };
+    var newSV = serverRound.serverVersion || 0;
+    if(newSV > (existing.sync.serverVersion || 0)){
+      existing.sync.serverVersion = newSV;
+      changed = true;
+    }
+    existing.sync.lastSyncedAt = new Date().toISOString();
+    // If no pending local changes, mark synced
+    if(!existing.dirtyFlags || (!existing.dirtyFlags.meta && !existing.dirtyFlags.score)){
+      if(typeof SyncQueue === 'undefined' || !SyncQueue.hasPending(roundId)){
+        existing.sync.syncStatus = 'synced';
+      }
+    }
+
+    // Update snapshots in data if server has them and no local dirty
+    if(serverRound.playersSnapshotJson && !(existing.dirtyFlags && existing.dirtyFlags.meta)){
+      var data = _loadData(roundId);
+      if(data){
+        data.playersSnapshot = serverRound.playersSnapshotJson;
+        if(serverRound.courseSnapshotJson){
+          data.courseSnapshot = serverRound.courseSnapshotJson;
+        }
+        _dataCache[roundId] = data;
+        _persistData(roundId);
+      }
+      // Update playerNames/playerIds from snapshot
+      var pNames = [], pIds = [];
+      var pSnap = serverRound.playersSnapshotJson || [];
+      for(var pi = 0; pi < pSnap.length; pi++){
+        pNames.push(pSnap[pi].name || '');
+        if(pSnap[pi].playerId) pIds.push(pSnap[pi].playerId);
+      }
+      existing.playerNames = pNames;
+      existing.playerIds = pIds;
+      existing.playerCount = pSnap.length;
+    }
+
+    if(changed){
+      existing.updatedAt = serverRound.updatedAt || existing.updatedAt;
+      _persistSummaries();
+      _notifyIndex(roundId);
+    }
+
+    console.log('[RoundStore] applyRemoteMerge:', roundId,
+      'sv:', existing.sync.serverVersion, 'changed:', changed, 'logs:', result.logs.length);
+    return changed;
+  }
+
+  /**
+   * Merge hole scores from server (pull response).
+   * Uses ConflictResolver per-hole. Updates local data.
+   * NEVER enqueues to SyncQueue.
+   *
+   * @param {string} roundId
+   * @param {Object[]} serverScores - from GET /rounds/:id/hole-scores
+   * @returns {boolean} true if local data was modified
+   */
+  function applyRemoteScoreMerge(roundId, serverScores){
+    if(!roundId || !serverScores || serverScores.length === 0) return false;
+
+    var data = _loadData(roundId);
+    if(!data) return false;
+
+    var summary = _summaries[roundId];
+    var dirtyHoles = (summary && summary.dirtyHoles) || {};
+
+    if(typeof ConflictResolver === 'undefined'){
+      console.warn('[RoundStore] applyRemoteScoreMerge: ConflictResolver not loaded');
+      return false;
+    }
+
+    var result = ConflictResolver.resolveHoleScores(roundId, data, serverScores, dirtyHoles);
+    ConflictResolver.appendLogs(result.logs);
+
+    var toApply = result.toApply;
+    if(toApply.length === 0){
+      console.log('[RoundStore] applyRemoteScoreMerge:', roundId, 'no changes to apply');
+      return false;
+    }
+
+    // Apply winning server scores to local data
+    for(var i = 0; i < toApply.length; i++){
+      var entry = toApply[i];
+      var rpId = entry.rpId;
+      var holeIdx = entry.holeIdx;
+
+      // Ensure structure
+      if(!data.scores[rpId]){
+        var hc = (summary && summary.holesPlanned) || 18;
+        data.scores[rpId] = { holes: [] };
+        for(var h = 0; h < hc; h++) data.scores[rpId].holes.push(_newHole());
+      }
+      while(data.scores[rpId].holes.length <= holeIdx){
+        data.scores[rpId].holes.push(_newHole());
+      }
+
+      var hole = data.scores[rpId].holes[holeIdx];
+      hole.gross = entry.gross;
+      hole.notes = entry.notes || '';
+      // Track server updatedAt for future conflict comparison
+      hole._remoteUpdatedAt = entry.updatedAt;
+    }
+
+    data.updatedAt = new Date().toISOString();
+    _dataCache[roundId] = data;
+    _persistData(roundId);
+
+    console.log('[RoundStore] applyRemoteScoreMerge:', roundId,
+      'applied:', toApply.length, 'logs:', result.logs.length);
+    return true;
+  }
+
+  /** Alias for SyncCoordinator compatibility. */
+  function getSummary(roundId){
+    return _summaries[roundId] || null;
+  }
+
+  // ══════════════════════════════════════════
   // INIT
   // ══════════════════════════════════════════
 
   load();
 
   return {
-    // Write
+    // Persist (internal layer — prefer applyLocal* from callers)
     putRound:            putRound,
     putSummary:          putSummary,
     putData:             putData,
@@ -1152,6 +1552,7 @@ const RoundStore = (function(){
 
     // Read
     get:                 get,
+    getSummary:          getSummary,
     getData:             getData,
     list:                list,
 
@@ -1166,13 +1567,24 @@ const RoundStore = (function(){
     recomputeProgress:   recomputeProgress,
     flushProgress:       flushProgress,
 
-    // Lifecycle
+    // Lifecycle (persist-only — prefer applyLocal* from callers)
     startRound:          startRound,
     finishRound:         finishRound,
     abandonRound:        abandonRound,
     reopenRound:         reopenRound,
     checkAutoFinish:     checkAutoFinish,
     checkGraceLock:      checkGraceLock,
+
+    // Apply Local (user-initiated → persist + enqueue)
+    applyLocalCreate:    applyLocalCreate,
+    applyLocalFinish:    applyLocalFinish,
+    applyLocalAbandon:   applyLocalAbandon,
+    applyLocalReopen:    applyLocalReopen,
+    applyLocalRemove:    applyLocalRemove,
+
+    // Apply Remote (server → persist, no enqueue)
+    applyRemoteMerge:       applyRemoteMerge,
+    applyRemoteScoreMerge:  applyRemoteScoreMerge,
 
     // Bridge (Phase A transition)
     syncFromScorecard:   syncFromScorecard,

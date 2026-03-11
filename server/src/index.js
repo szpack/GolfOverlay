@@ -12,6 +12,7 @@ const meRoutes = require('./routes/me');
 const playerRoutes = require('./routes/players');
 const buddyRoutes = require('./routes/buddies');
 const usersRoutes = require('./routes/users');
+const roundRoutes = require('./routes/rounds');
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use('/api/v1/me', meRoutes);
 app.use('/api/v1/players', playerRoutes);
 app.use('/api/v1/buddies', buddyRoutes);
 app.use('/api/v1/users', usersRoutes);
+app.use('/api/v1/rounds', roundRoutes);
 
 // ── Health check ──
 app.get('/api/health', (req, res) => {

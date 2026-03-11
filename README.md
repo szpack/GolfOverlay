@@ -168,6 +168,37 @@ No build step · No external dependencies · Vanilla JS + Canvas
 
 ## Changelog
 
+### v24.4.0 — 2026-03-10
+- **Sync v1 Phase 3 — Sync Status UI + Debug Tools**
+- **Sidebar sync indicator**: real-time dot + text showing sync state (idle/syncing/pending/error), refreshes every 3s
+- **Round card sync badge**: shows LOCAL/PENDING/FAILED/CONFLICT on round cards (hidden when synced to reduce noise)
+- **SyncDebug console tool**: `SyncDebug.status()`, `.queue()`, `.conflicts()`, `.rounds()`, `.round(id)`, `.retryFailed()`, `.forcePull()`, `.nudge()`
+- Light theme variants for all sync badges
+
+### v24.3.0 — 2026-03-10
+- **Sync v1 Phase 2 — Pull Engine + Conflict Resolution**：云端数据拉取与冲突解决
+- **PullEngine**：登录时拉取 round summaries，打开 round 时拉取 detail + hole-scores
+- **ConflictResolver**：保守版冲突解决 — round meta last-write-wins，hole score 按 updatedAt 比较
+- **applyRemoteMerge**：远端 round 合并到本地，server-authoritative 字段始终取服务端值
+- **applyRemoteScoreMerge**：远端 hole scores 按洞+roundPlayerId 合并，dirty hole 本地优先
+- **Conflict Log**：冲突记录持久化到 localStorage，最多保留 200 条
+- **Push conflict → auto pull**：推送 409 时自动拉取最新状态
+- **打开球局自动拉取**：进入 broadcast 页面时非阻塞拉取最新数据并自动重渲染
+
+### v24.2.0 — 2026-03-10
+- **Sync v1 Phase 1 — Client Push Engine**：本地优先云同步客户端推送架构
+- **SyncQueue**：localStorage 持久化 FIFO 队列，支持 coalesce 合并、retry/backoff、conflict 标记
+- **PushEngine**：自动排空队列，调用 REST API 推送变更，支持网络断开重试和指数退避
+- **SyncCoordinator**：中央编排器，连接 RoundStore ↔ SyncQueue ↔ PushEngine，自动响应登录/登出
+- **DeviceId**：持久化设备标识（localStorage），用于同步队列归属
+- **RoundStore 四层分离**：applyLocal*（用户操作→持久化+入队）/ applyRemote*（服务端数据→持久化）/ persist / bridge
+- **Sync 元数据**：每个 Round Summary 新增 sync{syncStatus, localVersion, serverVersion, lastSyncedAt} + dirtyFlags + dirtyHoles
+- **Score 推送路径**：记分 → flushProgress → SyncCoordinator.onScoreFlush → 按脏洞入队
+- **所有调用方迁移**：newRoundService / app.js / roundsPage.js / data.js 改用 applyLocal* 接口
+
+### v24.1.0 — 2026-03-10
+- **End Round 按钮**：在记分工作区的 Settings 抽屉和移动端 More 菜单中新增 End Round 按钮，无需返回 Rounds 列表即可结束当前球局
+
 ### v24.0.0 — 2026-03-10
 - **Round 结束机制**：新增完整的球局结束生命周期（手动结束 / 自动结束 / 弃局）
 - **Grace 重开窗口**：结束后 24 小时内可重新打开球局，过期自动锁定

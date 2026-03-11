@@ -247,9 +247,9 @@ const NewRoundService = (function(){
     var ws = D.ws();
     var count = result.holeCount;
 
-    // ── Write to RoundStore (source of truth) ──
+    // ── Write to RoundStore (source of truth) + enqueue sync ──
     if(typeof RoundStore !== 'undefined'){
-      RoundStore.putRound(round, snapshot);
+      RoundStore.applyLocalCreate(round, snapshot);
       RoundStore.setActive(round.id);
     }
 
@@ -308,7 +308,7 @@ const NewRoundService = (function(){
   function storeScheduledRound(result){
     var round = result.round;
     if(typeof RoundStore !== 'undefined'){
-      RoundStore.putRound(round, result.snapshot);
+      RoundStore.applyLocalCreate(round, result.snapshot);
     }
     console.log('[NewRoundService] Scheduled round stored: ' + round.id);
   }

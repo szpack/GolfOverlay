@@ -1374,19 +1374,19 @@ const D = (function(){
     return RoundStore.list().map(function(s){ return s.id; });
   }
 
-  /** @deprecated Use RoundStore.putRound() */
+  /** @deprecated Use RoundStore.applyLocalCreate() */
   function putRound(round){
     if(typeof RoundStore === 'undefined' || !round || !round.id) return false;
     // Prevent overwriting the active round via this legacy API
     if(round.id === RoundStore.getActiveId()) return false;
-    RoundStore.putRound(round, round._courseSnapshot);
+    RoundStore.applyLocalCreate(round, round._courseSnapshot);
     return true;
   }
 
-  /** @deprecated Use RoundStore.remove() */
+  /** @deprecated Use RoundStore.applyLocalRemove() */
   function deleteRound(id){
     if(typeof RoundStore === 'undefined' || !id) return false;
-    RoundStore.remove(id);
+    RoundStore.applyLocalRemove(id);
     return true;
   }
 

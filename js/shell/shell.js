@@ -81,11 +81,62 @@ const Shell = (function(){
     Router.start(_onRouteChange);
     _renderLiveRecent();
 
+    // Sync indicator: update every 3s when logged in
+    _updateSyncIndicator();
+    setInterval(_updateSyncIndicator, 3000);
+
     document.getElementById('app-shell').classList.add('shell-ready');
     // Remove lang-flash cloak — i18n is now applied
     var cloak = document.getElementById('shell-cloak');
     if(cloak) cloak.remove();
     console.log('[Shell] initialized');
+  }
+
+  // ══════════════════════════════════════════
+  // SYNC INDICATOR
+  // ══════════════════════════════════════════
+
+  function _updateSyncIndicator(){
+    var wrap = document.getElementById('sb-sync-indicator');
+    if(!wrap) return;
+
+    var hasSC = typeof SyncCoordinator !== 'undefined';
+    var loggedIn = typeof AuthState !== 'undefined' && AuthState.isLoggedIn();
+
+    if(!hasSC || !loggedIn){
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = '';
+
+    var st = SyncCoordinator.status();
+    var dot = document.getElementById('sb-sync-dot');
+    var txt = document.getElementById('sb-sync-text');
+    if(!dot || !txt) return;
+
+    var dotCls, label;
+    if(st.failed > 0 || st.conflicts > 0){
+      dotCls = 'sb-sync-dot-error';
+      var parts = [];
+      if(st.failed > 0) parts.push(st.failed + ' failed');
+      if(st.conflicts > 0) parts.push(st.conflicts + ' conflict');
+      label = parts.join(', ');
+    } else if(st.running && st.pending > 0){
+      dotCls = 'sb-sync-dot-syncing';
+      label = 'Syncing ' + st.pending + '...';
+    } else if(st.pending > 0){
+      dotCls = 'sb-sync-dot-pending';
+      label = st.pending + ' pending';
+    } else if(st.pulling){
+      dotCls = 'sb-sync-dot-syncing';
+      label = 'Pulling...';
+    } else {
+      dotCls = 'sb-sync-dot-idle';
+      label = 'Synced';
+    }
+
+    dot.className = 'sb-sync-dot ' + dotCls;
+    txt.textContent = label;
   }
 
   // ══════════════════════════════════════════
@@ -170,6 +221,17 @@ const Shell = (function(){
       });
     });
     _overlayReady = true;
+
+    // Pull latest round data from server (non-blocking)
+    var pullId = roundId || (typeof RoundStore !== 'undefined' ? RoundStore.getActiveId() : null);
+    if(pullId && typeof SyncCoordinator !== 'undefined'){
+      SyncCoordinator.onRoundOpen(pullId).then(function(result){
+        if(result && (result.roundChanged || result.scoresChanged)){
+          // Re-render if data changed from pull
+          if(typeof render === 'function') render();
+        }
+      });
+    }
   }
 
   function _leaveBroadcast(){
@@ -674,6 +736,8 @@ const Shell = (function(){
     if(typeof AuthState === 'undefined') return;
     AuthState.onChange(_updateAuthUI);
     AuthState.init();
+    // Initialize sync engine after auth
+    if(typeof SyncCoordinator !== 'undefined') SyncCoordinator.init();
   }
 
   function _updateAuthUI(){

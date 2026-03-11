@@ -729,6 +729,32 @@ html.light .landing-hero-btn-ghost:hover { color: #1a1a1a; }
   letter-spacing: 0.3px;
 }
 
+/* ── Sidebar sync indicator ── */
+.sb-sync-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--text-section);
+  padding: 0 12px;
+  cursor: default;
+}
+.sb-sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sb-sync-dot-idle    { background: #6b7280; }
+.sb-sync-dot-syncing { background: #4ade80; animation: sb-sync-pulse 1.2s infinite; }
+.sb-sync-dot-pending { background: #fbbf24; }
+.sb-sync-dot-error   { background: #ef4444; }
+.sb-sync-dot-offline { background: #4b5563; }
+@keyframes sb-sync-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 /* Light theme footer */
 html.light .sb-lang-toggle { border-color: rgba(0,0,0,0.10); }
 html.light .sb-lang-menu { background: #fff; border-color: rgba(0,0,0,0.08); }
@@ -1089,6 +1115,23 @@ html.light .sb-lang-menu button:hover { background: var(--bg-hover); }
   padding: 2px 8px;
   margin-top: 4px;
 }
+
+/* ── Sync badge on round cards ── */
+.sh-sync-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 8px;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.sh-sync-local    { background: rgba(156,163,175,0.12); color: #9ca3af; }
+.sh-sync-pending  { background: rgba(251,191,36,0.12);  color: #fbbf24; }
+.sh-sync-synced   { background: rgba(74,222,128,0.12);  color: #4ade80; }
+.sh-sync-failed   { background: rgba(239,68,68,0.15);   color: #ef4444; }
+.sh-sync-conflict { background: rgba(168,85,247,0.15);  color: #a855f7; }
 
 /* ── My Rounds: Filters ── */
 .mr-filters {
@@ -1682,6 +1725,11 @@ html.light .sh-btn-reopen { color: #059669; border-color: rgba(5,150,105,0.2); }
 html.light .sh-btn-reopen:hover { background: rgba(5,150,105,0.06); }
 html.light .sh-grace-badge { color: #d97706; background: rgba(217,119,6,0.08); border-color: rgba(217,119,6,0.15); }
 html.light .sh-locked-badge { color: #6b7280; background: rgba(107,114,128,0.08); border-color: rgba(107,114,128,0.15); }
+html.light .sh-sync-local    { background: rgba(107,114,128,0.08); color: #6b7280; }
+html.light .sh-sync-pending  { background: rgba(217,119,6,0.08);  color: #d97706; }
+html.light .sh-sync-synced   { background: rgba(22,163,106,0.08); color: #16a34a; }
+html.light .sh-sync-failed   { background: rgba(220,38,38,0.08);  color: #dc2626; }
+html.light .sh-sync-conflict { background: rgba(147,51,234,0.08); color: #9333ea; }
 html.light .sh-btn-confirm-del { background: rgba(220,38,38,0.04) !important; color: #dc2626 !important; border-color: rgba(220,38,38,0.2) !important; }
 
 /* Pills */
@@ -7043,5 +7091,76 @@ html.light .tt-btn-start-round:hover {
 @media (max-width: 480px) {
   .tt-drawer {
     max-width: 100%;
+  }
+}
+
+/* ============================================================
+   苏妲己 Avatar 样式
+   ============================================================ */
+
+.daji-avatar {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 120px;
+  text-align: center;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.daji-avatar img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-green);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+
+.daji-avatar img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.daji-greeting {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.7);
+  border-radius: 20px;
+  font-size: 12px;
+  color: #fff;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.daji-avatar:hover .daji-greeting {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 夜晚模式滤镜 */
+.daji-avatar.daji-night img {
+  filter: brightness(0.7) contrast(1.1);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .daji-avatar {
+    width: 80px;
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .daji-avatar img {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .daji-greeting {
+    font-size: 10px;
+    padding: 4px 8px;
   }
 }

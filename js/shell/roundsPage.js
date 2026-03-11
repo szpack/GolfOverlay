@@ -204,6 +204,27 @@ const RoundsPage = (function(){
   }
 
   // ══════════════════════════════════════════
+  // SYNC BADGE
+  // ══════════════════════════════════════════
+
+  var _syncLabels = {
+    local:   'LOCAL',
+    pending: 'PENDING',
+    synced:  'SYNCED',
+    failed:  'FAILED',
+    conflict:'CONFLICT'
+  };
+
+  function _renderSyncBadge(r){
+    if(!r.sync) return '';
+    var ss = r.sync.syncStatus || 'local';
+    // Don't show badge for 'synced' to reduce noise
+    if(ss === 'synced') return '';
+    var label = _syncLabels[ss] || ss.toUpperCase();
+    return '<span class="sh-sync-badge sh-sync-' + ss + '">' + label + '</span>';
+  }
+
+  // ══════════════════════════════════════════
   // CARD
   // ══════════════════════════════════════════
 
@@ -216,6 +237,7 @@ const RoundsPage = (function(){
     // Head: status + date
     html += '<div class="sh-card-head">';
     html += '<span class="sh-card-status sh-status-' + r.status + '">' + _h().statusLabel(r.status) + '</span>';
+    html += _renderSyncBadge(r);
     html += '<span class="sh-card-date">' + (r.date || '') + '</span>';
     html += '</div>';
 
@@ -349,7 +371,7 @@ const RoundsPage = (function(){
   function confirmDelete(id){
     _cancelConfirm();
     if(typeof RoundStore !== 'undefined'){
-      RoundStore.remove(id);
+      RoundStore.applyLocalRemove(id);
     }
     render();
   }
@@ -387,13 +409,13 @@ const RoundsPage = (function(){
   function endRound(id){
     if(typeof RoundStore === 'undefined') return;
     if(!confirm(T('endRoundConfirm'))) return;
-    RoundStore.finishRound(id, { endedBy: 'manual' });
+    RoundStore.applyLocalFinish(id, { endedBy: 'manual' });
     render();
   }
 
   function reopenRound(id){
     if(typeof RoundStore === 'undefined') return;
-    RoundStore.reopenRound(id);
+    RoundStore.applyLocalReopen(id);
     render();
   }
 

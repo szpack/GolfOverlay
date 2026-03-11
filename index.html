@@ -132,6 +132,10 @@
         </div>
       </div>
     </div>
+    <div id="sb-sync-indicator" class="sb-sync-indicator" style="display:none">
+      <span id="sb-sync-dot" class="sb-sync-dot sb-sync-dot-idle"></span>
+      <span id="sb-sync-text" class="sb-label"></span>
+    </div>
     <div class="sb-version"><span class="sb-label">v23.5.5</span></div>
   </div>
 </nav>
@@ -520,6 +524,8 @@
   <button onclick="openPlayerManager();closeMobMore()">Players</button>
   <button onclick="mobResetHole()">Reset Hole</button>
   <hr>
+  <button onclick="endCurrentRound()" style="color:#e74c3c">🏁 End Round</button>
+  <hr>
   <button onclick="closeMobMore()">Cancel</button>
 </div>
 
@@ -722,6 +728,10 @@
       <div class="sd-sec-title" id="sd-par-title" style="margin-top:8px">Course Par</div>
       <button class="sd-btn" id="btn-reset-par" onclick="resetAllPars()">Reset All to Par 4</button>
     </div>
+    <!-- End Round -->
+    <div class="sd-sec" id="sd-end-round-sec">
+      <button class="sd-btn sd-btn-danger" id="sd-end-round" onclick="endCurrentRound()">🏁 End Round</button>
+    </div>
   </div>
 </div>
 
@@ -798,6 +808,13 @@
 <!-- Cloud layer (before shell) -->
 <script src="./js/cloud/apiClient.js?v=23.5.4"></script>
 <script src="./js/cloud/authState.js?v=23.5.4"></script>
+<script src="./js/cloud/deviceId.js?v=24.1.0"></script>
+<script src="./js/cloud/syncQueue.js?v=24.1.0"></script>
+<script src="./js/cloud/conflictResolver.js?v=24.3.0"></script>
+<script src="./js/cloud/pushEngine.js?v=24.1.0"></script>
+<script src="./js/cloud/pullEngine.js?v=24.3.0"></script>
+<script src="./js/cloud/syncCoordinator.js?v=24.1.0"></script>
+<script src="./js/cloud/syncDebug.js?v=24.4.0"></script>
 <!-- App Shell (loaded after app.js, existing init() already ran) -->
 <script src="./js/shell/router.js?v=23.5.4"></script>
 <script src="./js/shell/roundHelper.js?v=23.5.4"></script>

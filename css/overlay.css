@@ -526,6 +526,8 @@ input[type=range]{accent-color:var(--mg);flex:1}
 .sd-btn:hover{background:var(--bd)}
 .sd-btn:active{background:var(--bd)}
 .sd-btn.highlight{border-color:var(--gold);color:var(--gold)}
+.sd-btn.sd-btn-danger{border-color:#e74c3c;color:#e74c3c;font-weight:600}
+.sd-btn.sd-btn-danger:hover{background:#e74c3c;color:#fff}
 
 /* ── NEW ROUND MODAL ── */
 #newround-modal{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);align-items:center;justify-content:center}

@@ -2194,6 +2194,7 @@ function applyLang(){
   // BG upload, reset par
   const bgUpBtn=g('bg-upload-btn'); if(bgUpBtn) bgUpBtn.textContent=T('bgUploadBtn');
   const resetParBtn=g('btn-reset-par'); if(resetParBtn) resetParBtn.textContent=T('resetParBtn');
+  const endRndBtn=g('sd-end-round'); if(endRndBtn) endRndBtn.textContent='🏁 '+T('endRoundBtn');
   // Safe zone options
   const szSelect=g('sz-size');
   if(szSelect){
@@ -2622,6 +2623,19 @@ function clearHole(){
   D.ws().shotIndex=-1;
   D.syncS(S);
   render(); scheduleSave();
+}
+
+// ── End current round from workspace ──
+function endCurrentRound(){
+  if(typeof RoundStore === 'undefined') return;
+  var rid = RoundStore.getActiveId();
+  if(!rid){ miniToast('No active round'); return; }
+  if(!confirm(T('endRoundConfirm'))) return;
+  RoundStore.applyLocalFinish(rid, { endedBy: 'manual' });
+  closeSettings();
+  closeMobMore();
+  miniToast(T('endRoundBtn') + ' ✓');
+  if(typeof Router !== 'undefined') Router.navigate('/rounds');
 }
 
 function setMode(m){ S.displayMode=m; D.ws().displayMode=m; render(); scheduleSave(); }
